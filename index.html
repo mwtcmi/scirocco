@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -14,10 +13,6 @@
 
 <style>
 
-/* ============================================================
-   SCIROCCO 799
-   ============================================================ */
-
 :root{
   --black:#050505;
   --dark:#0b0b0b;
@@ -26,7 +21,9 @@
   --paper:#f2f2ef;
   --copy:#d9d9d9;
   --line:#414141;
-  --green:#7ca64a;
+
+  /* SCIROCCO GREEN */
+  --green:#20C933;
 }
 
 *,
@@ -219,7 +216,7 @@ p{
 
 
 /* ============================================================
-   QUICK STRIP
+   QUICK SPECS
    ============================================================ */
 
 .quick{
@@ -525,7 +522,7 @@ p{
 
 .discipline-number{
   margin-bottom:70px;
-  color:#555;
+  color:var(--green);
   font-size:45px;
   font-weight:900;
 }
@@ -604,7 +601,7 @@ p{
 .build-card .label{
   display:block;
   margin-bottom:35px;
-  color:#777;
+  color:var(--green);
   font-size:10px;
   font-weight:900;
   letter-spacing:.2em;
@@ -691,7 +688,7 @@ p{
 }
 
 .number span{
-  color:#888;
+  color:var(--green);
   font-size:10px;
   font-weight:900;
   letter-spacing:.18em;
@@ -732,7 +729,7 @@ p{
 
 .partner-copy{
   padding:45px;
-  border-left:7px solid #111;
+  border-left:7px solid var(--green);
   background:#fff;
 }
 
@@ -747,6 +744,45 @@ p{
 .partner-copy p{
   color:#444;
   font-size:17px;
+}
+
+.current-sponsors{
+  margin:30px 0;
+  padding-top:25px;
+  border-top:1px solid #ccc;
+}
+
+.current-sponsors-label{
+  display:block;
+  margin-bottom:14px;
+  color:#777;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.sponsor-names{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.sponsor-names a{
+  display:inline-block;
+  padding:12px 16px;
+  border:1px solid #111;
+  color:#111;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-decoration:none;
+  text-transform:uppercase;
+}
+
+.sponsor-names a:hover{
+  background:#111;
+  color:#fff;
 }
 
 
@@ -859,7 +895,7 @@ p{
 .button-green{
   border-color:var(--green);
   background:var(--green);
-  color:#080808;
+  color:#050505;
 }
 
 .button-green:hover{
@@ -930,7 +966,7 @@ footer{
 
 
 /* ============================================================
-   RESPONSIVE
+   TABLET
    ============================================================ */
 
 @media(max-width:900px){
@@ -1041,6 +1077,10 @@ footer{
 }
 
 
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
 @media(max-width:520px){
 
   .hero{
@@ -1140,11 +1180,8 @@ footer{
     <div class="nav-links">
 
       <a href="#car">The Car</a>
-
       <a href="#results">Results</a>
-
       <a href="#build">Build</a>
-
       <a href="#partners">Partners</a>
 
       <a
@@ -1272,7 +1309,7 @@ footer{
 
 
 <!-- ============================================================
-     PHOTOS
+     PHOTO FEATURE
      ============================================================ -->
 
 <section class="photo-feature">
@@ -1282,11 +1319,13 @@ footer{
     <div class="photo-grid">
 
 
+      <!-- LARGE LEFT IMAGE -->
+
       <figure class="photo-main">
 
         <img
           src="images/Photo%20Sep%2029%202026%2C%203%2041%2039%20PM.jpg"
-          alt="Volkswagen Scirocco 799 competition car"
+          alt="Scirocco 799 competition car"
           loading="lazy">
 
         <div class="photo-tag">
@@ -1299,11 +1338,13 @@ footer{
       <div class="photo-stack">
 
 
+        <!-- NEW TOP RIGHT IMAGE -->
+
         <figure>
 
           <img
-            src="images/Photo%20Sep%2029%202026%2C%203%2045%2033%20PM.jpg"
-            alt="Scirocco 799 competition detail"
+            src="images/Photo%20Oct%2027%202025%2C%2011%2010%2032%20PM.png"
+            alt="Scirocco 799 competition car"
             loading="lazy">
 
           <div class="photo-tag">
@@ -1313,11 +1354,13 @@ footer{
         </figure>
 
 
+        <!-- NEW BOTTOM RIGHT IMAGE -->
+
         <figure>
 
           <img
-            src="images/Photo%20Sep%2029%202026%2C%203%2045%2033%20PM.png"
-            alt="Scirocco 799 race car"
+            src="images/Photo%20Sep%2019%202026%2C%202%2046%2003%20AM.jpg"
+            alt="Scirocco 799 on course"
             loading="lazy">
 
           <div class="photo-tag">
@@ -1580,7 +1623,9 @@ footer{
 
       <div class="build-card">
 
-        <span class="label">Power</span>
+        <span class="label">
+          Power
+        </span>
 
         <h3>Engine</h3>
 
@@ -1623,7 +1668,9 @@ footer{
 
       <div class="build-card">
 
-        <span class="label">Putting It Down</span>
+        <span class="label">
+          Putting It Down
+        </span>
 
         <h3>Drivetrain</h3>
 
@@ -1656,7 +1703,9 @@ footer{
 
       <div class="build-card">
 
-        <span class="label">Chassis</span>
+        <span class="label">
+          Chassis
+        </span>
 
         <h3>Suspension</h3>
 
@@ -1689,7 +1738,9 @@ footer{
 
       <div class="build-card">
 
-        <span class="label">Grip + Control</span>
+        <span class="label">
+          Grip + Control
+        </span>
 
         <h3>Brakes &amp; Tires</h3>
 
@@ -1771,7 +1822,7 @@ footer{
     <div>
 
       <div class="kicker">
-        Partnership Opportunities
+        Partners
       </div>
 
       <h2>
@@ -1794,6 +1845,32 @@ footer{
         an unmistakable vintage Volkswagen that is actively
         built, tested and raced.
       </p>
+
+      <div class="current-sponsors">
+
+        <span class="current-sponsors-label">
+          Proudly Sponsored By
+        </span>
+
+        <div class="sponsor-names">
+
+          <a
+            href="https://www.asterisk.org/"
+            target="_blank"
+            rel="noopener">
+            Asterisk.org
+          </a>
+
+          <a
+            href="https://www.freepbx.org/"
+            target="_blank"
+            rel="noopener">
+            FreePBX.org
+          </a>
+
+        </div>
+
+      </div>
 
       <p>
         Partnership opportunities include vehicle branding,
