@@ -6,11 +6,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Scirocco 799 | 1976 Volkswagen Scirocco Hill Climb Car</title>
+<title>Scirocco 799 | 1976 Volkswagen Scirocco Competition Car</title>
 
 <meta
   name="description"
-  content="Scirocco 799 is a 1976 Volkswagen Scirocco Type 53 built for Hill Climb, Time Trials and Track Sprint competition.">
+  content="Scirocco 799 is a 1976 Volkswagen Scirocco Type 53 competing in Hill Climb, Time Trials and Track Sprint events.">
 
 <style>
 
@@ -22,11 +22,11 @@
   --black:#050505;
   --dark:#0b0b0b;
   --panel:#141414;
-  --white:#ffffff;
+  --white:#fff;
   --paper:#f2f2ef;
   --copy:#d9d9d9;
   --line:#414141;
-  --green:#78a840;
+  --green:#7ca64a;
 }
 
 *,
@@ -42,7 +42,7 @@ html{
 body{
   margin:0;
   background:var(--black);
-  color:var(--white);
+  color:#fff;
   font-family:Arial,Helvetica,sans-serif;
   overflow-x:hidden;
 }
@@ -52,15 +52,11 @@ body{
   margin:0 auto;
 }
 
-h1,
-h2,
-h3,
-p{
+h1,h2,h3,p{
   margin-top:0;
 }
 
-h1,
-h2{
+h1,h2{
   text-wrap:balance;
 }
 
@@ -81,22 +77,22 @@ p{
 
 
 /* ============================================================
-   NAV
+   NAVIGATION
    ============================================================ */
 
 .site-nav{
   position:absolute;
+  z-index:20;
   top:0;
   left:0;
   right:0;
-  z-index:20;
-  padding:27px 0;
+  padding:28px 0;
 }
 
 .nav-inner{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   gap:30px;
 }
 
@@ -116,7 +112,7 @@ p{
 .nav-links{
   display:flex;
   align-items:center;
-  gap:28px;
+  gap:26px;
 }
 
 .nav-links a{
@@ -126,11 +122,22 @@ p{
   letter-spacing:.15em;
   text-decoration:none;
   text-transform:uppercase;
-  opacity:.82;
+  opacity:.8;
 }
 
 .nav-links a:hover{
   opacity:1;
+}
+
+.nav-links .merch-nav{
+  padding:11px 15px;
+  border:1px solid rgba(255,255,255,.7);
+  opacity:1;
+}
+
+.nav-links .merch-nav:hover{
+  background:#fff;
+  color:#111;
 }
 
 
@@ -139,19 +146,19 @@ p{
    ============================================================ */
 
 .hero{
-  min-height:820px;
   position:relative;
+  min-height:820px;
   display:flex;
   align-items:flex-end;
-  padding:140px 0 82px;
+  padding:140px 0 85px;
 
   background:
     linear-gradient(
       90deg,
       rgba(0,0,0,.94) 0%,
-      rgba(0,0,0,.70) 34%,
-      rgba(0,0,0,.22) 68%,
-      rgba(0,0,0,.06) 100%
+      rgba(0,0,0,.70) 35%,
+      rgba(0,0,0,.25) 68%,
+      rgba(0,0,0,.05) 100%
     ),
     url("images/Photo%20Sep%2029%202026%2C%203%2041%2052%20PM.jpg")
     center 52% / cover no-repeat;
@@ -168,7 +175,7 @@ p{
     linear-gradient(
       transparent,
       rgba(5,5,5,.5) 55%,
-      var(--black) 100%
+      #050505 100%
     );
 }
 
@@ -178,19 +185,19 @@ p{
 }
 
 .hero-number{
-  margin-bottom:14px;
+  margin-bottom:15px;
   color:var(--green);
-  font-size:16px;
+  font-size:13px;
   font-weight:900;
   letter-spacing:.25em;
   text-transform:uppercase;
 }
 
 .hero h1{
-  max-width:900px;
-  margin:0 0 28px;
+  max-width:950px;
+  margin:0 0 30px;
   color:#fff;
-  font-size:clamp(75px,12vw,165px);
+  font-size:clamp(78px,12vw,165px);
   font-weight:900;
   line-height:.84;
   letter-spacing:-.055em;
@@ -203,10 +210,10 @@ p{
 }
 
 .hero p{
-  max-width:700px;
+  max-width:710px;
   margin:0;
   color:#fff;
-  font-size:clamp(18px,2vw,24px);
+  font-size:clamp(19px,2vw,24px);
   line-height:1.48;
 }
 
@@ -259,7 +266,7 @@ p{
 
 .intro{
   padding:120px 0;
-  background:var(--black);
+  background:#050505;
 }
 
 .intro-grid{
@@ -283,7 +290,7 @@ p{
   font-size:19px;
 }
 
-.intro-copy p:first-child{
+.intro-copy .lead{
   color:#fff;
   font-size:24px;
   font-weight:700;
@@ -292,11 +299,86 @@ p{
 
 
 /* ============================================================
+   PHOTO FEATURE
+   ============================================================ */
+
+.photo-feature{
+  padding:0 0 120px;
+  background:#050505;
+}
+
+.photo-grid{
+  display:grid;
+  grid-template-columns:1.35fr .65fr;
+  gap:16px;
+}
+
+.photo-main,
+.photo-stack figure{
+  position:relative;
+  margin:0;
+  overflow:hidden;
+  background:#111;
+}
+
+.photo-main{
+  min-height:650px;
+}
+
+.photo-stack{
+  display:grid;
+  grid-template-rows:1fr 1fr;
+  gap:16px;
+}
+
+.photo-stack figure{
+  min-height:317px;
+}
+
+.photo-main img,
+.photo-stack img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  transition:transform .45s ease;
+}
+
+.photo-main:hover img,
+.photo-stack figure:hover img{
+  transform:scale(1.025);
+}
+
+.photo-main::after,
+.photo-stack figure::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+  pointer-events:none;
+}
+
+.photo-tag{
+  position:absolute;
+  left:22px;
+  bottom:20px;
+  z-index:2;
+  padding:9px 12px;
+  background:rgba(0,0,0,.78);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+
+/* ============================================================
    RESULTS
    ============================================================ */
 
 .results{
-  padding:115px 0;
+  padding:120px 0;
   background:var(--paper);
   color:#111;
 }
@@ -324,7 +406,7 @@ p{
 }
 
 .section-head p{
-  max-width:630px;
+  max-width:650px;
   margin:0;
   color:#333;
   font-size:19px;
@@ -332,27 +414,35 @@ p{
 
 .results-grid{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:1px;
   background:#999;
   border:1px solid #999;
 }
 
 .result{
-  min-height:360px;
-  padding:38px;
+  min-height:355px;
+  padding:34px;
   display:flex;
   flex-direction:column;
   background:#fff;
 }
 
+.result.dark{
+  background:#111;
+}
+
 .result-place{
-  margin-bottom:50px;
+  margin-bottom:48px;
   color:#111;
-  font-size:clamp(65px,7vw,100px);
+  font-size:clamp(55px,6vw,90px);
   font-weight:900;
   line-height:.8;
   letter-spacing:-.06em;
+}
+
+.result.dark .result-place{
+  color:#fff;
 }
 
 .result-place span{
@@ -371,16 +461,24 @@ p{
 .result h3{
   margin:0 0 10px;
   color:#111;
-  font-size:24px;
+  font-size:21px;
   line-height:1.05;
   text-transform:uppercase;
+}
+
+.result.dark h3{
+  color:#fff;
 }
 
 .result p{
   margin:auto 0 0;
   color:#555;
-  font-size:15px;
+  font-size:14px;
   line-height:1.5;
+}
+
+.result.dark p{
+  color:#bbb;
 }
 
 
@@ -430,7 +528,6 @@ p{
   color:#555;
   font-size:45px;
   font-weight:900;
-  line-height:1;
 }
 
 .discipline h3{
@@ -562,7 +659,7 @@ p{
 
 
 /* ============================================================
-   FEATURE NUMBERS
+   NUMBERS
    ============================================================ */
 
 .numbers{
@@ -652,8 +749,122 @@ p{
   font-size:17px;
 }
 
-.partner-copy p:last-child{
-  margin-bottom:0;
+
+/* ============================================================
+   MERCH
+   ============================================================ */
+
+.merch{
+  position:relative;
+  padding:125px 0;
+  overflow:hidden;
+  background:#0a0a0a;
+}
+
+.merch::before{
+  content:"799";
+  position:absolute;
+  right:-25px;
+  top:50%;
+  transform:translateY(-50%);
+  color:rgba(255,255,255,.025);
+  font-size:clamp(250px,38vw,570px);
+  font-weight:900;
+  line-height:.7;
+  letter-spacing:-.09em;
+  pointer-events:none;
+}
+
+.merch-grid{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:85px;
+  align-items:center;
+}
+
+.merch h2{
+  margin:0;
+  color:#fff;
+  font-size:clamp(60px,9vw,115px);
+  font-weight:900;
+  line-height:.9;
+  letter-spacing:-.045em;
+  text-transform:uppercase;
+}
+
+.merch h2 span{
+  color:var(--green);
+}
+
+.merch-copy{
+  padding:42px;
+  border:1px solid #3b3b3b;
+  background:rgba(20,20,20,.88);
+}
+
+.merch-copy h3{
+  margin:0 0 18px;
+  color:#fff;
+  font-size:30px;
+  line-height:1.05;
+  text-transform:uppercase;
+}
+
+.merch-copy p{
+  color:#c9c9c9;
+}
+
+.merch-items{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:28px 0;
+}
+
+.merch-items span{
+  padding:9px 11px;
+  border:1px solid #444;
+  color:#aaa;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.button{
+  display:inline-block;
+  padding:18px 26px;
+  border:2px solid #fff;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.17em;
+  text-decoration:none;
+  text-transform:uppercase;
+  transition:.2s ease;
+}
+
+.button:hover{
+  background:#fff;
+  color:#111;
+}
+
+.button-green{
+  border-color:var(--green);
+  background:var(--green);
+  color:#080808;
+}
+
+.button-green:hover{
+  border-color:#fff;
+  background:#fff;
 }
 
 
@@ -688,22 +899,11 @@ p{
   font-size:19px;
 }
 
-.button{
-  display:inline-block;
-  padding:18px 26px;
-  border:2px solid #fff;
-  color:#fff;
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.17em;
-  text-decoration:none;
-  text-transform:uppercase;
-  transition:.2s ease;
-}
-
-.button:hover{
-  background:#fff;
-  color:#111;
+.cta-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:12px;
 }
 
 
@@ -730,8 +930,17 @@ footer{
 
 
 /* ============================================================
-   TABLET
+   RESPONSIVE
    ============================================================ */
+
+@media(max-width:900px){
+
+  .results-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+}
+
 
 @media(max-width:800px){
 
@@ -763,12 +972,29 @@ footer{
   .intro-grid,
   .section-head,
   .build-head,
-  .partners-grid{
+  .partners-grid,
+  .merch-grid{
     grid-template-columns:1fr;
     gap:35px;
   }
 
-  .results-grid,
+  .photo-grid{
+    grid-template-columns:1fr;
+  }
+
+  .photo-main{
+    min-height:500px;
+  }
+
+  .photo-stack{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto;
+  }
+
+  .photo-stack figure{
+    min-height:300px;
+  }
+
   .disciplines{
     grid-template-columns:1fr;
   }
@@ -804,10 +1030,6 @@ footer{
     grid-template-columns:1fr 1fr;
   }
 
-  .number{
-    padding:30px;
-  }
-
   .number:nth-child(2){
     border-right:0;
   }
@@ -819,14 +1041,11 @@ footer{
 }
 
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
-
 @media(max-width:520px){
 
   .hero{
     min-height:640px;
+
     background:
       linear-gradient(
         90deg,
@@ -853,12 +1072,33 @@ footer{
   .results,
   .competition,
   .build,
-  .partners{
+  .partners,
+  .merch{
     padding:80px 0;
   }
 
+  .photo-feature{
+    padding-bottom:80px;
+  }
+
+  .photo-main{
+    min-height:360px;
+  }
+
+  .photo-stack{
+    grid-template-columns:1fr;
+  }
+
+  .photo-stack figure{
+    min-height:330px;
+  }
+
+  .results-grid{
+    grid-template-columns:1fr;
+  }
+
   .result{
-    min-height:310px;
+    min-height:290px;
   }
 
   .spec-list li{
@@ -866,11 +1106,8 @@ footer{
     gap:4px;
   }
 
-  .numbers-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .partner-copy{
+  .partner-copy,
+  .merch-copy{
     padding:32px;
   }
 
@@ -903,9 +1140,20 @@ footer{
     <div class="nav-links">
 
       <a href="#car">The Car</a>
+
       <a href="#results">Results</a>
+
       <a href="#build">Build</a>
+
       <a href="#partners">Partners</a>
+
+      <a
+        class="merch-nav"
+        href="https://www.empirehillclimb.racing/799"
+        target="_blank"
+        rel="noopener">
+        Merch
+      </a>
 
     </div>
 
@@ -932,8 +1180,8 @@ footer{
     </h1>
 
     <p>
-      A 50-year-old Volkswagen built to compete in
-      Hill Climb, Time Trials and Track Sprint.
+      Vintage Volkswagen. Modern competition.
+      Built for Hill Climb, Time Trials and Track Sprint.
     </p>
 
   </div>
@@ -965,7 +1213,7 @@ footer{
     </div>
 
     <div class="quick-item">
-      <span>Competition Number</span>
+      <span>Competition</span>
       <strong>#799</strong>
     </div>
 
@@ -990,7 +1238,7 @@ footer{
 
       <h2>
         Built To<br>
-        Be Driven.
+        Compete.
       </h2>
 
     </div>
@@ -998,24 +1246,88 @@ footer{
 
     <div class="intro-copy">
 
-      <p>
+      <p class="lead">
         Scirocco 799 is a 1976 Volkswagen Scirocco Type 53
-        developed for one purpose: competition.
+        being developed through real competition.
       </p>
 
       <p>
-        Powered by a naturally aspirated OBD1 ABA 2.0-liter
-        8-valve breathing through dual 40mm Weber DCOE
-        carburetors, the car combines old-school Volkswagen
-        character with a focused modern competition setup.
+        At its heart is a naturally aspirated OBD1 ABA
+        2.0-liter 8-valve breathing through dual 40mm Weber
+        DCOE carburetors and driving the front wheels through
+        a Quaife limited-slip differential.
       </p>
 
       <p>
-        The project continues to evolve through real competition
-        in Hill Climb, Time Trials and Track Sprint events.
-        Every change has the same objective: make the car
-        lighter, faster, more predictable and more capable.
+        The car competes in Hill Climb, Time Trials and Track
+        Sprint events. The development philosophy is simple:
+        race it, learn from it, improve it and go faster.
       </p>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     PHOTOS
+     ============================================================ -->
+
+<section class="photo-feature">
+
+  <div class="wrap">
+
+    <div class="photo-grid">
+
+
+      <figure class="photo-main">
+
+        <img
+          src="images/Photo%20Sep%2029%202026%2C%203%2041%2039%20PM.jpg"
+          alt="Volkswagen Scirocco 799 competition car"
+          loading="lazy">
+
+        <div class="photo-tag">
+          Scirocco 799
+        </div>
+
+      </figure>
+
+
+      <div class="photo-stack">
+
+
+        <figure>
+
+          <img
+            src="images/Photo%20Sep%2029%202026%2C%203%2045%2033%20PM.jpg"
+            alt="Scirocco 799 competition detail"
+            loading="lazy">
+
+          <div class="photo-tag">
+            Competition Built
+          </div>
+
+        </figure>
+
+
+        <figure>
+
+          <img
+            src="images/Photo%20Sep%2029%202026%2C%203%2045%2033%20PM.png"
+            alt="Scirocco 799 race car"
+            loading="lazy">
+
+          <div class="photo-tag">
+            #799
+          </div>
+
+        </figure>
+
+
+      </div>
 
     </div>
 
@@ -1041,16 +1353,16 @@ footer{
         </div>
 
         <h2>
-          Podium<br>
-          Proven.
+          Results<br>
+          Matter.
         </h2>
 
       </div>
 
       <p>
-        #799 isn't a show car. It is actively campaigned
-        across multiple forms of SCCA competition, with podium
-        finishes in both hill climb and track sprint competition.
+        #799 competes across multiple forms of motorsport,
+        with podium finishes in hill climb and track sprint
+        competition and an FTD at Waumandee.
       </p>
 
     </div>
@@ -1080,7 +1392,7 @@ footer{
       </article>
 
 
-      <article class="result">
+      <article class="result dark">
 
         <div class="result-place">
           P<span>2</span>
@@ -1117,6 +1429,27 @@ footer{
 
         <p>
           Empire, Michigan
+        </p>
+
+      </article>
+
+
+      <article class="result dark">
+
+        <div class="result-place">
+          <span>FTD</span>
+        </div>
+
+        <div class="result-year">
+          Time Trials
+        </div>
+
+        <h3>
+          Waumandee Time Trials
+        </h3>
+
+        <p>
+          Fastest Time of Day | 2:42.69
         </p>
 
       </article>
@@ -1163,8 +1496,8 @@ footer{
         <h3>Hill Climb</h3>
 
         <p>
-          Closed-road competition against the clock,
-          where precision and commitment matter on every run.
+          Closed-road competition against the clock.
+          One run, one road and no room to waste time.
         </p>
 
       </div>
@@ -1179,8 +1512,8 @@ footer{
         <h3>Time Trials</h3>
 
         <p>
-          Track competition focused on extracting the fastest
-          possible lap from both driver and machine.
+          Competition built around finding the fastest
+          possible time from driver and machine.
         </p>
 
       </div>
@@ -1195,8 +1528,8 @@ footer{
         <h3>Track Sprint</h3>
 
         <p>
-          Point-to-point track competition that rewards
-          outright pace and clean execution.
+          Point-to-point track competition rewarding
+          pace, precision and clean execution.
         </p>
 
       </div>
@@ -1234,8 +1567,9 @@ footer{
       </div>
 
       <p class="build-lead">
-        A naturally aspirated, front-wheel-drive package
-        built around mechanical grip, response and reliability.
+        Naturally aspirated. Front-wheel drive. Mechanical.
+        A competition package focused on response, grip and
+        making the most of a lightweight Mk1 chassis.
       </p>
 
     </div>
@@ -1244,17 +1578,11 @@ footer{
     <div class="build-grid">
 
 
-      <!-- ENGINE -->
-
       <div class="build-card">
 
-        <span class="label">
-          Power
-        </span>
+        <span class="label">Power</span>
 
-        <h3>
-          Engine
-        </h3>
+        <h3>Engine</h3>
 
         <ul class="spec-list">
 
@@ -1293,17 +1621,11 @@ footer{
       </div>
 
 
-      <!-- DRIVETRAIN -->
-
       <div class="build-card">
 
-        <span class="label">
-          Putting It Down
-        </span>
+        <span class="label">Putting It Down</span>
 
-        <h3>
-          Drivetrain
-        </h3>
+        <h3>Drivetrain</h3>
 
         <ul class="spec-list">
 
@@ -1332,17 +1654,11 @@ footer{
       </div>
 
 
-      <!-- CHASSIS -->
-
       <div class="build-card">
 
-        <span class="label">
-          Chassis
-        </span>
+        <span class="label">Chassis</span>
 
-        <h3>
-          Suspension
-        </h3>
+        <h3>Suspension</h3>
 
         <ul class="spec-list">
 
@@ -1371,17 +1687,11 @@ footer{
       </div>
 
 
-      <!-- BRAKES / TIRES -->
-
       <div class="build-card">
 
-        <span class="label">
-          Grip + Control
-        </span>
+        <span class="label">Grip + Control</span>
 
-        <h3>
-          Brakes &amp; Tires
-        </h3>
+        <h3>Brakes &amp; Tires</h3>
 
         <ul class="spec-list">
 
@@ -1401,7 +1711,7 @@ footer{
           </li>
 
           <li>
-            <strong>Wheel Size</strong>
+            <strong>Wheels</strong>
             <span>15-inch competition setup</span>
           </li>
 
@@ -1476,27 +1786,87 @@ footer{
     <div class="partner-copy">
 
       <h3>
-        Looking For Partners Who Want To Be Part Of The Build.
+        Become Part Of The Program.
       </h3>
 
       <p>
-        Scirocco 799 competes at motorsports events with an
-        unmistakable platform: a vintage Volkswagen being
-        developed, driven and improved through real competition.
+        Scirocco 799 gives partners something different:
+        an unmistakable vintage Volkswagen that is actively
+        built, tested and raced.
       </p>
 
       <p>
-        Partnership opportunities can include vehicle branding,
+        Partnership opportunities include vehicle branding,
         event exposure, social media content, product integration,
-        installation features, competition updates and ongoing
-        visibility as the car continues to develop.
+        installation features and competition updates throughout
+        the season.
       </p>
 
       <p>
-        We're interested in working with brands that fit the
-        project and want their products represented on a car
-        that is actually used, tested and raced.
+        The goal is to build long-term relationships with
+        motorsport and automotive brands whose products fit
+        the car and the program.
       </p>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     MERCH
+     ============================================================ -->
+
+<section class="merch" id="merch">
+
+  <div class="wrap merch-grid">
+
+    <div>
+
+      <div class="kicker">
+        799 Bergrennen
+      </div>
+
+      <h2>
+        Wear<br>
+        The<br>
+        <span>799.</span>
+      </h2>
+
+    </div>
+
+
+    <div class="merch-copy">
+
+      <h3>
+        From The Paddock To The Street.
+      </h3>
+
+      <p>
+        The official Scirocco 799 collection is available
+        through the Empire Hill Climb store.
+      </p>
+
+      <div class="merch-items">
+
+        <span>Race Tees</span>
+        <span>Paddock Jackets</span>
+        <span>Hoodies</span>
+        <span>Caps</span>
+        <span>Beanies</span>
+        <span>Race Patches</span>
+
+      </div>
+
+      <a
+        class="button button-green"
+        href="https://www.empirehillclimb.racing/799"
+        target="_blank"
+        rel="noopener">
+        Shop 799 Merch
+      </a>
 
     </div>
 
@@ -1524,17 +1894,29 @@ footer{
     </h2>
 
     <p>
-      Follow the build, the development and the competition
-      season of Volkswagen Scirocco #799.
+      Follow the build, development and competition season
+      of Volkswagen Scirocco #799.
     </p>
 
-    <a
-      class="button"
-      href="https://www.instagram.com/scirocco.799/"
-      target="_blank"
-      rel="noopener">
-      Follow @scirocco.799
-    </a>
+    <div class="cta-buttons">
+
+      <a
+        class="button"
+        href="https://www.instagram.com/scirocco.799/"
+        target="_blank"
+        rel="noopener">
+        Follow @scirocco.799
+      </a>
+
+      <a
+        class="button"
+        href="https://www.empirehillclimb.racing/799"
+        target="_blank"
+        rel="noopener">
+        Shop Merch
+      </a>
+
+    </div>
 
   </div>
 
