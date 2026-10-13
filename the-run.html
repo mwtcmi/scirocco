@@ -56,7 +56,7 @@ for(let [ox,oy,rad,color] of [[-8,-12,14,'#0b3020'],[8,-17,14,'#11542b'],[-1,-25
 }
 function drawBush(px,py){g.fillStyle='#0b2819';g.beginPath();g.ellipse(px+3,py+5,16,9,0,0,Math.PI*2);g.fill();g.fillStyle='#38834a';g.beginPath();g.ellipse(px,py,14,9,0,0,Math.PI*2);g.fill();g.fillStyle='#61a45c';g.beginPath();g.ellipse(px-4,py-3,6,4,0,0,Math.PI*2);g.fill()}
 function drawCar(px,py){if(inv>0&&Math.floor(inv*12)%2===0)return;
-g.save();g.translate(px,py);if(shake>0)g.translate((Math.random()-.5)*3,0);
+g.save();g.translate(px,py);g.scale(1.27,1.27);if(shake>0)g.translate((Math.random()-.5)*3,0);
 const turn=(keys.right?1:0)-(keys.left?1:0);g.rotate(turn*.055);
 function poly(points,fill,stroke='#09150d',lw=1){g.beginPath();points.forEach(([a,b],i)=>i?g.lineTo(a,b):g.moveTo(a,b));g.closePath();g.fillStyle=fill;g.fill();if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke()}}
 function rounded(xx,yy,ww,hh,rr,fill){g.beginPath();g.roundRect(xx,yy,ww,hh,rr);g.fillStyle=fill;g.fill()}
@@ -77,7 +77,12 @@ poly([[-13,23],[13,23],[15,34],[-15,34]],'#31515c',null);
 poly([[-12,24],[12,24],[13,26],[-13,26]],'#547983',null);
 rounded(-21,37,42,6,1,'#095b19');rounded(-22,42,44,3,1,'#121a16');
 rounded(-19,-46,14,5,1,'#eee9c8');rounded(5,-46,14,5,1,'#eee9c8');
-rounded(-23,37,46,6,1,'#070a09');g.fillStyle='#f5f4eb';g.textAlign='center';g.font='bold 5.1px Arial';g.fillText('Der Berg Ruft!',0,41.5);g.textAlign='left';rounded(-19,39,11,5,1,'#e53930');rounded(8,39,11,5,1,'#e53930');
+// Rear lamps belong at the trailing edge; the spoiler mounts ahead of them, on the hatch.
+rounded(-19,39,11,5,1,'#e53930');rounded(8,39,11,5,1,'#e53930');
+rounded(-21,29,42,3,1,'#141b17'); // spoiler uprights
+rounded(-24,27,48,8,1,'#050708'); // black rear hatch spoiler, above taillights
+rounded(-22,27,44,1,0,'#4b5550');
+g.fillStyle='#f5f4eb';g.textAlign='center';g.font='bold 5.3px Arial';g.fillText('Der Berg Ruft!',0,33.1);g.textAlign='left';
 rounded(-16,1,32,18,3,'#e6f0de');g.fillStyle='#101d13';g.font='900 17px Arial';g.textAlign='center';g.fillText('799',0,16);g.textAlign='left';
 g.strokeStyle='#06250c';g.lineWidth=1;g.beginPath();g.moveTo(-20,-26);g.lineTo(-20,36);g.moveTo(20,-26);g.lineTo(20,36);g.stroke();
 g.restore()}
