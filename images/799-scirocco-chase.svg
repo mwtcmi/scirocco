@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="420" viewBox="0 0 440 420">
+<defs><linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7eff45"/><stop offset=".32" stop-color="#37e51c"/><stop offset=".68" stop-color="#1ab00f"/><stop offset="1" stop-color="#0c7411"/></linearGradient><linearGradient id="glass" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#71908b"/><stop offset=".24" stop-color="#14262c"/><stop offset=".72" stop-color="#263c43"/><stop offset="1" stop-color="#0a131a"/></linearGradient><linearGradient id="side" x1="0" y1="0" x2="1" y2=".3"><stop stop-color="#5cf22d"/><stop offset=".5" stop-color="#20bb10"/><stop offset="1" stop-color="#08700c"/></linearGradient><linearGradient id="wing" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#434747"/><stop offset=".25" stop-color="#0d1113"/><stop offset=".75" stop-color="#202426"/><stop offset="1" stop-color="#050709"/></linearGradient><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter></defs>
+<ellipse cx="222" cy="361" rx="167" ry="34" fill="#050b08" opacity=".58" filter="url(#shadow)"/>
+<!-- rear three-quarter angle, car nose toward upper right -->
+<path d="M310 89 L365 123 L379 260 L344 332 L295 340 L277 257 Z" fill="#121517" stroke="#050606" stroke-width="7"/>
+<path d="M91 217 L120 334 L81 359 L51 344 L48 278 Z" fill="#111417" stroke="#050606" stroke-width="7"/>
+<path d="M79 165 L142 104 L303 91 L362 136 L379 265 L324 333 L107 354 L52 307 L50 236 Z" fill="url(#green)" stroke="#10330c" stroke-width="5" stroke-linejoin="round"/>
+<!-- visible passenger side -->
+<path d="M307 101 L362 136 L379 263 L326 330 L306 248 Z" fill="url(#side)" stroke="#11551b" stroke-width="3"/>
+<path d="M329 147 L356 167 L363 244 L330 263 Z" fill="url(#glass)" stroke="#86bda1" stroke-width="3"/>
+<path d="M345 159 L346 250" stroke="#2d7436" stroke-width="3"/>
+<path d="M351 272 L353 294" stroke="#07560b" stroke-width="5"/>
+<!-- roof, greenhouse -->
+<path d="M125 114 L296 98 L329 150 L321 250 L108 266 L81 207 Z" fill="#199d15" stroke="#0b4811" stroke-width="4"/>
+<path d="M130 127 L288 113 L310 151 L306 228 L117 245 L96 202 Z" fill="url(#glass)" stroke="#a4dfab" stroke-width="6"/>
+<path d="M133 131 L287 117 L303 151 L298 171 L112 189 Z" fill="#698780" opacity=".42"/>
+<!-- roll cage X -->
+<path d="M122 235 L287 120 M129 130 L296 228" stroke="#202c2c" stroke-width="10" opacity=".85"/>
+<path d="M122 235 L287 120 M129 130 L296 228" stroke="#667572" stroke-width="3" opacity=".7"/>
+<path d="M111 194 L305 176" stroke="#131d20" stroke-width="5"/>
+<!-- green hatch -->
+<path d="M91 251 L317 235 L330 289 L105 318 L69 289 Z" fill="url(#green)" stroke="#0b6714" stroke-width="4"/>
+<path d="M103 263 L310 247" stroke="#a0ff64" stroke-width="4" opacity=".7"/>
+<circle cx="211" cy="285" r="8" fill="#148b0d" stroke="#4fe52b" stroke-width="3"/>
+<!-- side 799 roundel -->
+<ellipse cx="350" cy="287" rx="24" ry="31" transform="rotate(9 350 287)" fill="#f4f1e4" stroke="#111a17" stroke-width="5"/>
+<text x="350" y="297" font-size="23" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" fill="#111">799</text>
+<!-- tail lamps and rear fascia -->
+<path d="M68 294 L110 319 L328 289 L327 319 L107 350 L56 320 Z" fill="#1a251e" stroke="#071008" stroke-width="5"/>
+<path d="M66 299 L117 320 L128 338 L74 320 Z" fill="#101314"/>
+<path d="M264 304 L322 295 L322 316 L268 324 Z" fill="#111517"/>
+<path d="M126 322 L264 303 L264 324 L128 342 Z" fill="#10220f"/>
+<path d="M68 302 L115 324 L120 335 L75 317 Z" fill="#35100d" opacity=".9"/>
+<path d="M274 310 L320 302 L320 317 L274 324 Z" fill="#390f0d" opacity=".8"/>
+<!-- rear bumper and diffuser -->
+<path d="M70 335 L118 359 L328 330 L331 345 L116 377 L66 349 Z" fill="#17a80d" stroke="#0b5010" stroke-width="4"/>
+<path d="M106 366 L330 337 L331 360 L113 392 L84 376 Z" fill="#101517" stroke="#030607" stroke-width="4"/>
+<path d="M146 369 L142 388 M181 365 L180 385 M220 359 L219 380 M258 353 L257 374 M294 349 L294 368" stroke="#333a39" stroke-width="6"/>
+<ellipse cx="132" cy="369" rx="18" ry="11" fill="#080b0c" stroke="#888e8c" stroke-width="5"/>
+<path d="M293 332 L308 329 L312 373 L296 379 Z" fill="#ef3029"/>
+<!-- rear wing uprights -->
+<path d="M112 177 L88 92 L100 87 L138 178 Z M291 163 L328 78 L342 82 L314 173 Z" fill="#101416" stroke="#404849" stroke-width="3"/>
+<path d="M95 116 L124 150 M325 112 L305 149" stroke="#59615f" stroke-width="5"/>
+<!-- very wide double plane wing -->
+<path d="M34 65 L372 45 L398 57 L394 84 L48 106 L29 88 Z" fill="url(#wing)" stroke="#050808" stroke-width="5"/>
+<path d="M33 83 L395 62 L394 81 L47 105 Z" fill="#080a0b"/>
+<path d="M30 42 L373 25 L392 39 L390 54 L36 76 Z" fill="#191e20" stroke="#050808" stroke-width="5"/>
+<path d="M37 46 L370 30" stroke="#6d7673" stroke-width="3" opacity=".8"/>
+<path d="M30 37 L41 32 L53 109 L34 116 Z M375 24 L390 28 L404 83 L390 94 Z" fill="#161b1c" stroke="#050808" stroke-width="4"/>
+</svg>
