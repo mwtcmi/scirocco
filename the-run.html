@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>799 // THE RUN</title>
+<style>
+:root{color-scheme:dark;--g:#20c933}*{box-sizing:border-box}body{margin:0;background:#080b0a;color:#f2f5f1;font-family:Arial,Helvetica,sans-serif;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%}
+.overlay{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 24%,#020403a8 100%)}
+.top{position:fixed;top:26px;left:clamp(20px,5vw,75px);right:clamp(20px,5vw,75px);display:flex;justify-content:space-between;align-items:start;gap:20px}
+.kicker{font-size:11px;letter-spacing:.32em;color:var(--g);font-weight:800}.brand{font-size:clamp(30px,5vw,68px);font-weight:1000;letter-spacing:-.06em;line-height:1;margin-top:8px}.brand span{color:var(--g)}.right{text-align:right;font-size:11px;letter-spacing:.18em;line-height:2;color:#b6c3ba}
+.bottom{position:fixed;bottom:clamp(24px,5vh,55px);left:clamp(20px,5vw,75px);right:clamp(20px,5vw,75px);display:flex;align-items:end;justify-content:space-between;gap:20px}.label{font-size:10px;color:#a2b2a5;letter-spacing:.22em}.time{font-variant-numeric:tabular-nums;font-size:clamp(32px,5vw,72px);font-weight:900;letter-spacing:-.06em}.stats{display:flex;gap:30px;margin-top:8px;font-size:12px}.stats b{color:var(--g)}
+button{pointer-events:auto;background:var(--g);color:#051008;border:0;border-radius:3px;padding:17px 26px;font-weight:900;letter-spacing:.13em;cursor:pointer}button:hover{background:#75f17d}.hint{font-size:11px;color:#a3afa5;margin-top:10px;text-align:right}
+#intro{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;transition:opacity .5s}#intro h1{font-size:clamp(44px,9vw,140px);line-height:.85;letter-spacing:-.08em;margin:10px 0;text-shadow:0 12px 45px #000}#intro p{font-size:12px;letter-spacing:.28em;color:#c1d0c5}#intro.hidden{opacity:0}
+#finish{position:fixed;left:50%;top:48%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .7s;pointer-events:none}#finish.visible{opacity:1}#finish h2{font-size:clamp(55px,12vw,150px);line-height:.8;margin:0;color:var(--g)}#finish p{letter-spacing:.3em}
+@media(max-width:600px){.right{display:none}.bottom{align-items:end}.stats{gap:12px;flex-wrap:wrap}button{padding:14px 17px}.brand{font-size:40px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<canvas id="track" aria-label="Animated stylized overhead hill climb with a Volkswagen Scirocco number 799"></canvas><div class="overlay"></div>
+<header class="top"><div><div class="kicker">799 MOTORSPORT / PRIVATE RUN</div><div class="brand">THE <span>RUN.</span></div></div><div class="right">1976 VOLKSWAGEN SCIROCCO MK1<br>HILL CLIMB // MICHIGAN<br>AN INTERACTIVE TRIBUTE · NOT A GPS COURSE MAP</div></header>
+<div id="intro"><p>ENGINE START // READY</p><h1>799</h1><p>ONE CAR. ONE ROAD. ONE MORE RUN.</p></div>
+<div id="finish"><h2>FINISH.</h2><p>799 // RUN COMPLETE</p></div>
+<footer class="bottom"><div><div class="label">RUN TIMER</div><div class="time" id="timer">00:00.00</div><div class="stats"><span>GEAR <b id="gear">N</b></span><span>PACE <b id="pace">0</b> MPH*</span><span>PROGRESS <b id="progress">0</b>%</span></div><div class="label" style="margin-top:12px;font-size:9px">*ANIMATED VALUES, NOT VEHICLE TELEMETRY</div></div><div><button id="go">START RUN ↗</button><div class="hint">SPACE TO START / PAUSE · R TO RESTART</div></div></footer>
+<script>
+const canvas=document.getElementById('track'),ctx=canvas.getContext('2d');let w,h,dpr;function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+let running=false,elapsed=0,last=0,finished=false;const duration=45;const button=document.getElementById('go'),intro=document.getElementById('intro'),finish=document.getElementById('finish');
+function reset(){elapsed=0;running=false;finished=false;finish.classList.remove('visible');intro.classList.remove('hidden');button.textContent='START RUN ↗';updateHUD()}
+function toggle(){if(finished){reset()}running=!running;intro.classList.toggle('hidden',running||elapsed>0);button.textContent=running?'PAUSE RUN Ⅱ':'RESUME RUN ↗'}
+button.addEventListener('click',toggle);addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();toggle()}if(e.key.toLowerCase()==='r')reset()});
+function roadX(y,p){return w*.5+Math.sin(y*.0034+p*6.2)*Math.min(w*.21,210)+Math.sin(y*.0071-p*4)*Math.min(w*.065,65)}
+function drawRoad(p){const roadWidth=Math.min(260,Math.max(140,w*.30));ctx.fillStyle='#102016';ctx.fillRect(0,0,w,h);for(let i=0;i<95;i++){let x=(i*187.7)%w,y=(i*277.3+elapsed*18)%h;ctx.fillStyle=i%4?'#183322':'#26432b';ctx.fillRect(x,y,2+(i%3),8+(i%5)*4)}
+const L=[],R=[];for(let y=-40;y<=h+50;y+=8){let x=roadX(y,p);L.push([x-roadWidth/2,y]);R.push([x+roadWidth/2,y])}
+ctx.beginPath();L.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));R.reverse().forEach(([x,y])=>ctx.lineTo(x,y));ctx.closePath();ctx.fillStyle='#30383a';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#73877a';ctx.stroke();
+for(let side of [-1,1]){ctx.beginPath();for(let y=-30;y<h+30;y+=8){let x=roadX(y,p)+side*(roadWidth/2-11);if(y===-30)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.lineWidth=3;ctx.strokeStyle='#d7e0cc';ctx.stroke()}
+ctx.lineWidth=4;ctx.strokeStyle='#d4d9b8';ctx.setLineDash([22,28]);ctx.lineDashOffset=-elapsed*85;ctx.beginPath();for(let y=-30;y<h+30;y+=8){let x=roadX(y,p);if(y===-30)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();ctx.setLineDash([]);
+if(p>.94){let yy=h*(1-(p-.94)/.06);for(let j=0;j<2;j++){for(let i=0;i<12;i++){ctx.fillStyle=(i+j)%2?'#f1f1ec':'#0b0d0b';ctx.fillRect(roadX(yy,p)-roadWidth/2+i*roadWidth/12,yy+j*15,roadWidth/12,15)}}}
+}
+function drawCar(p){const cx=roadX(h*.57,p),cy=h*.57;ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.cos(cy*.0034+p*6.2)*-.17);let scale=Math.min(1.12,Math.max(.7,w/950));ctx.scale(scale,scale);
+ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(9,13,42,85,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#080909';for(let y of [-51,50])for(let x of [-38,38])ctx.fillRect(x-8,y-17,16,33);
+ctx.fillStyle='#d8dcd0';ctx.strokeStyle='#090e0a';ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(-34,-79,68,158,10);ctx.fill();ctx.stroke();
+ctx.fillStyle='#1a2625';ctx.fillRect(-29,-49,58,31);ctx.fillRect(-29,23,58,31);ctx.fillStyle='#4d605b';ctx.fillRect(-27,-13,54,30);
+ctx.fillStyle='#20c933';ctx.fillRect(-33,-69,66,8);ctx.fillRect(-33,62,66,8);
+ctx.fillStyle='#101713';ctx.font='900 29px Arial';ctx.textAlign='center';ctx.fillText('799',0,10);ctx.font='bold 9px Arial';ctx.fillText('SCI ROCCO',0,19);
+ctx.fillStyle='#fff6c9';ctx.fillRect(-28,-77,20,5);ctx.fillRect(8,-77,20,5);ctx.fillStyle='#ec2929';ctx.fillRect(-27,74,17,4);ctx.fillRect(10,74,17,4);ctx.restore()}
+function updateHUD(){let m=Math.floor(elapsed/60),s=Math.floor(elapsed%60),cs=Math.floor(elapsed%1*100);document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(cs).padStart(2,'0');let p=Math.min(elapsed/duration,1);document.getElementById('progress').textContent=Math.round(p*100);document.getElementById('gear').textContent=elapsed===0?'N':String(Math.min(4,Math.max(1,Math.floor(elapsed/7)+1)));document.getElementById('pace').textContent=elapsed===0?0:Math.round(32+Math.abs(Math.sin(elapsed*.32))*28+p*12)}
+function frame(t){let dt=last?Math.min((t-last)/1000,.06):0;last=t;if(running){elapsed=Math.min(duration,elapsed+dt);if(elapsed>=duration){running=false;finished=true;finish.classList.add('visible');button.textContent='RUN AGAIN ↻'}}let p=elapsed/duration;ctx.clearRect(0,0,w,h);drawRoad(p);drawCar(p);updateHUD();requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script></body></html>
