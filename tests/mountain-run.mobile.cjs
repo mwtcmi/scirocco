@@ -48,6 +48,14 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
     await page.locator('#start').tap();
     const map = await page.locator('.course-map').boundingBox();
     assert.ok(map.width <= 72 && map.height <= 85, `${size.width}x${size.height}: map must be compact`);
+    for (const id of ['left', 'right', 'up', 'down']) {
+      const reachable = await page.locator(`#${id}`).evaluate(button => {
+        const r = button.getBoundingClientRect();
+        return r.x >= 0 && r.y >= 0 && r.right <= innerWidth && r.bottom <= innerHeight
+          && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest('button') === button;
+      });
+      assert.ok(reachable, `${size.width}x${size.height}: ${id} must be reachable over its artwork`);
+    }
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(baseURL);
@@ -84,6 +92,17 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
   assert.ok(parseInt(await page.locator('#speed').innerText()) < 80, 'lifting fingers must release the controls');
   assert.equal(await page.locator('#modal').getAttribute('class'), 'modal off');
   await page.screenshot({ path: '/tmp/gameplay-mobile-touch.png' });
+  await page.keyboard.press('r');
+  await page.evaluate(() => stepGame(1));
+  const leftBefore = await page.evaluate(() => testCar.x);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(bounds.left, 1)] });
+  await page.evaluate(() => stepGame(4));
+  assert.ok((await page.evaluate(() => testCar.x)) < leftBefore - 30, 'pressing the left wheel half must steer left');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(bounds.down, 1)] });
+  await page.evaluate(() => stepGame(20));
+  assert.ok(parseInt(await page.locator('#speed').innerText()) < 25, 'the brake pedal must slow the car');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.keyboard.press('r');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [gas] });
   await page.evaluate(() => stepGame(20));

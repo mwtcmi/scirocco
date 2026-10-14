@@ -11,6 +11,8 @@ Engine sound is enabled by default and starts on the first Start tap/click; the 
 
 The redesigned welcome screen features the supplied Scirocco and the gameplay version. Best times are saved separately for V4, preserving earlier course records. A shared, named leaderboard is deferred until a backend is connected; no leaderboard service or credentials are needed for this release.
 
+Steering uses the left and right halves of a quick-release wheel with a yellow center mark; press and hold a half to keep turning. Gas and brake use distinct pedal graphics with the same input behavior. Distance checkpoint popups have been removed; the distance HUD and route map show progress.
+
 Serve the static site from the repository root:
 
 ```sh
