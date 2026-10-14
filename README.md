@@ -3,6 +3,8 @@
 
 ## Mountain Run
 
+Play at [scirocco799.com/mountain-run](https://scirocco799.com/mountain-run). The homepage links there, and the game has a permanent Home link back to the website. The game lives in `mountain-run/index.html`; static hosts serve that directory at `/mountain-run` (some add a trailing slash). The older `mountain-run.html` address redirects to it.
+
 A point-to-point time attack with a 25% longer V4.1 climb. Hay-bale contact costs speed; a third wildlife hit ends the run. Going wide is allowed until three-quarters of the visible car is beyond the painted white road line, then the run ends. The HUD tracks wildlife hits, and only completed summit runs can save a personal best.
 
 The course has five three-gate chicanes and seven marked apexes on the inside of actual corners. Touch an apex at any speed for an immediate boost and 2.5 seconds of extra acceleration; no braking or precise centering is required. Gates remain 1,000 course units apart, with long clear sections between groups. Wildlife crosses once per run: deer in 2 seconds, foxes in 1.5, and rabbits in 1.1.

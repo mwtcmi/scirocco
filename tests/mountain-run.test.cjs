@@ -31,7 +31,7 @@ function game() {
     requestAnimationFrame() {}, addEventListener() {}, console
   };
   sandbox.window = sandbox;
-  const html = fs.readFileSync(path.join(__dirname, '..', 'mountain-run.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'mountain-run', 'index.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const exposed = `window.gameTest = {
     reset, update, render, togglePause, gates, wildlife, corners, potholes, keys, animalLane, playerPosition, project, path, roadDeparture, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,

@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html';
+const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined),headless:true,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1280,height:900}});
