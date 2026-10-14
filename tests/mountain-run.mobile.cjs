@@ -12,7 +12,7 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
     const NativeAudioContext = window.AudioContext;
     window.AudioContext = class extends NativeAudioContext {
       constructor(...args) { super(...args); window.testAudio = this; }
-      createGain() { const gain = super.createGain(); window.testGain = gain; return gain; }
+      createGain() { const gain = super.createGain(); if (!window.testGain) window.testGain = gain; else window.testTireGain = gain; return gain; }
     };
     window.testNow = 100;
     window.requestAnimationFrame = cb => { window.testFrame = cb; return 1; };

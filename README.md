@@ -3,7 +3,7 @@
 
 ## Mountain Run
 
-A point-to-point time attack with a 25% longer V4 climb. Hay-bale contact costs speed; a third wildlife hit ends the run. Going wide is allowed until three-quarters of the visible car is beyond the painted white road line, then the run ends. The HUD tracks wildlife hits, and only completed summit runs can save a personal best.
+A point-to-point time attack with a 25% longer V4.1 climb. Hay-bale contact costs speed; a third wildlife hit ends the run. Going wide is allowed until three-quarters of the visible car is beyond the painted white road line, then the run ends. The HUD tracks wildlife hits, and only completed summit runs can save a personal best.
 
 The course has five three-gate chicanes and seven marked apexes on the inside of actual corners. Touch an apex at any speed for an immediate boost and 2.5 seconds of extra acceleration; no braking or precise centering is required. Gates remain 1,000 course units apart, with long clear sections between groups. Wildlife crosses once per run: deer in 2 seconds, foxes in 1.5, and rabbits in 1.1.
 
@@ -11,7 +11,11 @@ Engine sound is enabled by default and starts on the first Start tap/click; the 
 
 The redesigned welcome screen features the supplied Scirocco and the gameplay version. Best times are saved separately for V4, preserving earlier course records. A shared, named leaderboard is deferred until a backend is connected; no leaderboard service or credentials are needed for this release.
 
-Steering uses the left and right halves of a quick-release wheel with a yellow center mark; press and hold a half to keep turning. Gas and brake use distinct pedal graphics with the same input behavior. Distance checkpoint popups have been removed; the distance HUD and route map show progress.
+Steering uses the left and right halves of an unbranded quick-release wheel with solid spokes and a yellow center mark; press and hold a half to keep turning. Gas and brake use distinct pedal graphics with the same input behavior. Distance checkpoint popups have been removed; the distance HUD and route map show progress.
+
+Three chipped-asphalt potholes are spread across the dry course, clear of other hazards and apexes. Contact costs 25% of speed, cancels an apex boost, and causes a sideways skid with reduced grip for about half a second, without adding wildlife strikes. Counter-steering still works and braking restores grip sooner. Each pothole can be avoided and only applies its penalty once per run. Screen-wide speed streaks have been removed.
+
+Starting a run gives a brief front-wheel burnout with smoke and tire squeal. Pothole skids also squeal. Tire sound follows the same mute, pause, and end-of-run behavior as the engine.
 
 Serve the static site from the repository root:
 
