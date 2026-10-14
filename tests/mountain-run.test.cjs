@@ -9,7 +9,7 @@ function game() {
   const elements = new Map();
   const storage = new Map([['799mountainrunbest', '12'], ['799mountainrunbest-v2', '15'], ['799mountainrunbest-v3', '17']]);
   const gradient = { addColorStop() {} };
-  const context = new Proxy({}, { get: (obj, key) => key in obj ? obj[key] : key === 'createLinearGradient' ? () => gradient : () => {} });
+  const context = new Proxy({}, { get: (obj, key) => key in obj ? obj[key] : ['createLinearGradient', 'createRadialGradient'].includes(key) ? () => gradient : () => {} });
   function element(id) {
     if (!elements.has(id)) {
       const classes = new Set();
@@ -34,8 +34,8 @@ function game() {
   const html = fs.readFileSync(path.join(__dirname, '..', 'mountain-run.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const exposed = `window.gameTest = {
-    reset, update, render, togglePause, gates, wildlife, corners, keys, animalLane, playerPosition, project, path, roadDeparture, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,
-    get: () => ({ state, t, dist, speed, lane, apexes, animalHits, boostUntil, best }),
+    reset, update, render, togglePause, gates, wildlife, corners, potholes, keys, animalLane, playerPosition, project, path, roadDeparture, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,
+    get: () => ({ state, t, dist, speed, lane, apexes, animalHits, boostUntil, skidUntil, skidDirection, best }),
     set: values => {
       if ('dist' in values) dist=values.dist;
       if ('speed' in values) speed=values.speed;
@@ -70,6 +70,69 @@ test('chicanes slow contact once, leave a usable alternating gap, and never end 
   assert.ok(g.get().speed > 450, 'the visible gap should allow a clean pass');
   g.reset(); approach(g, g.gates[1], -.65);
   assert.ok(g.get().speed > 450, 'the next gap must be on the opposite side');
+});
+
+test('sparse potholes can be avoided and slow a hit only once without ending the run', () => {
+  const g = game();
+  assert.ok(g.potholes.length > 0 && g.potholes.length <= 3, 'keep surface hazards rare');
+  for (const [i, hole] of g.potholes.entries()) {
+    if (i) assert.ok(hole.d - g.potholes[i - 1].d > 5000, 'leave long clear sections between potholes');
+    assert.ok(g.gates.every(q => Math.abs(q.d - hole.d) >= 650), 'keep potholes out of chicanes');
+    assert.ok(g.wildlife.every(q => Math.abs(q.d - hole.d) >= 550), 'keep crossings clear');
+    assert.ok(g.corners.every(q => Math.abs(q.d - hole.d) >= 650), 'leave room to collect apexes');
+    g.reset(); g.keys.up = true;
+    approach(g, hole, hole.lane, 750);
+    assert.ok(g.get().speed > 500 && g.get().speed < 650, 'a hit should be a modest speed penalty');
+    assert.equal(g.get().state, 'play'); assert.equal(g.get().animalHits, 0);
+    assert.match(g.element('feedback').textContent, /POTHOLE/);
+    const slowed = g.get().speed; g.update(.05);
+    assert.ok(g.get().speed > slowed, 'resume accelerating rather than colliding repeatedly');
+    g.reset(); g.keys.up = true;
+    approach(g, hole, hole.lane > 0 ? -.65 : .65, 750);
+    assert.ok(g.get().speed > 700, 'driving around the visible hole should avoid the penalty');
+    assert.equal(g.get().state, 'play');
+    g.reset(); g.keys.up = true;
+    approach(g, hole, hole.lane, 900);
+    assert.ok(g.get().speed < 700, 'detect contact even when a fast frame crosses the hole');
+  }
+  g.reset(); g.keys.up = true;
+  approach(g, g.corners[0], g.corners[0].lane, 750);
+  assert.ok(g.get().boostUntil > g.get().t);
+  approach(g, g.potholes[0], g.potholes[0].lane, 750);
+  assert.equal(g.get().boostUntil, 0, 'hitting a pothole should interrupt the boost');
+  g.reset();
+  assert.ok(g.potholes.every(q => !q.passed), 'replay restores every surface hazard');
+});
+
+test('pothole skids drift briefly, allow counter-steering, settle sooner with braking and freeze on pause', () => {
+  function hit() {
+    const g = game(); g.reset(); g.keys.up = true;
+    approach(g, g.potholes[0], g.potholes[0].lane + .05, 750);
+    return g;
+  }
+  const skid = hit(), ordinary = game(); ordinary.reset();
+  const impact = skid.get();
+  ordinary.set({ dist: impact.dist, lane: impact.lane, speed: impact.speed, t: impact.t });
+  ordinary.keys.up = true;
+  assert.ok(impact.skidUntil > impact.t && impact.skidUntil - impact.t < 1, 'loss of grip should be brief');
+  for (let i = 0; i < 4; i++) { skid.update(.05); ordinary.update(.05); }
+  assert.ok((skid.get().lane - ordinary.get().lane) * impact.skidDirection > .03, 'the impact should push the car sideways');
+  const corrected = hit(), uncorrected = hit();
+  corrected.keys.left = corrected.get().skidDirection > 0;
+  corrected.keys.right = corrected.get().skidDirection < 0;
+  for (let i = 0; i < 4; i++) { corrected.update(.05); uncorrected.update(.05); }
+  assert.ok((uncorrected.get().lane - corrected.get().lane) * impact.skidDirection > .08, 'counter-steering must still work during a skid');
+  const braking = hit(), coasting = hit(); braking.keys.down = true;
+  for (let i = 0; i < 7; i++) { braking.update(.05); coasting.update(.05); }
+  assert.ok(braking.get().skidUntil <= braking.get().t, 'braking helps the car settle sooner');
+  assert.ok(coasting.get().skidUntil > coasting.get().t, 'the unbraked skid lasts longer');
+  const paused = hit(); paused.togglePause(); const frozen = paused.get(); paused.update(.5);
+  assert.equal(paused.get().skidUntil, frozen.skidUntil); assert.equal(paused.get().t, frozen.t);
+  paused.togglePause();
+  for (let i = 0; i < 12; i++) paused.update(.05);
+  assert.ok(paused.get().skidUntil <= paused.get().t, 'grip must recover automatically');
+  assert.equal(paused.get().state, 'play');
+  paused.reset(); assert.equal(paused.get().skidUntil, 0); assert.equal(paused.get().skidDirection, 0);
 });
 
 test('deer, foxes, and rabbits warn on approach and cross once; braking allows them to clear', () => {
@@ -218,6 +281,7 @@ test('pause freezes the run and restart clears every event, hit, and bonus', () 
   assert.ok(g.gates.every(q => !q.passed && !q.warned));
   assert.ok(g.wildlife.every(q => !q.passed && q.start === null));
   assert.ok(g.corners.every(q => !q.passed));
+  assert.ok(g.potholes.every(q => !q.passed));
   assert.ok(Object.values(g.keys).every(v => !v));
   assert.doesNotThrow(() => g.render());
 });

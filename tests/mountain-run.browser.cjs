@@ -10,19 +10,22 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
   const NativeAudioContext=window.AudioContext;
   window.AudioContext=class extends NativeAudioContext {
    constructor(...args){super(...args);window.testAudio=this}
-   createGain(){const gain=super.createGain();window.testGain=gain;return gain}
+   createGain(){const gain=super.createGain();if(!window.testGain)window.testGain=gain;else window.testTireGain=gain;return gain}
   };
   window.testNow=100;window.requestAnimationFrame=cb=>{window.testFrame=cb;return 1};
   window.stepGame=n=>{for(let i=0;i<n;i++){window.testNow+=50;window.testFrame(window.testNow)}};
   // Drive through real input events while keeping the car centered in the rendered road.
   window.driveGame=n=>{for(let i=0;i<n;i++){
    if(!document.getElementById('modal').classList.contains('off'))break;
-   const x=window.carDraw?.x,center=(window.carDraw?.sceneWidth||960)/2;
+   const x=window.carDraw?.x,progress=parseInt(document.getElementById('dist').textContent);
+   // Aim toward the first pothole for the contact/sound check; normal summit runs stay centered.
+   const center=(window.carDraw?.sceneWidth||960)/2-(window.seekPothole&&progress>=16&&progress<=22?150:0);
    const feedback=document.getElementById('feedback');
    const brake=feedback.classList.contains('visible')&&feedback.textContent.includes('CROSSING');
    for(const [key,on] of [['ArrowLeft',x>center+15],['ArrowRight',x<center-15],['ArrowDown',brake],['ArrowUp',!brake]])
     window.dispatchEvent(new KeyboardEvent(on?'keydown':'keyup',{key}));
    window.stepGame(1);
+   if(window.stopAtPothole&&feedback.classList.contains('visible')&&feedback.textContent.includes('POTHOLE'))break;
   }};
   const draw=CanvasRenderingContext2D.prototype.drawImage;
   CanvasRenderingContext2D.prototype.drawImage=function(im,...args){const matrix=this.getTransform(),scaleX=Math.hypot(matrix.a,matrix.c);window.carDraw={x:matrix.e/scaleX,sceneWidth:this.canvas.width/scaleX,src:im.src,width:im.naturalWidth,height:im.naturalHeight,args,matrix:Array.from(['a','b','c','d','e','f'],k=>this.getTransform()[k])};return draw.call(this,im,...args)};
@@ -39,7 +42,11 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
  await page.screenshot({path:'/tmp/gameplay-v4-start.png'});
  assert.match(await page.locator('#msg').innerText(),/three-quarters/);
  assert.match(await page.locator('#sound').innerText(),/SOUND ON/);assert.equal(await page.locator('#sound').getAttribute('aria-pressed'),'true');assert.equal(await page.evaluate(()=>!!window.testAudio),false);
- await page.click('#start');await page.waitForFunction(()=>window.testAudio?.state==='running'&&window.testGain?.gain.value>0,null,{polling:50});await page.keyboard.down('ArrowUp');await page.evaluate(()=>stepGame(20));await page.keyboard.up('ArrowUp');
+ await page.click('#start');
+ await page.waitForFunction(()=>window.testAudio?.state==='running'&&window.testGain?.gain.value>0&&window.testTireGain?.gain.value>.005,null,{polling:50});
+ await page.keyboard.down('ArrowUp');await page.evaluate(()=>stepGame(6));await page.screenshot({path:'/tmp/gameplay-launch-burnout.png'});
+ await page.evaluate(()=>stepGame(20));await page.keyboard.up('ArrowUp');
+ await page.waitForFunction(()=>window.testTireGain.gain.value<.001,null,{polling:50});
  assert.ok(parseInt(await page.locator('#speed').innerText())>90);
  const before=await page.evaluate(()=>carDraw.matrix[4]);await page.keyboard.down('ArrowRight');await page.evaluate(()=>stepGame(4));await page.keyboard.up('ArrowRight');assert.ok((await page.evaluate(()=>carDraw.matrix[4]))>before);
  await page.keyboard.down('ArrowDown');await page.evaluate(()=>stepGame(20));await page.keyboard.up('ArrowDown');assert.ok(parseInt(await page.locator('#speed').innerText())<25);
@@ -51,12 +58,24 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
  await page.keyboard.press('r');await page.keyboard.down('ArrowRight');await page.evaluate(()=>stepGame(50));await page.keyboard.up('ArrowRight');
  assert.match(await page.locator('#title').innerText(),/OFF ROAD/);assert.equal(await page.locator('#best').innerText(),'--');
  await page.click('#start');await page.evaluate(()=>stepGame(1));assert.equal(await page.locator('#strikes').innerText(),'0 / 3');
+ await page.evaluate(()=>{window.stopAtPothole=true;window.seekPothole=true});
+ for(let i=0;i<18&&!/POTHOLE/.test(await page.locator('#feedback').innerText());i++)await page.evaluate(()=>driveGame(100));
+ assert.match(await page.locator('#feedback').innerText(),/POTHOLE/, 'drive through an actual surface hazard');
+ await page.waitForFunction(()=>window.testTireGain.gain.value>.005,null,{polling:50});
+ await page.screenshot({path:'/tmp/gameplay-pothole-skid.png'});
+ await page.keyboard.press('Space');
+ await page.waitForFunction(()=>window.testGain.gain.value<.001&&window.testTireGain.gain.value<.001,null,{polling:50});
+ await page.click('#sound');await page.click('#start');await page.evaluate(()=>stepGame(3));
+ await page.waitForFunction(()=>window.testGain.gain.value<.001&&window.testTireGain.gain.value<.001,null,{polling:50});
+ await page.click('#sound');
+ await page.waitForFunction(()=>window.testTireGain.gain.value>.005,null,{polling:50});
+ await page.evaluate(()=>{window.stopAtPothole=false;window.seekPothole=false});
  for(let i=0;i<18&&!/SUMMIT/.test(await page.locator('#title').innerText());i++)await page.evaluate(()=>driveGame(500));
  assert.match(await page.locator('#title').innerText(),/SUMMIT/);assert.equal(await page.locator('#dist').innerText(),'100%');assert.match(await page.locator('#msg').innerText(),/CLEAN APEXES/);assert.notEqual(await page.locator('#best').innerText(),'--');
  await page.click('#start');await page.evaluate(()=>stepGame(1));assert.equal(await page.locator('#dist').innerText(),'0%');
  await page.setViewportSize({width:390,height:844});await page.reload();await page.evaluate(()=>stepGame(1));await page.screenshot({path:'/tmp/gameplay-v4-start-mobile.png'});await page.click('#start');await page.keyboard.press('r');const gas=await page.locator('#up').boundingBox();await page.mouse.move(gas.x+gas.width/2,gas.y+gas.height/2);await page.mouse.down();await page.evaluate(()=>stepGame(20));await page.mouse.up();assert.ok(parseInt(await page.locator('#speed').innerText())>80);
  await checkAspect();const stage=await page.locator('.stage').boundingBox();assert.ok(stage.x>=0&&stage.x+stage.width<=390&&stage.y+stage.height<=844);await page.screenshot({path:'/tmp/gameplay-mobile.png'});
  await page.setViewportSize({width:844,height:390});await page.reload();await page.evaluate(()=>stepGame(1));const footer=await page.locator('.controls').boundingBox();assert.ok(footer.y+footer.height<=390);const panel=await page.locator('.panel').boundingBox();assert.ok(panel.y>=0&&panel.y+panel.height<=390);const startButton=await page.locator('#start').boundingBox();assert.ok(startButton.y+startButton.height<=panel.y+panel.height, 'the landscape welcome button must be visible without scrolling');assert.notEqual(await page.locator('#best').innerText(),'--');
- assert.deepEqual(errors,[]);console.log('PASS: sprite, desktop/mobile proportions, real controls, pause/resume, restart, sound, complete novice run, summit/replay, best persistence, mobile pointer input; off-road crash/replay, V4 welcome screen; no page or HTTP errors.');
+ assert.deepEqual(errors,[]);console.log('PASS: sprite, desktop/mobile proportions, real controls, pause/resume, restart, engine and burnout/skid sound, actual pothole contact, complete novice run, summit/replay, best persistence, mobile pointer input; off-road crash/replay, V4.1 welcome screen; no page or HTTP errors.');
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

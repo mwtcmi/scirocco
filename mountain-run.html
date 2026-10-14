@@ -2,7 +2,7 @@
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#090f10;color:#f2f6ef;font-family:Arial,Helvetica,sans-serif;overflow:hidden}main{height:100%;height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);place-items:center;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}.game{width:min(100%,1280px);height:min(100%,1000px);display:flex;flex-direction:column;gap:7px}.bar{display:flex;justify-content:space-between;align-items:center;gap:10px}.logo{font-weight:1000;font-style:italic;letter-spacing:-.055em;font-size:clamp(24px,4vw,40px)}.logo b{color:#20c933}.eyebrow{font-size:10px;letter-spacing:.17em;color:#a6bba8;text-align:right}.hud{display:flex;justify-content:space-around;gap:5px;background:#101e18;border:1px solid #3c5843;padding:9px 5px}.metric{text-align:center;font-size:10px;color:#8ba88e;letter-spacing:.12em}.metric strong{display:block;color:#fff;font-size:clamp(15px,3vw,25px);font-variant-numeric:tabular-nums;margin-top:3px}.stage{position:relative;flex:1;min-height:0;border:2px solid #3a5b40;overflow:hidden;background:#8cb9bd}canvas{display:block;width:100%;height:100%}.shade{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 70px #0008}.modal{position:absolute;z-index:5;inset:0;display:grid;grid-template-rows:minmax(0,1fr);place-items:center;background:#06110de6;padding:18px;text-align:center}.modal.off{display:none}.panel{border:2px solid #20c933;background:#0e2119;padding:clamp(16px,3vw,30px);max-width:490px;max-height:100%;overflow-y:auto;box-shadow:10px 10px #0008}.panel h1{font-size:clamp(32px,6vw,62px);font-style:italic;line-height:.93;margin:0 0 15px}.panel h1 span{color:#20c933}.panel p{font-size:13px;line-height:1.8;color:#d2e4d3}.panel button,.controls button{background:#20c933;color:#07140b;border:0;padding:13px 20px;font-weight:900;cursor:pointer;touch-action:none}.controls{display:flex;justify-content:space-between;align-items:center;gap:10px}.pads{display:flex;gap:6px}.pads button{min-width:54px;font-size:20px;padding:10px}.hint{color:#9eae9e;font-size:11px;text-align:right}.brake{background:#e7ac44!important}.controls .pause{background:#243b2d;color:#eaf9e8;border:1px solid #52795a}@media(max-width:560px){.hint{display:none}.pads button{min-width:47px;padding:9px}.eyebrow{font-size:8px}.game{gap:4px}.hud{padding:5px}}@media(max-height:590px){.eyebrow,.hint{display:none}.logo{font-size:21px}.controls button{padding:5px 12px}}
  .stage-tag{position:absolute;z-index:2;top:16px;right:18px;font-size:11px;font-weight:900;letter-spacing:.15em;color:#efffe7;text-shadow:0 2px 8px #000}.stage-tag span{color:#75ff5a}.controls .sound{background:#182d20;color:#c3edc6;border:1px solid #52795a;font-size:11px;padding:12px}.stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#05130c35,transparent 18%,transparent 78%,#07180d42)}@media(max-width:560px){.controls .sound{font-size:9px;padding:7px}.stage-tag{font-size:8px;right:8px;top:8px}} .course-map{position:absolute;z-index:3;right:12px;top:47px;width:clamp(125px,19vw,205px);padding:10px 11px;background:#081711b8;border:1px solid #ffffff3d;border-radius:8px;box-shadow:0 6px 22px #0005;backdrop-filter:blur(7px);pointer-events:none}.course-map svg{display:block;width:100%;max-height:180px}.map-heading,.map-bottom{font-size:10px;font-weight:900;letter-spacing:.1em;color:#e5f2e6;display:flex;justify-content:space-between}.map-heading b,.map-bottom strong{color:#20c933}.map-bottom{padding-top:5px;border-top:1px solid #ffffff30}@media(max-width:600px){.course-map{width:105px;right:5px;top:26px;padding:5px}.course-map svg{max-height:100px}.map-heading,.map-bottom{font-size:7px}} .driving-feedback{position:absolute;z-index:3;bottom:17px;left:50%;transform:translateX(-50%);padding:9px 16px;border:1px solid #b3cd9b80;border-radius:5px;background:#081810de;color:#e7f2db;font-size:12px;font-weight:900;letter-spacing:.08em;opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap}.driving-feedback.visible{opacity:1}.driving-feedback[data-kind="reward"]{color:#a9ff80;border-color:#75ed50}.driving-feedback[data-kind="warning"]{color:#ffdc8a;border-color:#d2a552}@media(max-width:560px){.driving-feedback{font-size:9px;padding:7px 9px;bottom:10px}.panel p{font-size:12px;line-height:1.6}.eyebrow{max-width:50%;white-space:normal}}
  @media(max-height:590px){.modal{padding:10px}.panel{padding:12px;max-width:620px}.panel h1{font-size:28px;margin-bottom:8px}.panel p{font-size:11px;line-height:1.4;margin:8px 0}.panel button{padding:8px 16px}}
-[hidden]{display:none!important}.metric{min-width:0}.metric strong{white-space:nowrap}button:focus-visible{outline:2px solid #e3ffae;outline-offset:3px}.panel.welcome{width:min(100%,820px);max-width:820px;background:radial-gradient(ellipse at 76% 35%,#224d27 0,transparent 55%),linear-gradient(145deg,#091b13,#07100d);border:1px solid #618956;box-shadow:0 25px 70px #0009;text-align:left;padding:28px;position:relative}.welcome h1{font-size:clamp(38px,5vw,70px);max-width:470px;margin-top:7px;position:relative;z-index:1}.welcome #msg{max-width:390px;position:relative;z-index:1;font-size:12px;line-height:1.55}.welcome #start{position:relative;z-index:1;min-width:205px;background:linear-gradient(120deg,#80f950,#20c933);box-shadow:0 5px 22px #4dc93230}.welcome #intro{position:absolute;inset:0;pointer-events:none;overflow:hidden}.hero-car{position:absolute;width:48%;right:-2%;bottom:48px;filter:drop-shadow(0 14px 18px #0009);transform:rotate(-3deg)}.hero-road{position:absolute;right:-15%;bottom:-105px;width:65%;height:240px;background:repeating-linear-gradient(0deg,#2c352f 0px,#2c352f 5px,#313c34 6px);transform:skewX(-27deg) rotate(-7deg);border:3px solid #97a58e38}.hero-road:before{content:"";position:absolute;left:48%;height:100%;width:5px;background:repeating-linear-gradient(0deg,#e9e6c8 0 20px,transparent 20px 42px)}.start-kicker{position:relative;z-index:1;color:#c7dbb7;font-size:10px;letter-spacing:.2em}.start-rules{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 15px;max-width:450px}.start-rules span{padding:6px 8px;border:1px solid #617851;background:#0b1b14b8;color:#bceaa4;font-size:9px;font-weight:900;letter-spacing:.07em}.panel:not(.welcome) .start-kicker,.panel:not(.welcome) .start-rules{display:none}.panel.welcome .start-kicker:after{content:" // GAMEPLAY V4";color:#81f05b}@media(max-width:600px){.panel.welcome{padding:20px}.welcome h1{font-size:44px;margin-top:140px;max-width:none}.hero-car{width:65%;right:17%;top:18px;bottom:auto;transform:none}.hero-road{top:88px;right:2%;width:90%;height:120px;bottom:auto}.welcome #msg{max-width:none}.start-rules{margin:12px 0}.welcome #start{width:100%}.metric{font-size:8px}}@media(max-height:590px){.panel.welcome{padding:10px 16px}.welcome .start-kicker{font-size:8px}.welcome h1{font-size:30px;margin:4px 0 7px;max-width:55%}.welcome #msg{max-width:56%;font-size:9px;line-height:1.25;margin:3px 0}.hero-car{top:auto;bottom:20px;right:-1%;width:40%}.hero-road{top:auto;bottom:-130px;right:-15%;width:60%;height:240px}.start-rules{margin:6px 0;gap:4px}.start-rules span{font-size:7px;padding:3px}.welcome #start{min-width:170px;padding:7px 14px}}
+[hidden]{display:none!important}.metric{min-width:0}.metric strong{white-space:nowrap}button:focus-visible{outline:2px solid #e3ffae;outline-offset:3px}.panel.welcome{width:min(100%,820px);max-width:820px;background:radial-gradient(ellipse at 76% 35%,#224d27 0,transparent 55%),linear-gradient(145deg,#091b13,#07100d);border:1px solid #618956;box-shadow:0 25px 70px #0009;text-align:left;padding:28px;position:relative}.welcome h1{font-size:clamp(38px,5vw,70px);max-width:470px;margin-top:7px;position:relative;z-index:1}.welcome #msg{max-width:390px;position:relative;z-index:1;font-size:12px;line-height:1.55}.welcome #start{position:relative;z-index:1;min-width:205px;background:linear-gradient(120deg,#80f950,#20c933);box-shadow:0 5px 22px #4dc93230}.welcome #intro{position:absolute;inset:0;pointer-events:none;overflow:hidden}.hero-car{position:absolute;width:48%;right:-2%;bottom:48px;filter:drop-shadow(0 14px 18px #0009);transform:rotate(-3deg)}.hero-road{position:absolute;right:-15%;bottom:-105px;width:65%;height:240px;background:repeating-linear-gradient(0deg,#2c352f 0px,#2c352f 5px,#313c34 6px);transform:skewX(-27deg) rotate(-7deg);border:3px solid #97a58e38}.hero-road:before{content:"";position:absolute;left:48%;height:100%;width:5px;background:repeating-linear-gradient(0deg,#e9e6c8 0 20px,transparent 20px 42px)}.start-kicker{position:relative;z-index:1;color:#c7dbb7;font-size:10px;letter-spacing:.2em}.start-rules{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 15px;max-width:450px}.start-rules span{padding:6px 8px;border:1px solid #617851;background:#0b1b14b8;color:#bceaa4;font-size:9px;font-weight:900;letter-spacing:.07em}.panel:not(.welcome) .start-kicker,.panel:not(.welcome) .start-rules{display:none}.panel.welcome .start-kicker:after{content:" // GAMEPLAY V4.1";color:#81f05b}@media(max-width:600px){.panel.welcome{padding:20px}.welcome h1{font-size:44px;margin-top:140px;max-width:none}.hero-car{width:65%;right:17%;top:18px;bottom:auto;transform:none}.hero-road{top:88px;right:2%;width:90%;height:120px;bottom:auto}.welcome #msg{max-width:none}.start-rules{margin:12px 0}.welcome #start{width:100%}.metric{font-size:8px}}@media(max-height:590px){.panel.welcome{padding:10px 16px}.welcome .start-kicker{font-size:8px}.welcome h1{font-size:30px;margin:4px 0 7px;max-width:55%}.welcome #msg{max-width:56%;font-size:9px;line-height:1.25;margin:3px 0}.hero-car{top:auto;bottom:20px;right:-1%;width:40%}.hero-road{top:auto;bottom:-130px;right:-15%;width:60%;height:240px}.start-rules{margin:6px 0;gap:4px}.start-rules span{font-size:7px;padding:3px}.welcome #start{min-width:170px;padding:7px 14px}}
 
 .steering-pads,.driving-pads{display:flex;gap:6px}#left,#right{font-size:34px}.pads{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.touch-note{display:none}
 @media(max-width:600px),(pointer:coarse){
@@ -74,20 +74,18 @@
 .pedal:active .pedal-art{transform:translateY(3px) scale(.96)}
 .pedal:active .pedal-label{color:#ffe164}
 @media(max-height:500px) and (orientation:landscape){.controls{grid-template-rows:48px 48px}}
- </style></head><body><main><div class="game menu" id="game"><div class="bar"><div class="logo"><b>799</b> HILL CLIMB</div><div class="eyebrow">MOUNTAIN RUN // 1976 SCIROCCO MK1<br>FULL THROTTLE // THE MOUNTAIN IS CALLING</div></div><div class="hud"><div class="metric">TIME<strong id="time">00:00.0</strong></div><div class="metric">SPEED<strong id="speed">0 MPH</strong></div><div class="metric">DISTANCE<strong id="dist">0%</strong></div><div class="metric">CLEAN APEX<strong id="apexes">0</strong></div><div class="metric">WILDLIFE<strong id="strikes">0 / 3</strong></div><div class="metric">BEST<strong id="best">--</strong></div></div><div class="stage"><div class="course-map"><div class="map-heading">POINT TO POINT <b>↗</b></div><svg viewBox="0 0 190 200" aria-label="Open hill climb route from start to summit"><path id="coursePath" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#ffffff42" stroke-width="11" stroke-linecap="round"/><path d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#e4e8df" stroke-width="4" stroke-linecap="round"/><path id="courseProgress" fill="none" stroke="#20c933" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="182" r="5" fill="#20c933"/><circle cx="170" cy="17" r="6" fill="#fff"/><circle id="mapDot" cx="21" cy="182" r="7" fill="#20c933" stroke="#061b0b" stroke-width="3"/><text x="4" y="199" font-size="11" font-weight="bold" fill="white">START</text><text x="122" y="10" font-size="11" font-weight="bold" fill="white">SUMMIT</text></svg><div class="map-bottom">ASCENT <strong id="elevation">0 FT</strong></div></div><div class="stage-tag">GAMEPLAY V4 <span>SUMMIT CHALLENGE</span></div><div class="driving-feedback" id="feedback" role="status" aria-live="polite"></div><canvas id="scene" tabindex="-1" width="1920" height="1200" aria-label="Third-person mountain racing game starring the green Scirocco 799"></canvas><div class="shade"></div><div class="modal" id="modal"><div class="panel welcome" id="gamePanel"><div id="intro"><div class="hero-road"></div><img class="hero-car" src="images/799-scirocco-rear.svg?v=4233c019" alt="Green 799 Scirocco ready for the mountain"></div><div class="start-kicker">THE MOUNTAIN IS CALLING</div><h1 id="title">799 <span>MOUNTAIN RUN</span></h1><p id="msg"><span class="intro-copy">ONE CAR. ONE SUMMIT. ONE SHOT.<br>Hit inside apexes for instant speed boosts.<br>Hay bales cost speed. Three animal hits end your run.<br>Crash when three-quarters of the car crosses the white road line.<br><span class="keyboard-note"><b>← →</b> STEER &nbsp; <b>↑</b> GAS &nbsp; <b>↓</b> BRAKE<br>A/D and W/S also work. Space pauses. R restarts.</span></span><span class="mobile-rules">Hit apexes for speed. Three animal hits end the run.<br>Crash when three-quarters of the car crosses the white line.<br></span><span class="touch-note">STEER WITH YOUR LEFT THUMB.<br>GAS AND BRAKE WITH YOUR RIGHT.</span></p><div class="start-rules"><span>25% LONGER CLIMB</span><span>INSTANT APEX BOOSTS</span><span>3 WILDLIFE HITS = OUT</span></div><button id="start">START THE CLIMB →</button></div></div></div><div class="controls"><div class="pads"><div class="steering-pads">
+ </style></head><body><main><div class="game menu" id="game"><div class="bar"><div class="logo"><b>799</b> HILL CLIMB</div><div class="eyebrow">MOUNTAIN RUN // 1976 SCIROCCO MK1<br>FULL THROTTLE // THE MOUNTAIN IS CALLING</div></div><div class="hud"><div class="metric">TIME<strong id="time">00:00.0</strong></div><div class="metric">SPEED<strong id="speed">0 MPH</strong></div><div class="metric">DISTANCE<strong id="dist">0%</strong></div><div class="metric">CLEAN APEX<strong id="apexes">0</strong></div><div class="metric">WILDLIFE<strong id="strikes">0 / 3</strong></div><div class="metric">BEST<strong id="best">--</strong></div></div><div class="stage"><div class="course-map"><div class="map-heading">POINT TO POINT <b>↗</b></div><svg viewBox="0 0 190 200" aria-label="Open hill climb route from start to summit"><path id="coursePath" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#ffffff42" stroke-width="11" stroke-linecap="round"/><path d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#e4e8df" stroke-width="4" stroke-linecap="round"/><path id="courseProgress" fill="none" stroke="#20c933" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="182" r="5" fill="#20c933"/><circle cx="170" cy="17" r="6" fill="#fff"/><circle id="mapDot" cx="21" cy="182" r="7" fill="#20c933" stroke="#061b0b" stroke-width="3"/><text x="4" y="199" font-size="11" font-weight="bold" fill="white">START</text><text x="122" y="10" font-size="11" font-weight="bold" fill="white">SUMMIT</text></svg><div class="map-bottom">ASCENT <strong id="elevation">0 FT</strong></div></div><div class="stage-tag">GAMEPLAY V4.1 <span>SUMMIT CHALLENGE</span></div><div class="driving-feedback" id="feedback" role="status" aria-live="polite"></div><canvas id="scene" tabindex="-1" width="1920" height="1200" aria-label="Third-person mountain racing game starring the green Scirocco 799"></canvas><div class="shade"></div><div class="modal" id="modal"><div class="panel welcome" id="gamePanel"><div id="intro"><div class="hero-road"></div><img class="hero-car" src="images/799-scirocco-rear.svg?v=4233c019" alt="Green 799 Scirocco ready for the mountain"></div><div class="start-kicker">THE MOUNTAIN IS CALLING</div><h1 id="title">799 <span>MOUNTAIN RUN</span></h1><p id="msg"><span class="intro-copy">ONE CAR. ONE SUMMIT. ONE SHOT.<br>Hit inside apexes for instant speed boosts.<br>Hay bales and potholes cost speed. Three animal hits end your run.<br>Crash when three-quarters of the car crosses the white road line.<br><span class="keyboard-note"><b>← →</b> STEER &nbsp; <b>↑</b> GAS &nbsp; <b>↓</b> BRAKE<br>A/D and W/S also work. Space pauses. R restarts.</span></span><span class="mobile-rules">Hit apexes for speed. Three animal hits end the run.<br>Crash when three-quarters of the car crosses the white line.<br></span><span class="touch-note">STEER WITH YOUR LEFT THUMB.<br>GAS AND BRAKE WITH YOUR RIGHT.</span></p><div class="start-rules"><span>25% LONGER CLIMB</span><span>INSTANT APEX BOOSTS</span><span>3 WILDLIFE HITS = OUT</span></div><button id="start">START THE CLIMB →</button></div></div></div><div class="controls"><div class="pads"><div class="steering-pads">
 <svg class="wheel-art" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
  <defs><linearGradient id="wheel-metal" x2="0" y2="1"><stop stop-color="#7e8784"/><stop offset=".4" stop-color="#3c4341"/><stop offset="1" stop-color="#1a211e"/></linearGradient><linearGradient id="wheel-rim" x2="0" y2="1"><stop stop-color="#343936"/><stop offset=".5" stop-color="#171b19"/><stop offset="1" stop-color="#080c0a"/></linearGradient></defs>
  <circle cx="60" cy="50" r="43" fill="none" stroke="#020504" stroke-width="13"/>
  <circle cx="60" cy="50" r="43" fill="none" stroke="url(#wheel-rim)" stroke-width="10"/>
  <circle cx="60" cy="50" r="38" fill="none" stroke="#768073" stroke-width=".8" stroke-dasharray="2 3"/>
  <path d="M18 43L50 42L60 50L50 57L18 55ZM70 42L102 43L102 55L70 57L60 50ZM53 58L67 58L66 91L54 91Z" fill="url(#wheel-metal)" stroke="#87918a" stroke-width=".7"/>
- <g fill="#080e0b" stroke="#939d94" stroke-width=".6"><circle cx="29" cy="49" r="2.3"/><circle cx="39" cy="49" r="2.3"/><circle cx="81" cy="49" r="2.3"/><circle cx="91" cy="49" r="2.3"/><circle cx="60" cy="74" r="2.5"/><circle cx="60" cy="84" r="2.5"/></g>
  <path d="M57 2H63V12H57Z" fill="#ffe047"/><path d="M57 3H63" stroke="#fff4a2"/>
  <circle cx="60" cy="50" r="18" fill="#871f1b" stroke="#ef5e47" stroke-width="1"/>
  <circle cx="60" cy="50" r="15.5" fill="#171c19" stroke="#a5afa5" stroke-width="1.2"/>
  <g fill="#a9b4ac" stroke="#080d0a" stroke-width=".7"><circle cx="60" cy="37" r="1.7"/><circle cx="71.3" cy="43.5" r="1.7"/><circle cx="71.3" cy="56.5" r="1.7"/><circle cx="60" cy="63" r="1.7"/><circle cx="48.7" cy="56.5" r="1.7"/><circle cx="48.7" cy="43.5" r="1.7"/></g>
  <circle cx="60" cy="50" r="9" fill="#070c09" stroke="#596157" stroke-width=".6"/>
- <text x="60" y="52.5" text-anchor="middle" fill="#ffe047" font-family="Arial,Helvetica,sans-serif" font-style="italic" font-weight="900" font-size="6.8">momo</text>
  <path d="M76 53L81 55L78 63L73 61Z" fill="#ec4c38" stroke="#6c1b12" stroke-width=".8"/>
 </svg>
 <button id="left" aria-label="Steer left"><span class="wheel-direction" aria-hidden="true">‹</span></button><button id="right" aria-label="Steer right"><span class="wheel-direction" aria-hidden="true">›</span></button>
@@ -111,14 +109,39 @@
 </svg><span class="pedal-label" aria-hidden="true">GAS</span></button>
 </div></div><div class="hint">← → STEER · ↑ GAS · ↓ BRAKE<br>SPACE PAUSE · R RESTART · M SOUND</div><button class="sound" id="sound" aria-label="Toggle engine sound" aria-pressed="true">SOUND ON ♪</button><button class="pause" id="pause">PAUSE</button></div></div></main>
 <script>
-(()=>{'use strict';const canvas=document.getElementById('scene'),g=canvas.getContext('2d',{alpha:false});let W=960;const H=600,GOAL=30000,VIEW=1650,ROAD=420,CAR_AHEAD=140,CAR_HALF_WIDTH=83,ROAD_LINE_INSET=9,APEX_RADIUS=32,ANIMAL_WAIT=.25,BEST_KEY='799mountainrunbest-v4';const $=id=>document.getElementById(id);let state='menu',t=0,dist=0,speed=0,lane=0,apexes=0,animalHits=0,boostUntil=0,feedbackUntil=0,feedbackPriority=0,wasNearEdge=false,shake=0,flash=0,last=0,particles=[],best=null,soundOn=true,audio=null,osc=null,gain=null;const keys={left:false,right:false,up:false,down:false};try{best=Number(localStorage.getItem(BEST_KEY))||null}catch(e){}const rand=n=>{let x=Math.sin(n*127.17+71.71)*43758.545;return x-Math.floor(x)};const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));function fmt(v){return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.floor(v%60)).padStart(2,'0')+'.'+Math.floor(v%1*10)}
-function audioStart(){if(audio)return;try{audio=new (window.AudioContext||window.webkitAudioContext)();osc=audio.createOscillator();gain=audio.createGain();osc.type='sawtooth';let filter=audio.createBiquadFilter();filter.type='lowpass';filter.frequency.value=420;osc.connect(filter);filter.connect(gain);gain.connect(audio.destination);gain.gain.value=0;osc.start()}catch(e){audio=null}}
-function audioUpdate(){if(!audio||!osc||!gain)return;let active=soundOn&&state==='play';if(audio.state==='suspended'&&active)audio.resume();osc.frequency.setTargetAtTime(38+speed*.23,audio.currentTime,.09);gain.gain.setTargetAtTime(active?.028:0,audio.currentTime,.07)}
+(()=>{'use strict';const canvas=document.getElementById('scene'),g=canvas.getContext('2d',{alpha:false});let W=960;const H=600,GOAL=30000,VIEW=1650,ROAD=420,CAR_AHEAD=140,CAR_HALF_WIDTH=83,ROAD_LINE_INSET=9,APEX_RADIUS=32,ANIMAL_WAIT=.25,SKID_DURATION=.55,BURNOUT_DURATION=.9,BEST_KEY='799mountainrunbest-v4';const $=id=>document.getElementById(id);let state='menu',t=0,dist=0,speed=0,lane=0,apexes=0,animalHits=0,boostUntil=0,skidUntil=0,skidDirection=0,burnoutUntil=0,smokeTimer=0,tireSmoke=[],feedbackUntil=0,feedbackPriority=0,wasNearEdge=false,shake=0,flash=0,last=0,particles=[],best=null,soundOn=true,audio=null,osc=null,gain=null,tireOsc=null,tireGain=null;const keys={left:false,right:false,up:false,down:false};try{best=Number(localStorage.getItem(BEST_KEY))||null}catch(e){}const rand=n=>{let x=Math.sin(n*127.17+71.71)*43758.545;return x-Math.floor(x)};const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));function fmt(v){return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.floor(v%60)).padStart(2,'0')+'.'+Math.floor(v%1*10)}
+function audioStart(){
+ if(audio)return;
+ try{
+  audio=new (window.AudioContext||window.webkitAudioContext)();
+  osc=audio.createOscillator();gain=audio.createGain();osc.type='sawtooth';
+  const filter=audio.createBiquadFilter();filter.type='lowpass';filter.frequency.value=420;
+  osc.connect(filter);filter.connect(gain);gain.connect(audio.destination);gain.gain.value=0;osc.start();
+  // A pitched squeal mixed with filtered friction noise for spinning/sliding tires.
+  tireOsc=audio.createOscillator();tireGain=audio.createGain();tireOsc.type='triangle';
+  const tireFilter=audio.createBiquadFilter();tireFilter.type='bandpass';tireFilter.frequency.value=1450;tireFilter.Q.value=.9;
+  const noise=audio.createBufferSource(),buffer=audio.createBuffer(1,audio.sampleRate,audio.sampleRate),samples=buffer.getChannelData(0);
+  for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+  noise.buffer=buffer;noise.loop=true;noise.connect(tireFilter);tireOsc.connect(tireFilter);
+  tireFilter.connect(tireGain);tireGain.connect(audio.destination);tireGain.gain.value=0;noise.start();tireOsc.start();
+ }catch(e){audio=null}
+}
+function audioUpdate(){
+ if(!audio||!osc||!gain)return;
+ const active=soundOn&&state==='play',launch=t<burnoutUntil,tireLevel=launch?clamp((burnoutUntil-t)/.2,0,1):skidStrength();
+ if(audio.state==='suspended'&&active)audio.resume();
+ osc.frequency.setTargetAtTime(38+speed*.23+(launch?80:0),audio.currentTime,.09);
+ gain.gain.setTargetAtTime(active?.028:0,audio.currentTime,.07);
+ tireOsc.frequency.setTargetAtTime(740+speed*.4+Math.sin(t*31)*45,audio.currentTime,.03);
+ tireGain.gain.setTargetAtTime(active?.035*tireLevel:0,audio.currentTime,.035);
+}
 $('sound').onclick=()=>{soundOn=!soundOn;if(soundOn)audioStart();$('sound').textContent=soundOn?'SOUND ON ♪':'SOUND OFF ♪';$('sound').setAttribute('aria-pressed',String(soundOn));audioUpdate()};
 function path(d){return Math.sin(d/1200)*175+Math.sin(d/490)*67+Math.sin(d/2500)*100}function project(d){let z=clamp((d-dist)/VIEW,0,1),depth=1-z,scale=.16+depth*1.6;return {y:240+Math.pow(depth,1.48)*350,x:W/2+(path(d)-path(dist))*depth*1.2,scale,depth}}
 function updateViewport(){
  const bounds=canvas.getBoundingClientRect();
+ const previousW=W;
  W=bounds.height<280&&bounds.width/bounds.height>2.2?1920:bounds.width<=600?780:960;
+ if(W!==previousW)for(const q of [...particles,...tireSmoke])q.x+=(W-previousW)/2;
  const ratio=Math.min(window.devicePixelRatio||1,2);
  const width=Math.max(1,Math.round(bounds.width*ratio)),height=Math.max(1,Math.round(bounds.height*ratio));
  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}
@@ -148,6 +171,8 @@ for(let group=0;group<5;group++)for(let leg=0;leg<3;leg++){
  gates.push({d:1500+group*5500+leg*1000,side,passed:false,warned:false});
 }
 const wildlife=[['deer',4650],['fox',10750],['rabbit',16875],['deer',21600],['fox',28250]].map(([kind,d],i)=>({kind,d,side:i%2?1:-1,duration:kind==='deer'?2:kind==='fox'?1.5:1.1,start:null,passed:false}));
+// Three isolated surface hazards, with room between chicanes, crossings and apexes.
+const potholes=[[6200,-.5],[15500,.35],[26300,-.25]].map(([d,lane])=>({d,lane,radius:34,passed:false}));
 const corners=[];
 for(let d=1200;d<GOAL-1200;d+=60){
  const strength=Math.abs(bend(d));
@@ -214,8 +239,34 @@ function drawApex(corner,p){
 }
 const carSprite=new Image();
 carSprite.src='images/799-scirocco-rear.svg?v=4233c019';
+function skidStrength(){return clamp((skidUntil-t)/SKID_DURATION,0,1)}
+function updateTireSmoke(dt){
+ const launch=t<burnoutUntil,sliding=skidStrength()>0;
+ if(launch||sliding){
+  smokeTimer+=dt*(launch?22:12);
+  while(smokeTimer>=1){
+   smokeTimer--;
+   const pos=playerPosition(),frontY=project(dist+CAR_AHEAD+170).y;
+   for(const side of [-1,1]){
+    const duration=.7+Math.random()*.5;
+    tireSmoke.push({x:pos.x+side*83,y:frontY,vx:side*(18+Math.random()*15),vy:20+Math.random()*15,
+     life:duration,duration,r:11+Math.random()*5,alpha:launch?.7:.35});
+   }
+  }
+ }else smokeTimer=0;
+ for(const q of tireSmoke){q.x+=q.vx*dt;q.y+=q.vy*dt;q.r+=dt*22;q.life-=dt}
+ tireSmoke=tireSmoke.filter(q=>q.life>0);
+}
+function drawTireSmoke(){
+ const bounds=canvas.getBoundingClientRect(),aspect=(bounds.width/W)/(bounds.height/H);
+ for(const q of tireSmoke){
+  g.save();g.translate(q.x,q.y);g.scale(1,aspect);g.globalAlpha=q.alpha*q.life/q.duration;
+  const cloud=g.createRadialGradient(0,0,0,0,0,q.r);cloud.addColorStop(0,'#eef2e6b0');cloud.addColorStop(1,'#aeb8ac00');
+  ellipse(0,0,q.r,q.r,cloud);g.restore();
+ }
+}
 function car(x,y,steer){
- g.save();g.translate(x,y);g.rotate(steer*.035);
+ g.save();g.translate(x,y);g.rotate(steer*.035+skidDirection*skidStrength()*.08);
  if(carSprite.complete&&carSprite.naturalWidth){
   // Compensate for the responsive canvas so the rear view stays proportional on screen.
   const bounds=canvas.getBoundingClientRect(),spriteWidth=216,spriteHeight=spriteWidth*carSprite.naturalHeight/carSprite.naturalWidth
@@ -238,11 +289,33 @@ for(let n=Math.floor(dist/7);n<Math.ceil((dist+VIEW)/7);n++)for(let j=0;j<3;j++)
 let v=g.createLinearGradient(0,240,0,600);v.addColorStop(0,'#ffffff08');v.addColorStop(1,'#00000024');rect(0,240,W,360,v);g.restore();
 for(let side of [-1,1]){for(let n=Math.floor(dist/180);n<Math.ceil((dist+VIEW)/180);n++){let d=n*180;if(d<=dist+20)continue;let p=project(d),q=project(d+180);let edge=p.x+side*(ROAD*.5+19)*p.scale,edge2=q.x+side*(ROAD*.5+19)*q.scale;if(p.scale<.25)continue;line([[edge,p.y-19*p.scale],[edge2,q.y-19*q.scale]],'#b6bab2',Math.max(1,5*p.scale));line([[edge,p.y-11*p.scale],[edge2,q.y-11*q.scale]],'#666d69',Math.max(1,3*p.scale));line([[edge,p.y-20*p.scale],[edge,p.y+9*p.scale]],'#555f59',Math.max(1,5*p.scale));}}
 }
+function drawPothole(q,p){
+ const bounds=canvas.getBoundingClientRect(),aspect=(bounds.width/W)/(bounds.height/H);
+ g.save();g.translate(p.x+q.lane*ROAD*p.scale*.5,p.y);g.scale(p.scale,p.scale*aspect);
+ // Chipped asphalt surrounds a dark depression, flattened onto the road surface.
+ const rim=[],hole=[];
+ for(let i=0;i<14;i++){
+  const angle=i*Math.PI*2/14,rough=.7+rand(q.d+i*31)*.3;
+  rim.push([Math.cos(angle)*(q.radius+5)*rough,Math.sin(angle)*17*rough]);
+  hole.push([Math.cos(angle)*q.radius*rough,Math.sin(angle)*12*rough]);
+ }
+ polygon(rim,'#5b625b','#343c36',1);
+ const depth=g.createLinearGradient(0,-12,0,12);depth.addColorStop(0,'#080d0b');depth.addColorStop(1,'#27332b');
+ polygon(hole,depth,'#111912',1.5);
+ line([[-q.radius*.72,8],[-q.radius*.2,12],[q.radius*.48,10]],'#b0b6a273',1.2);
+ for(let i=0;i<5;i++){
+  const angle=rand(q.d+i*53)*Math.PI*2,x=Math.cos(angle)*(q.radius+7),y=Math.sin(angle)*19;
+  line([[x*.85,y*.7],[x*1.1,y*1.2],[x*1.22-2,y*1.25]],'#202922',.7);
+  polygon([[x-2,y],[x+1,y-2],[x+3,y+1]],i%2?'#8c9586':'#4c554a');
+ }
+ g.restore();
+}
 function obstacleWorld(){
- // Draw far to near so animals, bales, and apex markers share the road's perspective.
- const visible=[...gates.map(q=>({kind:'gate',q})),...wildlife.map(q=>({kind:'animal',q})),...corners.map(q=>({kind:'apex',q}))]
+ // Draw far to near so surface hazards and obstacles share the road's perspective.
+ const visible=[...gates.map(q=>({kind:'gate',q})),...wildlife.map(q=>({kind:'animal',q})),...corners.map(q=>({kind:'apex',q})),...potholes.map(q=>({kind:'pothole',q}))]
   .filter(({q})=>q.d>dist+CAR_AHEAD-35&&q.d<dist+VIEW).sort((a,b)=>b.q.d-a.q.d);
  for(const {kind,q} of visible){const p=project(q.d);
+  if(kind==='pothole'){drawPothole(q,p);continue}
   if(kind==='animal'){drawAnimal(q,p);continue}
   if(kind==='apex'){drawApex(q,p);continue}
   const low=q.side<0?-1:-.18,high=q.side<0?.18:1,count=6,width=(high-low)*ROAD*.5/count;
@@ -251,13 +324,14 @@ function obstacleWorld(){
  }
 }
 function finish(){let d=GOAL;if(d<dist||d>dist+VIEW)return;let p=project(d),half=ROAD*p.scale*.5;for(let row=0;row<4;row++){let near=project(d-row*12),far=project(d-(row+1)*12);for(let k=0;k<14;k++){let x0=(k/14-.5)*ROAD,x1=((k+1)/14-.5)*ROAD;polygon([[far.x+x0*far.scale,far.y],[far.x+x1*far.scale,far.y],[near.x+x1*near.scale,near.y],[near.x+x0*near.scale,near.y]],(row+k)%2?'#111':'#fff')}}let pole=p.scale*120;rect(p.x-half-13*p.scale,p.y-pole,7*p.scale,pole,'#f5f5e9');rect(p.x+half+6*p.scale,p.y-pole,7*p.scale,pole,'#f5f5e9');rect(p.x-half-12*p.scale,p.y-pole,ROAD*p.scale+25*p.scale,27*p.scale,'#10291a');g.fillStyle='#f4f5e9';g.textAlign='center';g.font='bold '+Math.max(10,15*p.scale)+'px Arial';g.fillText('799 // FINISH',p.x,p.y-pole+20*p.scale);g.textAlign='left'}
-const route=$('coursePath'),routeProgress=$('courseProgress'),mapDot=$('mapDot'),routeLength=route.getTotalLength();function updateCourseMap(){let fraction=clamp(dist/GOAL,0,1),pt=route.getPointAtLength(routeLength*fraction);mapDot.setAttribute('cx',pt.x);mapDot.setAttribute('cy',pt.y);let samples=Math.max(2,Math.ceil(fraction*130)),d='';for(let i=0;i<=samples;i++){let p=route.getPointAtLength(routeLength*fraction*i/samples);d+=(i?' L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}routeProgress.setAttribute('d',d);$('elevation').textContent=Math.round(fraction*1500).toLocaleString()+' FT'}function render(){updateViewport();g.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.clearRect(0,0,W,H);sky();road();roadDetails();let zone=Math.min(3,Math.floor(dist/(GOAL/4)));let start=Math.floor(dist/135),end=Math.ceil((dist+VIEW)/135);for(let n=end;n>=start;n--){let d=n*135;if(d<dist+5)continue;for(let side of [-1,1]){let r=rand(n*9+side*33),kind=zone===0?(r>.24?'tree':'bush'):zone===1?(r>.43?'tree':'bush'):zone===2?(r>.48?'rock':'tree'):(r>.65?'tree':'rock');scenery(d,side,kind)}}for(let d=5000;d<GOAL;d+=5000){if(d>dist&&d<dist+VIEW)scenery(d,1,'banner')}obstacleWorld();finish();g.save();if(shake>0)g.translate((Math.random()-.5)*shake*22,(Math.random()-.5)*shake*12);car(playerPosition().x,playerPosition().y,(keys.right?1:0)-(keys.left?1:0));g.restore();if(speed>430){g.save();g.globalAlpha=Math.min(.35,(speed-430)/1400);for(let i=0;i<22;i++){let x=rand(i*31+Math.floor(dist/20))*W,y=300+rand(i*83+Math.floor(dist/20))*300;line([[x,y],[x+(x-W/2)*.08,y+25+speed*.025]],'#efffe0',1+rand(i*7)*2)}g.restore()}for(let q of particles){g.globalAlpha=Math.min(1,q.life*2);ellipse(q.x,q.y,q.r,q.r,q.color)}g.globalAlpha=1;updateCourseMap();if(flash>0)rect(0,0,W,H,'rgba(255,240,194,'+flash*.5+')');rect(16,16,140,11,'#11291e');rect(16,16,140*clamp((boostUntil-t)/2.5,0,1),11,'#a8ff79');g.font='bold 10px Arial';g.fillStyle='#d6ecc8';g.textAlign='left';g.fillText(boostUntil>t?'APEX SPEED BOOST':'HIT THE INSIDE APEX · GET A BOOST',16,42);$('time').textContent=fmt(t);$('speed').textContent=Math.round(speed*.15)+' MPH';$('dist').textContent=Math.min(100,Math.floor(dist/GOAL*100))+'%';$('apexes').textContent=String(apexes);$('strikes').textContent=animalHits+' / 3';$('best').textContent=best?fmt(best):'--'}
+const route=$('coursePath'),routeProgress=$('courseProgress'),mapDot=$('mapDot'),routeLength=route.getTotalLength();function updateCourseMap(){let fraction=clamp(dist/GOAL,0,1),pt=route.getPointAtLength(routeLength*fraction);mapDot.setAttribute('cx',pt.x);mapDot.setAttribute('cy',pt.y);let samples=Math.max(2,Math.ceil(fraction*130)),d='';for(let i=0;i<=samples;i++){let p=route.getPointAtLength(routeLength*fraction*i/samples);d+=(i?' L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}routeProgress.setAttribute('d',d);$('elevation').textContent=Math.round(fraction*1500).toLocaleString()+' FT'}function render(){updateViewport();g.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.clearRect(0,0,W,H);sky();road();roadDetails();let zone=Math.min(3,Math.floor(dist/(GOAL/4)));let start=Math.floor(dist/135),end=Math.ceil((dist+VIEW)/135);for(let n=end;n>=start;n--){let d=n*135;if(d<dist+5)continue;for(let side of [-1,1]){let r=rand(n*9+side*33),kind=zone===0?(r>.24?'tree':'bush'):zone===1?(r>.43?'tree':'bush'):zone===2?(r>.48?'rock':'tree'):(r>.65?'tree':'rock');scenery(d,side,kind)}}for(let d=5000;d<GOAL;d+=5000){if(d>dist&&d<dist+VIEW)scenery(d,1,'banner')}obstacleWorld();finish();drawTireSmoke();g.save();if(shake>0)g.translate((Math.random()-.5)*shake*22,(Math.random()-.5)*shake*12);car(playerPosition().x,playerPosition().y,(keys.right?1:0)-(keys.left?1:0));g.restore();for(let q of particles){g.globalAlpha=Math.min(1,q.life*2);ellipse(q.x,q.y,q.r,q.r,q.color)}g.globalAlpha=1;updateCourseMap();if(flash>0)rect(0,0,W,H,'rgba(255,240,194,'+flash*.5+')');rect(16,16,140,11,'#11291e');rect(16,16,140*clamp((boostUntil-t)/2.5,0,1),11,'#a8ff79');g.font='bold 10px Arial';g.fillStyle='#d6ecc8';g.textAlign='left';g.fillText(boostUntil>t?'APEX SPEED BOOST':'HIT THE INSIDE APEX · GET A BOOST',16,42);$('time').textContent=fmt(t);$('speed').textContent=Math.round(speed*.15)+' MPH';$('dist').textContent=Math.min(100,Math.floor(dist/GOAL*100))+'%';$('apexes').textContent=String(apexes);$('strikes').textContent=animalHits+' / 3';$('best').textContent=best?fmt(best):'--'}
 function slowContact(kind){
- speed=Math.max(85,speed*(kind==='bale'?.48:.62));boostUntil=0;shake=.35;flash=.12;
+ const pothole=kind==='pothole';
+ speed=Math.max(85,speed*(pothole?.75:kind==='bale'?.48:.62));boostUntil=0;shake=pothole?.22:.35;flash=pothole?0:.12;
  if(kind==='animal')animalHits++;
- notice(kind==='bale'?'HAY BALE · SPEED LOST':'WILDLIFE HIT '+animalHits+' / 3','warning',1.7,3);
+ notice(pothole?'POTHOLE · SKID · STEER + BRAKE':kind==='bale'?'HAY BALE · SPEED LOST':'WILDLIFE HIT '+animalHits+' / 3','warning',pothole?1.2:1.7,3);
  const pos=playerPosition();
- for(let i=0;i<18;i++){const a=Math.random()*Math.PI*2;particles.push({x:pos.x,y:535,vx:Math.cos(a)*100,vy:Math.sin(a)*65,life:.3+Math.random()*.5,r:1+Math.random()*3,color:kind==='bale'?'#d5b777':'#c6ba98'})}
+ for(let i=0;i<(pothole?8:18);i++){const a=Math.random()*Math.PI*2;particles.push({x:pos.x,y:535,vx:Math.cos(a)*100,vy:Math.sin(a)*65,life:.3+Math.random()*.5,r:1+Math.random()*3,color:pothole?'#7c8478':kind==='bale'?'#d5b777':'#c6ba98'})}
 }
 function update(dt){
  if(state!=='play')return;
@@ -267,7 +341,9 @@ function update(dt){
  speed+=(target-speed)*Math.min(1,dt*(keys.down?3.2:boosted?2.8:1.6));
  dist=Math.min(GOAL,dist+speed*dt);
  const steer=(keys.right?1:0)-(keys.left?1:0),curvature=(path(dist+110)-path(dist-50))/600;
- lane=clamp(lane+steer*dt*(.9+speed/950)-curvature*dt*(speed/420),-1.45,1.45);
+ if(keys.down&&skidUntil>t)skidUntil=Math.max(t,skidUntil-dt*.8);
+ const skid=skidStrength(),grip=1-skid*.45;
+ lane=clamp(lane+steer*dt*(.9+speed/950)*grip+skidDirection*skid*dt*.6-curvature*dt*(speed/420),-1.45,1.45);
  const now=dist+CAR_AHEAD,halfCar=CAR_HALF_WIDTH/(ROAD*project(now).scale*.5);
  const departure=roadDeparture();
  if(departure>=.75){end(false,'offroad');return}
@@ -298,7 +374,16 @@ function update(dt){
    apexes++;speed=Math.min(960,speed+140);boostUntil=t+2.5;notice('CLEAN APEX · SPEED BOOST!','reward',2.5,3);
   }
  }
+ for(const pothole of potholes){
+  if(pothole.passed||now<pothole.d)continue;
+  pothole.passed=true;
+  if(was<=pothole.d&&Math.abs(lane-pothole.lane)<halfCar+pothole.radius/(ROAD*.5)){
+   slowContact('pothole');skidUntil=t+SKID_DURATION;
+   skidDirection=Math.sign(lane-pothole.lane)||Math.sign(pothole.lane)||1;
+  }
+ }
  for(const q of particles){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt}particles=particles.filter(q=>q.life>0);
+ updateTireSmoke(dt);
  shake=Math.max(0,shake-dt*1.6);flash=Math.max(0,flash-dt);
  if(t>feedbackUntil)$('feedback').classList.remove('visible');
  if(dist>=GOAL)end(true);
@@ -308,7 +393,7 @@ function show(title,msg,button){
  $('title').innerHTML=title;$('msg').innerHTML=msg;$('start').textContent=button;$('modal').classList.remove('off');
 }
 function end(win,reason){
- state='end';boostUntil=0;
+ state='end';boostUntil=0;skidUntil=0;skidDirection=0;burnoutUntil=0;
  if(!win){
   show(reason==='offroad'?'OFF ROAD <span>799</span>':'RUN <span>OVER</span>',
    (reason==='offroad'?'THREE-QUARTERS OF THE CAR CROSSED THE ROAD LINE.':'THREE WILDLIFE HITS. THE RUN IS OVER.')
@@ -322,10 +407,11 @@ function reset(){
  feedbackUntil=0;feedbackPriority=0;wasNearEdge=false;
  $('feedback').classList.remove('visible');
  $('intro').hidden=true;$('gamePanel').classList.remove('welcome');$('game').classList.remove('menu');
- t=0;dist=0;speed=250;lane=0;apexes=0;animalHits=0;boostUntil=0;shake=0;flash=0;particles=[];
+ t=0;dist=0;speed=250;lane=0;apexes=0;animalHits=0;boostUntil=0;skidUntil=0;skidDirection=0;burnoutUntil=BURNOUT_DURATION;smokeTimer=0;tireSmoke=[];shake=0;flash=0;particles=[];
  for(const q of gates){q.passed=false;q.warned=false}
  for(const q of wildlife){q.start=null;q.passed=false}
  for(const q of corners)q.passed=false;
+ for(const q of potholes)q.passed=false;
  for(const k of Object.keys(keys))keys[k]=false;
  state='play';$('modal').classList.add('off');$('pause').textContent='PAUSE';
  if(soundOn)audioStart();audioUpdate();
