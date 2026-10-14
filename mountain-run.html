@@ -21,7 +21,7 @@ for(let n=Math.floor(dist/105);n<Math.ceil((dist+VIEW)/105);n++){let d=n*105;if(
 function drawCone(x,y,scale){g.save();g.translate(x,y);g.scale(scale,scale);ellipse(0,4,16,5,'#14141488');polygon([[-12,0],[12,0],[3,-29],[-3,-29]],'#f36b28','#a73718',1);rect(-7,-14,14,5,'#f4f4d8');rect(-15,0,30,5,'#222');g.restore()}
 function drawBarrier(x,y,scale){g.save();g.translate(x,y);g.scale(scale,scale);rect(-25,-18,50,20,'#e6e6da');for(let i=-25;i<25;i+=20)polygon([[i,-18],[i+11,-18],[i-1,2],[i-12,2]],'#e44b30');rect(-29,2,58,5,'#2a2e2b');g.restore()}
 const carSprite=new Image();
-carSprite.src='images/799-scirocco-rear.svg';
+carSprite.src='images/799-scirocco-rear.svg?v=4233c019';
 function car(x,y,steer){
  g.save();g.translate(x,y);g.rotate(steer*.035);
  if(carSprite.complete&&carSprite.naturalWidth){
@@ -30,7 +30,8 @@ function car(x,y,steer){
    *(bounds.width/W)/(bounds.height/H);
   g.drawImage(carSprite,-spriteWidth/2,36-spriteHeight,spriteWidth,spriteHeight);
  }else{
-  polygon([[-90,-90],[75,-110],[115,70],[-110,85]],'#20c933','#091a0d',5);ellipse(50,0,29,30,'#f5f2df');g.fillStyle='#111';g.font='bold 27px Arial';g.textAlign='center';g.fillText('799',50,9);
+  g.fillStyle='#fff';g.font='bold 12px Arial';g.textAlign='center';
+  g.fillText(carSprite.complete?'CAR IMAGE UNAVAILABLE':'LOADING SCIROCCO…',0,-30);
  }
  g.restore();
 }
