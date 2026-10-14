@@ -49,11 +49,10 @@
 <path d="M624 416 L649 559 M682 436 L694 505" fill="none" stroke="#0c6412" stroke-width="5"/>
 <ellipse cx="658" cy="466" rx="42" ry="56" transform="rotate(-14 658 466)" fill="#f9f7e9" stroke="#111a15" stroke-width="8"/>
 <text x="658" y="484" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="37" font-weight="900" transform="rotate(-14 658 466)" fill="#111">799</text>
-<!-- giant double-element rear wing, raised above glass -->
-<path d="M194 290 L229 275 L246 137 L222 139Z M522 267 L548 264 L616 122 L586 127Z" fill="#202a2c" stroke="#070d0e" stroke-width="8"/>
-<path d="M96 116 L676 63 L701 128 L117 184Z" fill="url(#wing)" stroke="#050909" stroke-width="12"/>
-<path d="M104 112 L675 60 L683 86 L107 144Z" fill="#2b3334" stroke="#070b0d" stroke-width="8"/>
-<path d="M106 154 L686 100 L696 130 L118 185Z" fill="#111719" stroke="#070b0d" stroke-width="8"/>
-<path d="M92 95 L119 93 L138 199 L111 204Z M667 49 L695 48 L719 141 L695 151Z" fill="#131a1c" stroke="#050809" stroke-width="9"/>
-<path d="M137 180 L672 130" stroke="#788280" stroke-width="3" opacity=".4"/>
+<!-- Low black duckbill spoiler following the hatch edge, not a raised GT wing -->
+<path d="M108 438 L569 397 L594 418 L118 465Z" fill="#151c1b" stroke="#060909" stroke-width="9"/>
+<path d="M109 437 L567 396" stroke="#5e6966" stroke-width="5"/>
+<!-- Period-correct black hatch surround and racing identification -->
+<path d="M157 459 L568 417" stroke="#101c16" stroke-width="6"/>
+<text x="340" y="548" text-anchor="middle" font-family="Arial,sans-serif" font-size="34" font-weight="900" fill="#101910" transform="rotate(-8 340 548)">799</text>
 </svg>
