@@ -24,17 +24,36 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
       return draw.call(this, im, ...args);
     };
   });
+  // Do not let Playwright's automatic scroll-to-tap hide an overflowing welcome screen.
+  for (const size of [
+    { width: 320, height: 568 }, { width: 360, height: 640 },
+    { width: 375, height: 667 }, { width: 390, height: 700 },
+    { width: 390, height: 844 }, { width: 412, height: 915 },
+    { width: 568, height: 320 }, { width: 667, height: 375 }, { width: 844, height: 390 }
+  ]) {
+    await page.setViewportSize(size);
+    await page.goto(baseURL);
+    const fit = await page.evaluate(() => {
+      const panel = document.getElementById('gamePanel'), button = document.getElementById('start');
+      const rect = button.getBoundingClientRect(), card = panel.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      return { scrollHeight: panel.scrollHeight, clientHeight: panel.clientHeight, scrollTop: panel.scrollTop,
+        inside: rect.y >= card.y && rect.bottom <= card.bottom && rect.bottom <= innerHeight,
+        tappable: hit?.closest('#start') === button };
+    });
+    assert.ok(fit.scrollHeight <= fit.clientHeight + 1 && fit.scrollTop === 0, `${size.width}x${size.height}: welcome must not scroll`);
+    assert.ok(fit.inside && fit.tappable, `${size.width}x${size.height}: Start must be visible and tappable without scrolling`);
+    assert.equal(await page.locator('.hud').isVisible(), false, 'hide race instruments until Start');
+    assert.equal(await page.locator('#sound').isVisible(), true, 'sound settings remain accessible');
+    await page.locator('#start').tap();
+    const map = await page.locator('.course-map').boundingBox();
+    assert.ok(map.width <= 72 && map.height <= 85, `${size.width}x${size.height}: map must be compact`);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(baseURL);
   await page.waitForFunction(() => window.testFrame && performance.getEntriesByType('resource').some(r => r.name.includes('799-scirocco-rear.svg')));
   await page.evaluate(() => stepGame(1));
   assert.match(await page.locator('#sound').innerText(), /SOUND ON/);
-  const bounds = {};
-  for (const id of ['left', 'right', 'up', 'down']) {
-    bounds[id] = await page.locator(`#${id}`).boundingBox();
-    assert.ok(bounds[id].width >= 56 && bounds[id].height >= 64, `${id} must be thumb-sized`);
-  }
-  assert.ok(bounds.right.x + bounds.right.width < bounds.down.x, 'steering and pedals must be separated');
-  assert.equal(await page.locator('.hud').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 3);
   assert.equal(await page.locator('.touch-note').isVisible(), true);
   assert.equal(await page.locator('.keyboard-note').isVisible(), false);
   assert.equal(await page.evaluate(() => Math.round(testCar.sceneWidth)), 780, 'portrait uses a closer camera');
@@ -42,6 +61,14 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
   await page.screenshot({ path: '/tmp/gameplay-mobile-welcome.png' });
   await page.locator('#start').tap();
   await page.waitForFunction(() => window.testAudio?.state === 'running' && window.testGain?.gain.value > 0, null, { polling: 50 });
+  const bounds = {};
+  for (const id of ['left', 'right', 'up', 'down']) {
+    bounds[id] = await page.locator(`#${id}`).boundingBox();
+    assert.ok(bounds[id].width >= 56 && bounds[id].height >= 64, `${id} must be thumb-sized`);
+  }
+  assert.ok(bounds.right.x + bounds.right.width < bounds.down.x, 'steering and pedals must be separated');
+  assert.equal(await page.locator('.hud').isVisible(), true);
+  assert.equal(await page.locator('.hud').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 3);
   const cdp = await page.context().newCDPSession(page);
   const point = (box, id) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2, id, force: 1 });
   const gas = point(bounds.up, 1), right = point(bounds.right, 2);
@@ -80,6 +107,6 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
   assert.match(await page.locator('#sound').innerText(), /SOUND OFF/);
   await page.waitForFunction(() => window.testGain.gain.value < .001, null, { polling: 50 });
   assert.deepEqual(errors, []);
-  console.log('PASS: phone layout, enlarged targets, simultaneous trusted touches, release/cancel, default audio from a tap, rotation pause, landscape camera and controls; no page or HTTP errors.');
+  console.log('PASS: nine phone welcome/map sizes without scrolling, phone layout, enlarged targets, simultaneous trusted touches, release/cancel, default audio from a tap, rotation pause, landscape camera and controls; no page or HTTP errors.');
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

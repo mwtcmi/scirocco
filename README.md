@@ -7,7 +7,7 @@ A point-to-point time attack with a 25% longer V4 climb. Hay-bale contact costs 
 
 The course has five three-gate chicanes and seven marked apexes on the inside of actual corners. Touch an apex at any speed for an immediate boost and 2.5 seconds of extra acceleration; no braking or precise centering is required. Gates remain 1,000 course units apart, with long clear sections between groups. Wildlife crosses once per run: deer in 2 seconds, foxes in 1.5, and rabbits in 1.1.
 
-Engine sound is enabled by default and starts on the first Start tap/click; the Sound button or M mutes it. Phones get split steering/pedal controls, larger touch targets, a compact HUD, a portrait camera that keeps the road lines visible, and a wider landscape camera. Rotating the phone pauses the run and clears held controls. Rendering follows the viewport and caps its backing resolution at 2× for mobile performance.
+Engine sound is enabled by default and starts on the first Start tap/click; the Sound button or M mutes it. Phones get split steering/pedal controls, larger touch targets, a compact HUD and map, a portrait camera that keeps the road lines visible, and a wider landscape camera. The mobile welcome screen keeps Start visible without scrolling and shows the HUD and driving controls after the race starts. Rotating the phone pauses the run and clears held controls. Rendering follows the viewport and caps its backing resolution at 2× for mobile performance.
 
 The redesigned welcome screen features the supplied Scirocco and the gameplay version. Best times are saved separately for V4, preserving earlier course records. A shared, named leaderboard is deferred until a backend is connected; no leaderboard service or credentials are needed for this release.
 
@@ -30,4 +30,4 @@ node tests/mountain-run.browser.cjs
 node tests/mountain-run.mobile.cjs
 ```
 
-The browser checks cover desktop/mobile rendering, controls, off-road crash/replay, a driven summit run, best-time persistence, and portrait/landscape welcome layouts. The phone check emulates touch hardware and verifies simultaneous steering/gas, release/cancel, default audio from a tap, and rotation pause. Set `GAME_URL` to test a different server and `CHROMIUM_PATH` to select a Chromium executable. Screenshots are written to `/tmp/gameplay-chicane.png` and `/tmp/gameplay-mobile.png`.
+The browser checks cover desktop/mobile rendering, controls, off-road crash/replay, a driven summit run, best-time persistence, and portrait/landscape welcome layouts. The phone check verifies that Start is visible without scrolling and the map stays compact at nine phone sizes, then emulates touch hardware to check simultaneous steering/gas, release/cancel, default audio from a tap, and rotation pause. Set `GAME_URL` to test a different server and `CHROMIUM_PATH` to select a Chromium executable. Screenshots are written to `/tmp/gameplay-chicane.png` and `/tmp/gameplay-mobile.png`.
