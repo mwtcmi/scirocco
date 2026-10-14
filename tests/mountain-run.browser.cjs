@@ -35,6 +35,7 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
  const checkAspect=async()=>{const d=await page.evaluate(()=>carDraw),b=await page.locator('#scene').boundingBox();assert.ok(Math.abs(d.args[2]*b.width/d.sceneWidth/(d.args[3]*b.height/600)-1.5)<.001)};
  await checkAspect();
  assert.equal(await page.locator('#damage').count(),0);
+ assert.equal(await page.locator('#checkpoint').count(),0, 'distance popups must not obstruct the course');
  await page.screenshot({path:'/tmp/gameplay-v4-start.png'});
  assert.match(await page.locator('#msg').innerText(),/three-quarters/);
  assert.match(await page.locator('#sound').innerText(),/SOUND ON/);assert.equal(await page.locator('#sound').getAttribute('aria-pressed'),'true');assert.equal(await page.evaluate(()=>!!window.testAudio),false);
