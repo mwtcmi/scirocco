@@ -13,6 +13,7 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run.html
   CanvasRenderingContext2D.prototype.drawImage=function(im,...args){window.carDraw={src:im.src,width:im.naturalWidth,height:im.naturalHeight,args,matrix:Array.from(['a','b','c','d','e','f'],k=>this.getTransform()[k])};return draw.call(this,im,...args)};
  });
  await page.goto(baseURL);
+ assert.match(await page.locator('.stage-tag').innerText(),/GAMEPLAY V3/, 'the server must serve the current gameplay release');
  await page.waitForFunction(()=>window.testFrame&&performance.getEntriesByType('resource').some(r=>r.name.includes('799-scirocco-rear.svg')));
  await page.evaluate(()=>stepGame(1));await page.waitForFunction(()=>window.carDraw);
  let draw=await page.evaluate(()=>carDraw);assert.equal(draw.width/draw.height,1.5);assert.equal(draw.args[2],216);

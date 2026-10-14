@@ -3,7 +3,7 @@
 
 ## Mountain Run
 
-A point-to-point time attack: hay-bale contact, wildlife contact, and grass cost speed rather than damage. The course has five three-gate chicanes, deer/fox/rabbit crossings, and eight marked apexes. Brake on approach, clip an apex cleanly, then accelerate to use the short exit boost. Wildlife crosses once per run and clears while you slow down. Best times for these rules are stored separately from the original damage-based game.
+A point-to-point time attack: hay-bale contact, wildlife contact, and grass cost speed rather than damage. The course has four three-gate chicanes, deer/fox/rabbit crossings, and six marked apexes at the inside of actual corners. Touch a marker at any speed for an immediate boost and 2.5 seconds of extra acceleration; no braking or precise centering is required. Chicane gates are spaced 1,000 course units apart for more room to change direction, with longer clear sections between the four groups. Wildlife crosses once per run, with deer crossing in 2 seconds, foxes in 1.5 seconds, and rabbits in 1.1 seconds. Best times for these rules are stored separately for the V3 course, preserving earlier records without comparing different rules.
 
 Serve the static site from the repository root:
 
