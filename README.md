@@ -3,7 +3,7 @@
 
 ## Mountain Run
 
-Play at [scirocco799.com/mountain-run](https://scirocco799.com/mountain-run). The homepage links there, and the game has a permanent Home link back to the website. The game lives in `mountain-run/index.html`; static hosts serve that directory at `/mountain-run` (some add a trailing slash). The older `mountain-run.html` address redirects to it.
+Play at [scirocco799.com/mountain-run](https://scirocco799.com/mountain-run). The homepage links there, and the game has a permanent Home link back to the website. The game lives in `mountain-run/index.html`; static hosts serve that directory at `/mountain-run` (some add a trailing slash). The older `mountain-run.html` address immediately replaces itself with the game in browser history. Its two fallback links are only shown when JavaScript is disabled, so they cannot appear between the homepage and game during normal navigation. The complete welcome screen appears after its styles, controls and car image are ready.
 
 A point-to-point time attack spanning all nine venues in the planned 2027 schedule. Every event is available from the season selector, with venue-inspired scenery: Empire has dunes and Lake Michigan, Reading has the pagoda and city overlooks, and Waumandee has rolling farmland, barns and cornfields. The events have distinct road profiles without a progressive difficulty ladder; each retains the same 30,000-unit length, road width, speeds and hazard counts.
 
