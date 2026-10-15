@@ -79,7 +79,81 @@
 
 .home-link{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:44px;padding:9px 12px;border:1px solid #52795a;border-radius:5px;background:#182d20;color:#c3edc6;font:900 11px Arial,Helvetica,sans-serif;text-decoration:none;white-space:nowrap}
 .home-link:hover{background:#243b2d;color:#fff}
- </style></head><body><main><div class="game menu" id="game"><div class="bar"><div class="logo"><b>799</b> HILL CLIMB</div><div class="eyebrow">MOUNTAIN RUN // 1976 SCIROCCO MK1<br>FULL THROTTLE // THE MOUNTAIN IS CALLING</div><a class="home-link" href="https://scirocco799.com/" aria-label="Back to Scirocco 799 home">← Home</a></div><div class="hud"><div class="metric">TIME<strong id="time">00:00.0</strong></div><div class="metric">SPEED<strong id="speed">0 MPH</strong></div><div class="metric">DISTANCE<strong id="dist">0%</strong></div><div class="metric">CLEAN APEX<strong id="apexes">0</strong></div><div class="metric">WILDLIFE<strong id="strikes">0 / 3</strong></div><div class="metric">BEST<strong id="best">--</strong></div></div><div class="stage"><div class="course-map"><div class="map-heading">POINT TO POINT <b>↗</b></div><svg viewBox="0 0 190 200" aria-label="Open hill climb route from start to summit"><path id="coursePath" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#ffffff42" stroke-width="11" stroke-linecap="round"/><path d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#e4e8df" stroke-width="4" stroke-linecap="round"/><path id="courseProgress" fill="none" stroke="#20c933" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="182" r="5" fill="#20c933"/><circle cx="170" cy="17" r="6" fill="#fff"/><circle id="mapDot" cx="21" cy="182" r="7" fill="#20c933" stroke="#061b0b" stroke-width="3"/><text x="4" y="199" font-size="11" font-weight="bold" fill="white">START</text><text x="122" y="10" font-size="11" font-weight="bold" fill="white">SUMMIT</text></svg><div class="map-bottom">ASCENT <strong id="elevation">0 FT</strong></div></div><div class="stage-tag">GAMEPLAY V4.1 <span>SUMMIT CHALLENGE</span></div><div class="driving-feedback" id="feedback" role="status" aria-live="polite"></div><canvas id="scene" tabindex="-1" width="1920" height="1200" aria-label="Third-person mountain racing game starring the green Scirocco 799"></canvas><div class="shade"></div><div class="modal" id="modal"><div class="panel welcome" id="gamePanel"><div id="intro"><div class="hero-road"></div><img class="hero-car" src="../images/799-scirocco-rear.svg?v=4233c019" alt="Green 799 Scirocco ready for the mountain"></div><div class="start-kicker">THE MOUNTAIN IS CALLING</div><h1 id="title">799 <span>MOUNTAIN RUN</span></h1><p id="msg"><span class="intro-copy">ONE CAR. ONE SUMMIT. ONE SHOT.<br>Hit inside apexes for instant speed boosts.<br>Hay bales and potholes cost speed. Three animal hits end your run.<br>Crash when three-quarters of the car crosses the white road line.<br><span class="keyboard-note"><b>← →</b> STEER &nbsp; <b>↑</b> GAS &nbsp; <b>↓</b> BRAKE<br>A/D and W/S also work. Space pauses. R restarts.</span></span><span class="mobile-rules">Hit apexes for speed. Three animal hits end the run.<br>Crash when three-quarters of the car crosses the white line.<br></span><span class="touch-note">STEER WITH YOUR LEFT THUMB.<br>GAS AND BRAKE WITH YOUR RIGHT.</span></p><div class="start-rules"><span>25% LONGER CLIMB</span><span>INSTANT APEX BOOSTS</span><span>3 WILDLIFE HITS = OUT</span></div><button id="start">START THE CLIMB →</button></div></div></div><div class="controls"><div class="pads"><div class="steering-pads">
+
+/* Match the website's typography and palette in the non-driving interface. */
+:root{--black:#050505;--dark:#0b0b0b;--paper:#f2f2ef;--copy:#d9d9d9;--line:#414141;--green:#20c933}
+html,body{background:var(--black);color:#fff}
+.bar{padding:4px 0 10px;border-bottom:1px solid var(--line)}
+.logo{font-size:18px;font-weight:900;font-style:normal;letter-spacing:.08em;line-height:1.1;white-space:nowrap}
+.logo span{color:var(--green)}
+.eyebrow{color:#b5b5b5;font-size:9px;line-height:1.65;letter-spacing:.18em}
+.home-link,.controls .sound,.controls .pause{border:1px solid #fff;border-radius:0;background:transparent;color:#fff;font-size:10px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}
+.home-link:hover,.controls .sound:hover,.controls .pause:hover{background:#fff;color:var(--black)}
+.controls .sound[aria-pressed="true"]{border-color:var(--green)}
+button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
+.hud{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;background:var(--paper);border-color:#bbb}
+.metric{padding:0 6px;color:#666;font-size:9px;letter-spacing:.13em}
+.metric+.metric{border-left:1px solid #c8c8c8}
+.metric strong{color:var(--black);font-weight:900}
+.stage{border-color:var(--line)}
+.hint,.pedal-label{color:#aaa}
+.modal{background:#050505f5}
+.panel{border:1px solid #bbb;background:var(--paper);color:var(--black);box-shadow:none;text-align:left}
+.panel h1{color:var(--black);font-style:normal;font-weight:900;letter-spacing:-.055em;line-height:.9}
+.panel h1 span{color:var(--green)}
+.panel p{color:#444}
+.panel button,.welcome #start{min-height:48px;border:2px solid var(--green);border-radius:0;background:var(--green);color:var(--black);padding:16px 24px;box-shadow:none;font-size:11px;font-weight:900;letter-spacing:.17em;text-transform:uppercase}
+.panel button:hover,.welcome #start:hover{border-color:#fff;background:#fff;color:var(--black)}
+.panel:not(.welcome) button:hover{border-color:var(--black);background:var(--black);color:#fff}
+.game.menu .hud,.game.menu .pads,.game.menu .pause,.game.menu .hint{display:none}
+.game.menu .controls{display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line)}
+.game.menu .stage{border-color:var(--black);background:var(--black)}
+.game.menu .modal{background:var(--black)}
+.panel.welcome{width:min(100%,1040px);max-width:1040px;padding:32px;border:0;background:var(--black);box-shadow:none}
+.welcome h1{max-width:520px;margin:16px 0 24px;color:#fff;font-size:clamp(56px,6.5vw,88px);font-style:normal;font-weight:900;letter-spacing:-.055em;line-height:.86}
+.welcome h1 span{color:transparent;-webkit-text-stroke:1.5px #fff}
+.welcome #msg{max-width:460px;color:var(--copy);font-size:13px;line-height:1.6}
+.welcome .start-kicker{color:var(--green);font-size:10px;font-weight:900;letter-spacing:.22em}
+.panel.welcome .start-kicker:after{color:#aaa}
+.welcome .start-rules{gap:20px;margin:24px 0;max-width:460px}
+.welcome .start-rules span{padding:10px 0 0;border:0;border-top:1px solid var(--line);background:transparent;color:#cfcfcf;font-size:8px;letter-spacing:.13em}
+.welcome .hero-road{display:none}
+.welcome .hero-car{width:43%;right:-1%;bottom:70px;transform:none;filter:drop-shadow(0 15px 18px #0006)}
+@media(max-height:700px) and (min-width:601px){
+ .panel.welcome{padding:20px 24px}
+ .welcome h1{margin:10px 0 16px;font-size:56px}
+ .welcome #msg{font-size:11px;line-height:1.4}
+ .welcome .start-rules{margin:14px 0}.welcome .start-rules span{padding-top:6px}
+ .welcome .hero-car{width:40%;bottom:36px}
+ .welcome #start{min-height:44px;padding:12px 20px}
+}
+@media(max-width:600px),(pointer:coarse){
+ .bar{padding:0 0 6px}.logo{font-size:16px}
+ .hud{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .metric:nth-child(3n+1){border-left:0}
+ .panel.welcome{grid-template-columns:minmax(0,1fr) 96px;padding:14px;gap:10px}
+ .welcome #intro{width:96px;height:88px}
+ .welcome .hero-car{width:100%;inset:50% auto auto 0;transform:translateY(-50%)}
+ .welcome h1{max-width:none;margin:0;font-size:clamp(25px,7vw,34px);line-height:.88}
+ .welcome h1 span{-webkit-text-stroke:1px #fff}
+ .welcome #msg{max-width:none;margin:0;font-size:11px;line-height:1.35}
+ .welcome .start-kicker{font-size:8px;letter-spacing:.13em}
+ .welcome #start{width:100%;min-height:48px;padding:12px 14px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .bar{padding:0 0 4px}.logo{font-size:16px}
+ .hud{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .metric:nth-child(n){border-left:1px solid #c8c8c8}.metric:first-child{border-left:0}
+ .panel.welcome{display:grid;grid-template-columns:minmax(0,1fr) 120px;grid-template-areas:'kicker art' 'title art' 'copy art' 'start art';gap:6px;width:min(100%,680px);padding:10px}
+ .welcome #intro{grid-area:art;position:relative;inset:auto;width:120px;height:100%;min-height:94px}
+ .welcome .hero-car{width:100%;inset:50% auto auto 0;transform:translateY(-50%)}
+ .welcome .start-kicker{grid-area:kicker;font-size:8px;letter-spacing:.13em}
+ .welcome h1{grid-area:title;max-width:none;margin:0;font-size:26px;line-height:.88}
+ .welcome #msg{grid-area:copy;max-width:none;margin:0;font-size:10px;line-height:1.25}
+ .welcome #start{grid-area:start;width:220px;min-height:44px;padding:10px 14px}
+ .welcome .intro-copy,.welcome .start-rules{display:none}.welcome .mobile-rules{display:inline}
+}
+ </style></head><body><main><div class="game menu" id="game"><div class="bar"><div class="logo">799 <span>MOTORSPORT</span></div><div class="eyebrow">MOUNTAIN RUN<br>1976 VOLKSWAGEN SCIROCCO</div><a class="home-link" href="https://scirocco799.com/" aria-label="Back to Scirocco 799 home">← Home</a></div><div class="hud"><div class="metric">TIME<strong id="time">00:00.0</strong></div><div class="metric">SPEED<strong id="speed">0 MPH</strong></div><div class="metric">DISTANCE<strong id="dist">0%</strong></div><div class="metric">CLEAN APEX<strong id="apexes">0</strong></div><div class="metric">WILDLIFE<strong id="strikes">0 / 3</strong></div><div class="metric">BEST<strong id="best">--</strong></div></div><div class="stage"><div class="course-map"><div class="map-heading">POINT TO POINT <b>↗</b></div><svg viewBox="0 0 190 200" aria-label="Open hill climb route from start to summit"><path id="coursePath" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#ffffff42" stroke-width="11" stroke-linecap="round"/><path d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#e4e8df" stroke-width="4" stroke-linecap="round"/><path id="courseProgress" fill="none" stroke="#20c933" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="182" r="5" fill="#20c933"/><circle cx="170" cy="17" r="6" fill="#fff"/><circle id="mapDot" cx="21" cy="182" r="7" fill="#20c933" stroke="#061b0b" stroke-width="3"/><text x="4" y="199" font-size="11" font-weight="bold" fill="white">START</text><text x="122" y="10" font-size="11" font-weight="bold" fill="white">SUMMIT</text></svg><div class="map-bottom">ASCENT <strong id="elevation">0 FT</strong></div></div><div class="stage-tag">GAMEPLAY V4.1 <span>SUMMIT CHALLENGE</span></div><div class="driving-feedback" id="feedback" role="status" aria-live="polite"></div><canvas id="scene" tabindex="-1" width="1920" height="1200" aria-label="Third-person mountain racing game starring the green Scirocco 799"></canvas><div class="shade"></div><div class="modal" id="modal"><div class="panel welcome" id="gamePanel"><div id="intro"><div class="hero-road"></div><img class="hero-car" src="../images/799-scirocco-rear.svg?v=4233c019" alt="Green 799 Scirocco ready for the mountain"></div><div class="start-kicker">THE MOUNTAIN IS CALLING</div><h1 id="title">MOUNTAIN<br><span>RUN.</span></h1><p id="msg"><span class="intro-copy">ONE CAR. ONE SUMMIT. ONE SHOT.<br>Hit inside apexes for instant speed boosts.<br>Hay bales and potholes cost speed. Three animal hits end your run.<br>Crash when three-quarters of the car crosses the white road line.<br><span class="keyboard-note"><b>← →</b> STEER &nbsp; <b>↑</b> GAS &nbsp; <b>↓</b> BRAKE<br>A/D and W/S also work. Space pauses. R restarts.</span></span><span class="mobile-rules">Hit apexes for speed. Three animal hits end the run.<br>Crash when three-quarters of the car crosses the white line.<br></span><span class="touch-note">STEER WITH YOUR LEFT THUMB.<br>GAS AND BRAKE WITH YOUR RIGHT.</span></p><div class="start-rules"><span>25% LONGER CLIMB</span><span>INSTANT APEX BOOSTS</span><span>3 WILDLIFE HITS = OUT</span></div><button id="start">START THE CLIMB →</button></div></div></div><div class="controls"><div class="pads"><div class="steering-pads">
 <svg class="wheel-art" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
  <defs><linearGradient id="wheel-metal" x2="0" y2="1"><stop stop-color="#7e8784"/><stop offset=".4" stop-color="#3c4341"/><stop offset="1" stop-color="#1a211e"/></linearGradient><linearGradient id="wheel-rim" x2="0" y2="1"><stop stop-color="#343936"/><stop offset=".5" stop-color="#171b19"/><stop offset="1" stop-color="#080c0a"/></linearGradient></defs>
  <circle cx="60" cy="50" r="43" fill="none" stroke="#020504" stroke-width="13"/>
