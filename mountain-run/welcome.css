@@ -2,7 +2,7 @@
 .game.menu .modal{padding:12px;background:#050505}
 .panel.welcome{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-areas:'kicker art' 'title art' 'copy art' 'event art' 'driver art' 'start art' 'king king';grid-template-rows:auto auto 1fr auto auto auto auto;gap:12px 32px;width:min(100%,1180px);max-width:1180px;height:min(100%,760px);padding:26px;border:1px solid #2d3b31;background:#080d0a;overflow:hidden;text-align:left}
 .welcome .start-kicker{grid-area:kicker;align-self:end;margin:0;font-size:9px;letter-spacing:.2em}
-.panel.welcome .start-kicker:after{content:' // GAMEPLAY V5';color:#829285}
+.panel.welcome .start-kicker:after{color:#829285}
 .welcome h1{grid-area:title;max-width:none;font-size:clamp(48px,5.6vw,76px);line-height:.86;margin:0;align-self:center;letter-spacing:-.065em}
 .welcome h1 span{color:#20c933;-webkit-text-stroke:0}
 .welcome #msg{grid-area:copy;align-self:center;max-width:none;margin:0}
@@ -109,3 +109,7 @@
  .welcome .welcome-crown{min-height:36px;padding:5px 10px;gap:10px}.welcome-crown>svg{width:18px;height:18px}.crown-label{font-size:7px}.crown-driver,.crown-time{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.game.menu .idle-exhaust i{animation:none}}
+
+.preview-route{position:absolute;z-index:3;right:18px;top:104px;width:70px;height:78px;padding:5px;border:1px solid #8eb59b50;background:#06150bb8;border-radius:3px;pointer-events:none}
+@media(max-width:600px),(pointer:coarse){.preview-route{width:38px;height:44px;padding:3px;right:9px;top:9px}}
+@media(max-height:500px) and (orientation:landscape){.preview-route{display:none}}

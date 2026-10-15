@@ -130,7 +130,33 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
   await page.locator('#sound').tap();
   assert.match(await page.locator('#sound').innerText(), /SOUND OFF/);
   await page.waitForFunction(() => window.testGain.gain.value < .001, null, { polling: 50 });
+  // Drive every authored route through the phone cameras as well as testing touch input.
+  await page.evaluate(() => {
+    window.drivePhone = n => {
+      for (let i = 0; i < n; i++) {
+        if (!document.getElementById('modal').classList.contains('off')) break;
+        const x = window.testCar?.x, center = (window.testCar?.sceneWidth || 780) / 2;
+        const feedback = document.getElementById('feedback'), brake = feedback.classList.contains('visible') && feedback.textContent.includes('CROSSING');
+        for (const [key, on] of [['ArrowLeft', x > center + 15], ['ArrowRight', x < center - 15], ['ArrowDown', brake], ['ArrowUp', !brake]])
+          window.dispatchEvent(new KeyboardEvent(on ? 'keydown' : 'keyup', { key }));
+        window.stepGame(1);
+      }
+    };
+  });
+  for (const size of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+    await page.setViewportSize(size);
+    for (let event = 0; event < 9; event++) {
+      if (!(await page.locator('#eventSelect').isVisible())) {
+        if (!(await page.locator('#eventMenu').isVisible())) await page.locator('#pause').tap();
+        await page.locator('#eventMenu').tap();
+      }
+      await page.locator('#eventSelect').selectOption(String(event)); await page.locator('#start').tap();
+      await page.evaluate(() => stepGame(1));
+      for (let attempt = 0; attempt < 18 && !(await page.locator('#modal').isVisible()); attempt++) await page.evaluate(() => drivePhone(500));
+      assert.match(await page.locator('#title').innerText(), /FINISH|SEASON/, `${size.width}x${size.height}: finish event ${event + 1}`);
+    }
+  }
   assert.deepEqual(errors, []);
-  console.log('PASS: nine phone welcome/map sizes without scrolling, phone layout, enlarged targets, simultaneous trusted touches, release/cancel, default audio from a tap, rotation pause, landscape camera and controls; no page or HTTP errors.');
+  console.log('PASS: all nine courses finish in portrait and landscape; nine phone welcome/map sizes without scrolling, simultaneous trusted touches, release/cancel, default audio, rotation pause and controls; no page or HTTP errors.');
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

@@ -72,7 +72,8 @@
     if (key === last) return;
     last = key; intro.dataset.event = c.id;
     $('previewScene').innerHTML = scene(c, bounds.width / bounds.height, index, compact);
-    $('previewVenue').textContent = c.short; $('previewPlace').textContent = c.place;
+    $('previewVenue').textContent = c.short; $('previewPlace').textContent = [c.place, c.profile].filter(Boolean).join(' · ');
+    $('previewRoute')?.setAttribute('d', c.mapPath || '');
     $('previewNumber').textContent = 'EVENT ' + String(index + 1).padStart(2, '0') + ' / 09';
   }
   picker.addEventListener('change', update);

@@ -1,9 +1,18 @@
 // Paste this entire file into Cloudflare's Worker editor. Bind D1 as DB.
-export const RULESET = '2027-v5';
+// BEGIN COURSE MANIFEST
+export const RULESET = "2027-v6";
 export const EVENTS = Object.freeze({
-  'pine-mountain': 7, 'spring-weatherly': 7, pagoda: 5, 'flag-rock': 5,
-  'giants-despair': 7, duryea: 7, waumandee: 7, empire: 7, 'shamrock-mountain': 7
+  "pine-mountain": 6,
+  "spring-weatherly": 6,
+  "pagoda": 7,
+  "flag-rock": 5,
+  "giants-despair": 7,
+  "duryea": 7,
+  "waumandee": 5,
+  "empire": 5,
+  "shamrock-mountain": 6
 });
+// END COURSE MANIFEST
 const EVENT_COUNT = Object.keys(EVENTS).length;
 const ORIGINS = ['https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
