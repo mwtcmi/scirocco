@@ -1,4 +1,3 @@
--- Run once in the Cloudflare D1 console. Safe to run again; existing scores stay.
 CREATE TABLE IF NOT EXISTS leaderboard_meta (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   version INTEGER NOT NULL

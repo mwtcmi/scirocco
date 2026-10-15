@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { database } from './helpers/d1.cjs';
 import { createWorker, RULESET, EVENTS } from '../leaderboard/worker.mjs';
 
@@ -37,6 +38,14 @@ function service(t) {
   }
   return { ...storage, call, player, start, finish, advance: ms => time += ms };
 }
+
+test('schema creates all tables when the D1 console collapses pasted SQL onto one line', t => {
+  const sqlite = new DatabaseSync(':memory:'); t.after(() => sqlite.close());
+  const schema = fs.readFileSync(new URL('../leaderboard/schema.sql', import.meta.url), 'utf8');
+  sqlite.exec(schema.replace(/\s+/g, ' '));
+  assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table'").get().n, 5);
+  assert.equal(sqlite.prepare('SELECT version FROM leaderboard_meta WHERE id = 1').get().version, 1);
+});
 
 test('schema is repeatable; health validates DB/schema; site origins and preflight are restricted', async t => {
   const s = service(t); s.sqlite.exec(s.schema);

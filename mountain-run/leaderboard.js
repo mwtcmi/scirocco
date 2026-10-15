@@ -1,18 +1,21 @@
 (() => {
   'use strict';
   const API = 'https://scirocco799-leaderboard.mr-mikewhite.workers.dev';
-  const RULESET = '2027-v5', PROFILE_KEY = '799-podium-driver-v1', PENDING_KEY = '799-podium-pending-v1';
+  const RULESET = '2027-v5', PROFILE_KEY = '799-podium-driver-v1', PENDING_KEY = '799-podium-pending-v1', NAME_KEY = '799-podium-name-v1';
   const $ = id => document.getElementById(id), game = window.MountainRun, dialog = $('podiumDialog');
   if (!game || !dialog) return;
   const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } };
   const save = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } };
   let profile = read(PROFILE_KEY, null);
   if (!profile || !/^[0-9a-f-]{36}$/i.test(profile.playerId) || !/^[0-9a-f]{64}$/i.test(profile.token)) profile = null;
+  let draftName = read(NAME_KEY, '');
+  if (typeof draftName !== 'string') draftName = '';
+  draftName = draftName || profile?.name || '';
   let pending = read(PENDING_KEY, []);
   if (!Array.isArray(pending)) pending = [];
   pending = pending.filter(p => p && p.playerId === profile?.playerId && typeof p.runId === 'string' && p.expiresAt > Date.now()).slice(-10);
   let selected = game.events[0].id, active = null, finishView = null, readiness = null, readyUntil = 0, profilePromise = null;
-  let boardGeneration = 0, declinedName = false;
+  let boardGeneration = 0, declinedName = false, serviceIssue = 'offline', nameProblem = '', nameSync = null;
   const submitting = new Map();
   class ServiceError extends Error { constructor(message, status = 0) { super(message); this.status = status; } }
   function time(ms) {
@@ -35,7 +38,10 @@
   function ready(force = false) {
     if (!force && readiness && Date.now() < readyUntil) return readiness;
     readyUntil = Date.now() + 30000;
-    readiness = request('/api/health').then(r => r.ok === true && r.ruleset === RULESET).catch(() => false);
+    readiness = request('/api/health').then(r => {
+      if (r.ok === true && r.ruleset === RULESET) { serviceIssue = ''; return true; }
+      serviceIssue = r.ok === true ? 'version' : 'setup'; return false;
+    }).catch(() => { serviceIssue = 'offline'; return false; });
     return readiness;
   }
   async function identity() {
@@ -47,10 +53,39 @@
     return profilePromise;
   }
   function updateDriver() {
-    $('podiumDriver').textContent = profile?.name ? 'DRIVER · ' + profile.name : 'Choose a name to post your times.';
-    $('driverEdit').textContent = profile?.name ? 'EDIT NAME' : 'ADD NAME';
-    $('driverInput').value = profile?.name || '';
+    $('podiumDriver').textContent = profile?.name ? 'DRIVER · ' + profile.name : draftName ? 'YOUR DRIVER · ' + draftName : 'Set your driver name on the start screen.';
+    $('driverEdit').hidden = !profile?.name && !draftName;
+    if (document.activeElement !== $('driverInput')) $('driverInput').value = draftName || profile?.name || '';
+    if ($('welcomeDriverInput') && document.activeElement !== $('welcomeDriverInput')) $('welcomeDriverInput').value = draftName || profile?.name || '';
     $('podiumOpen').classList.toggle('pending', pending.length > 0);
+  }
+  function nameNote(text, error = false) {
+    if (!$('welcomeDriverNote')) return;
+    $('welcomeDriverNote').textContent = text; $('welcomeDriverNote').classList.toggle('error', error);
+    $('welcomeDriverInput')?.setAttribute('aria-invalid', String(error));
+  }
+  function rememberName() {
+    if (!$('welcomeDriverInput')) return;
+    draftName = $('welcomeDriverInput').value.normalize('NFKC').trim().replace(/\s+/gu, ' ');
+    if (!draftName && profile?.name) draftName = profile.name;
+    save(NAME_KEY, draftName); nameProblem = ''; updateDriver();
+  }
+  async function syncName(force = false) {
+    if (!draftName || profile?.name === draftName) return;
+    if (nameSync) { await nameSync; if (profile?.name === draftName) return; }
+    const name = draftName;
+    nameSync = (async () => {
+      if (!await ready(force)) { nameNote('Name remembered here. Shared podiums reconnect later.'); return; }
+      await identity();
+      try {
+        const named = await request('/api/profile', { auth: true, data: { name } });
+        profile.name = named.name; save(PROFILE_KEY, profile);
+        if (draftName === name) { draftName = named.name; save(NAME_KEY, draftName); nameProblem = ''; nameNote('Ready for the shared podiums.'); updateDriver(); }
+      } catch (error) {
+        if (draftName === name) { nameProblem = error.status >= 400 && error.status < 500 ? error.message : ''; nameNote(nameProblem || 'Name remembered here. Shared podiums reconnect later.', !!nameProblem); }
+      }
+    })().catch(() => nameNote('Name remembered here. Shared podiums reconnect later.')).finally(() => { nameSync = null; });
+    await nameSync;
   }
   function persistPending() { save(PENDING_KEY, pending); updateDriver(); }
   function status(text, crown = false) {
@@ -62,10 +97,12 @@
     $('sharedFinish').hidden = false; $('sharedFinish').textContent = text; $('sharedFinish').dataset.state = state;
   }
   function clearBoard() {
+    const season = $('podiumEvent').value === 'season';
     for (const place of dialog.querySelectorAll('.podium-place')) {
       place.querySelector('.place-name').textContent = '—'; place.querySelector('.place-time').textContent = '—'; place.classList.remove('mine');
+      place.querySelector('.place-title').textContent = place.dataset.rank === '1' ? (season ? 'SEASON CHAMPION' : 'KING OF THE HILL') : 'PODIUM';
     }
-    $('podiumRows').replaceChildren(); $('podiumSelf').textContent = 'Finish an event to post your first time.';
+    $('podiumRows').replaceChildren(); $('podiumSelf').textContent = season ? 'Finish and post all nine events to qualify for the season podium.' : 'Finish this hill to post your first time.';
   }
   function renderBoard(board) {
     for (const place of dialog.querySelectorAll('.podium-place')) {
@@ -94,24 +131,27 @@
   }
   async function loadBoard(force = false) {
     const generation = ++boardGeneration, eventId = $('podiumEvent').value;
-    status('Loading shared times…'); clearBoard();
+    dialog.dataset.state = 'loading'; status('Loading shared times…'); clearBoard();
     if (!await ready(force)) {
-      if (generation === boardGeneration) status('Podiums are temporarily unavailable. Device bests still save; keep racing.');
+      if (generation === boardGeneration) {
+        dialog.dataset.state = 'offline';
+        status(serviceIssue === 'setup' ? 'Shared podiums are not online yet. Your best times still save on this device.' : serviceIssue === 'version' ? 'A podium update is available. Reload the game to reconnect.' : 'Shared podiums cannot be reached right now. Your best times still save here. Tap Refresh to reconnect.');
+      }
       return;
     }
     try {
       const board = await request('/api/leaderboard?event=' + encodeURIComponent(eventId) + (profile ? '&player=' + encodeURIComponent(profile.playerId) : ''));
       if (generation !== boardGeneration) return;
       if (board.ruleset !== RULESET || !Array.isArray(board.entries)) throw new ServiceError('Podiums are still coming online.');
-      renderBoard(board);
+      dialog.dataset.state = 'ready'; renderBoard(board);
       const waiting = profile?.name && pending.filter(p => p.eventId === eventId);
       if (waiting?.length) status(waiting.some(p => submitting.has(p.runId)) ? 'Posting your time…' : 'Your time is waiting to post. Reconnect and tap Refresh to retry.');
       else status(board.total ? board.total + (board.total === 1 ? ' driver ranked.' : ' drivers ranked.') : eventId === 'season' ? 'The season crown is waiting for its first complete set.' : 'The crown is waiting. Post the first time.');
-    } catch (error) { if (generation === boardGeneration) status(error.message); }
+    } catch (error) { if (generation === boardGeneration) { dialog.dataset.state = 'offline'; status(error.message); } }
   }
   function nameForm(show) {
-    $('driverForm').hidden = !show; $('nameError').textContent = '';
-    if (show) { $('driverInput').value = profile?.name || ''; $('driverInput').focus(); }
+    $('driverForm').hidden = !show; $('nameError').textContent = show ? nameProblem : '';
+    if (show) { $('driverInput').value = draftName || profile?.name || ''; $('driverInput').focus(); }
   }
   function open(eventId = selected, askName = false) {
     game.pauseForPodium();
@@ -140,7 +180,7 @@
         const text = (result.newKing ? 'YOU TOOK THE CROWN! · ' : 'TIME POSTED · ') + (board.self ? '#' + board.self.rank + ' · ' + time(board.self.timeMs) : time(entry.timeMs));
         finishStatus(view, text, 'posted');
         if (dialog.open && $('podiumEvent').value === entry.eventId) {
-          ++boardGeneration; renderBoard(board); status(text, result.newKing);
+          ++boardGeneration; dialog.dataset.state = 'ready'; renderBoard(board); status(text, result.newKing);
         }
         return true;
       } catch (error) {
@@ -169,11 +209,13 @@
     isOpen: () => dialog.open,
     select: eventId => { selected = eventId; },
     start(eventId) {
+      rememberName();
       close(); finishView = null; $('sharedFinish').hidden = true; selected = eventId;
       const run = { eventId }; active = run;
       run.promise = (async () => {
         if (!await ready()) return null;
         await identity();
+        await syncName();
         const ticket = await request('/api/runs', { auth: true, data: { eventId, ruleset: RULESET } });
         if (ticket.ruleset !== RULESET || !ticket.runId || ticket.eventId !== eventId) return null;
         return ticket;
@@ -204,14 +246,18 @@
   $('podiumEvent').onchange = () => loadBoard();
   $('podiumRefresh').onclick = async () => { await loadBoard(true); await flush(); };
   $('driverEdit').onclick = () => nameForm(true);
+  $('welcomeDriverInput')?.addEventListener('input', () => { rememberName(); nameNote('Remembered here. Shown on shared podiums.'); });
+  $('welcomeDriverInput')?.addEventListener('blur', () => { rememberName(); syncName(true); });
   $('driverSkip').onclick = () => { declinedName = true; close(); };
   $('driverForm').onsubmit = async event => {
     event.preventDefault(); $('nameError').textContent = ''; $('driverSave').disabled = true;
+    draftName = $('driverInput').value.normalize('NFKC').trim().replace(/\s+/gu, ' '); save(NAME_KEY, draftName);
     try {
       if (!await ready(true)) throw new ServiceError('Podiums are temporarily unavailable. Your device best is saved.');
       await identity();
       const named = await request('/api/profile', { auth: true, data: { name: $('driverInput').value } });
-      profile.name = named.name; const remembered = save(PROFILE_KEY, profile); declinedName = false; updateDriver(); nameForm(false);
+      profile.name = named.name; draftName = named.name; save(NAME_KEY, draftName); nameProblem = '';
+      const remembered = save(PROFILE_KEY, profile); declinedName = false; nameNote('Ready for the shared podiums.'); updateDriver(); nameForm(false);
       await loadBoard(); await flush();
       if (!remembered) status('Your name is remembered for this visit. Browser storage is unavailable.');
     } catch (error) { $('nameError').textContent = error.message; $('driverInput').focus(); }
