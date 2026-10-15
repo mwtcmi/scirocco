@@ -13,7 +13,9 @@ Each event has five three-gate chicanes and at least five clear apex opportuniti
 
 Engine sound is enabled by default and starts on the first Start tap/click; the Sound button or M mutes it. Phones get split steering/pedal controls, larger touch targets, a compact HUD and map, a portrait camera that keeps the road lines visible, and a wider landscape camera. The mobile welcome screen keeps Start visible without scrolling and shows the HUD and driving controls after the race starts. Rotating the phone pauses the run and clears held controls. Rendering follows the viewport and caps its backing resolution at 2× for mobile performance.
 
-The welcome screen keeps the website's branding and features the supplied Scirocco, Gameplay V5 and the season selector. Finish an event to continue to the next one, replay it or return to the season menu. Per-event bests and season completion save on the player's device under separate V5 keys, preserving earlier records. A shared leaderboard remains deferred until a backend is connected.
+The welcome screen keeps the website's branding and features the supplied Scirocco, Gameplay V5 and the season selector. Finish an event to continue to the next one, replay it or return to the season menu. Per-event bests and season completion save on the player's device under separate V5 keys, preserving earlier records.
+
+PODIUMS opens shared event and season standings, powered by a Cloudflare Worker and D1. Each hill has a King of the Hill, a top-three podium, and one best time per named driver. Finishing all nine qualifies for the season podium, ranked by combined event bests. Driver identity stays in the browser; first-time finishers can choose a name or keep racing. Device bests remain available during outages, and ticketed finishes retry posting after reconnecting. The shared board becomes available after the two dashboard publication steps in [leaderboard/README.md](leaderboard/README.md). Course layouts and driving rules remain fixed at Gameplay V5.
 
 Steering uses the left and right halves of an unbranded quick-release wheel with solid spokes and a yellow center mark; press and hold a half to keep turning. Gas and brake use distinct pedal graphics with the same input behavior. Distance checkpoint popups have been removed; the distance HUD and route map show progress.
 
@@ -31,6 +33,7 @@ Run the gameplay regression tests with Node.js:
 
 ```sh
 node --test tests/mountain-run.test.cjs
+node --test tests/leaderboard.test.mjs
 ```
 
 With the server running, Playwright and Chromium available, run the browser checks:
@@ -38,6 +41,7 @@ With the server running, Playwright and Chromium available, run the browser chec
 ```sh
 node tests/mountain-run.browser.cjs
 node tests/mountain-run.mobile.cjs
+node tests/leaderboard.browser.cjs
 ```
 
 The browser checks drive all nine season events through real controls, verify next-event/replay/menu flow and saved bests, and check engine and tire audio, crash/replay, sprite proportions and mobile input. The phone check verifies that the season selector and Start fit without scrolling at nine phone sizes, then checks simultaneous steering/gas, release/cancel, default audio and rotation pause. Set `GAME_URL` to test a different server and `CHROMIUM_PATH` to select a Chromium executable. Screenshots are written to `/tmp/gameplay-chicane.png` and `/tmp/gameplay-mobile.png`.

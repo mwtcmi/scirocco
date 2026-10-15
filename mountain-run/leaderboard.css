@@ -1,0 +1,68 @@
+.bar-actions{display:flex;align-items:center;gap:8px;flex:none}
+.podium-open{min-height:44px;padding:9px 12px;border:1px solid #fff;border-radius:0;background:transparent;color:#fff;font:900 10px Arial,Helvetica,sans-serif;letter-spacing:.1em;cursor:pointer}
+.podium-open:hover{background:#fff;color:#050505}.podium-open.pending{border-color:#20c933;color:#20c933}
+.shared-finish{margin:8px 0;color:#356b24;font:700 11px/1.4 Arial,Helvetica,sans-serif;overflow-wrap:anywhere}
+.shared-finish[data-state="waiting"]{color:#555}
+.game.menu .shared-finish{display:none}
+dialog.podium{width:min(94vw,740px);max-height:calc(100dvh - 24px);padding:0;border:1px solid #666;background:#f2f2ef;color:#111;color-scheme:light;font:13px Arial,Helvetica,sans-serif;box-shadow:0 20px 80px #000a}
+dialog.podium[open]{display:flex;flex-direction:column}
+dialog.podium::backdrop{background:#050505db}
+.podium header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:#050505;color:#fff;flex:none}
+.podium header p{margin:0 0 4px;color:#20c933;font-size:8px;font-weight:900;letter-spacing:.2em}
+.podium h2{margin:0;font-size:27px;letter-spacing:-.04em}.podium h2 span{color:#20c933}
+.podium button,.podium input,.podium select{font:700 12px Arial,Helvetica,sans-serif;min-height:44px;border-radius:0}
+.podium button{padding:10px 14px;border:1px solid #555;background:transparent;color:inherit;cursor:pointer}
+.podium button:hover{background:#111;color:#fff}.podium button:disabled{opacity:.55;cursor:wait}
+.podium .podium-close{width:44px;padding:0;border-color:#777;color:#fff;font-size:24px;flex:none}
+.podium button:focus-visible,.podium input:focus-visible,.podium select:focus-visible{outline:2px solid #20c933;outline-offset:2px}
+.podium-body{padding:18px 20px;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.podium-picker{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.podium-picker label{display:block;margin-bottom:5px;font-size:8px;font-weight:900;letter-spacing:.13em;color:#555}
+.podium select{width:100%;padding:8px 28px 8px 10px;border:1px solid #777;background:#fff;color:#111}
+.podium-status{min-height:18px;margin:12px 0 8px;line-height:1.4;color:#444}
+.podium-status.crowned{color:#27621b;font-weight:900}
+.driver-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #ccc;padding:0 0 12px;margin-bottom:12px}
+.driver-row span{font-size:10px;color:#555;overflow-wrap:anywhere}
+.driver-row button{font-size:10px;flex:none}
+.driver-form{padding:14px;border:1px solid #aaa;background:#fff;margin:12px 0}
+.driver-form label{display:block;font-weight:900;margin-bottom:7px}
+.driver-form input{width:100%;padding:10px;border:1px solid #666;background:#fff;color:#111}
+.driver-form p{font-size:11px;line-height:1.45;color:#555;margin:8px 0}
+.driver-form .name-error{color:#a4261e;min-height:0}
+.name-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.podium .primary{border-color:#20c933;background:#20c933;color:#050505;font-weight:900;letter-spacing:.07em}
+.podium .primary:hover{border-color:#111;background:#111;color:#fff}
+.podium-places{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end;margin:16px 0 14px}
+.podium-place{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12px 8px;border:1px solid #b5b5b5;background:#e3e3de;text-align:center;min-height:123px;overflow:hidden}
+.podium-place[data-rank="1"]{min-height:151px;border-color:#20c933;background:#111;color:#fff}
+.podium-place[data-rank="2"]{min-height:133px}.podium-place[data-rank="3"]{min-height:115px}
+.place-number{display:block;margin-bottom:9px;font-size:24px;font-weight:900}
+.podium-place[data-rank="1"] .place-number{color:#20c933}
+.place-name{width:100%;min-height:30px;font-size:12px;font-weight:900;overflow-wrap:anywhere}
+.place-time{margin-top:5px;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+.place-title{display:block;min-height:21px;margin:8px 0 0;font-size:7px;font-weight:900;letter-spacing:.07em;color:#aaa}
+.podium-place[data-rank="1"] .place-title{color:#91ee72}
+.podium-place.mine{box-shadow:inset 0 -4px #20c933}
+.podium-status.crowned+.podium-places .podium-place[data-rank="1"]{animation:crown-arrive .55s ease-out}
+.podium-self{padding:11px 12px;border:1px solid #ccc;border-left:4px solid #20c933;font-size:12px;font-weight:700;line-height:1.5;font-variant-numeric:tabular-nums}
+.podium-table{width:100%;margin-top:16px;border-collapse:collapse;text-align:left;font-size:12px;table-layout:fixed}
+.podium-table th{padding:9px 8px;font-size:8px;letter-spacing:.1em;color:#555;border-bottom:1px solid #888}
+.podium-table td{padding:11px 8px;border-bottom:1px solid #d4d4ce;overflow-wrap:anywhere}
+.podium-table th:first-child{width:48px}.podium-table th:last-child{width:112px}
+.podium-table td:last-child,.podium-table th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.podium-table tr.mine{background:#e1ecd9;font-weight:900}
+.podium-note{margin:12px 0 0;font-size:10px;line-height:1.5;color:#666}
+.podium footer{flex:none;padding:12px 20px;border-top:1px solid #bbb;display:flex;justify-content:flex-end;background:#f2f2ef}
+@keyframes crown-arrive{from{transform:translateY(7px);box-shadow:0 0 0 5px #20c93355}to{transform:none;box-shadow:0 0 0 0 #20c93300}}
+@media(prefers-reduced-motion:reduce){.podium *{animation:none!important}}
+@media(max-width:400px){.bar .logo{font-size:13px;letter-spacing:.05em}.bar-actions{gap:6px}.bar-actions .home-link,.podium-open{padding:8px;font-size:9px;letter-spacing:.04em}}
+@media(max-width:600px){
+ .podium header{padding:10px 12px}.podium h2{font-size:23px}.podium-body{padding:12px}.podium footer{padding:10px 12px}
+ .podium-places{gap:5px}.podium-place{padding:10px 4px}.place-name{font-size:10px}.place-time{font-size:11px}
+ .podium-table th:last-child{width:98px}.shared-finish{font-size:10px;margin:6px 0}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .podium header{padding:5px 12px}.podium header p{display:none}.podium h2{font-size:20px}
+ .podium-body{padding:10px 14px}.podium footer{padding:6px 12px}.shared-finish{font-size:9px;margin:4px 0}
+ .game.results .panel h1{font-size:24px;margin-bottom:6px}.game.results .panel p{margin:5px 0;font-size:10px;line-height:1.3}
+}
