@@ -87,6 +87,35 @@ test('only ticketed, named, authenticated runs can publish; times, apex counts a
   assert.equal(accepted.status, 200); assert.equal(accepted.body.accepted, true);
 });
 
+test('direct API submissions reject blocked names without overwriting a clean name', async t => {
+  const s = service(t), p = await s.player('Clean Driver');
+  for (const name of ['f u c k', 'sh1t799', 'b.i.t.c.h', 'a55hole', 'n1gga', 'fuсk', 'ｆｕｃｋ']) {
+    const result = await s.call('/api/profile', { method: 'POST', player: p, data: { name } });
+    assert.equal(result.status, 400, name); assert.match(result.body.error, /without bad language/);
+    assert.equal(s.sqlite.prepare('SELECT name FROM players WHERE id = ?').get(p.playerId).name, 'Clean Driver');
+  }
+});
+
+test('existing blocked names are masked on hill and season podiums; renaming preserves scores and pending tickets', async t => {
+  const s = service(t), p = await s.player('Legacy Driver');
+  for (const eventId of Object.keys(EVENTS)) await s.finish(p, await s.start(p, eventId));
+  const ticket = await s.start(p);
+  s.sqlite.prepare("UPDATE players SET name = 'Sh1t Driver', name_key = 'sh1t driver' WHERE id = ?").run(p.playerId);
+  const alias = 'Driver ' + p.playerId.replace(/-/g, '').slice(0, 6).toUpperCase();
+  for (const event of ['pine-mountain', 'season']) {
+    const board = (await s.call('/api/leaderboard?event=' + event + '&player=' + p.playerId)).body;
+    assert.equal(board.entries[0].name, alias); assert.equal(board.self.name, alias);
+    assert.equal(board.self.rank, 1); assert.equal(board.self.playerId, p.playerId);
+  }
+  const rejected = await s.finish(p, ticket);
+  assert.equal(rejected.status, 400); assert.match(rejected.body.error, /without bad language/);
+  assert.equal(s.sqlite.prepare('SELECT finished_at FROM runs WHERE id = ?').get(ticket.runId).finished_at, null);
+  await s.call('/api/profile', { method: 'POST', player: p, data: { name: 'Cassidy' } });
+  assert.equal((await s.finish(p, ticket)).status, 200);
+  const board = (await s.call('/api/leaderboard?event=season&player=' + p.playerId)).body;
+  assert.equal(board.self.name, 'Cassidy'); assert.equal(board.self.timeMs, 9 * 45000);
+});
+
 test('one personal best per event; podium crown transfers; slower runs and retries cannot duplicate positions', async t => {
   const s = service(t), a = await s.player('First'), b = await s.player('Challenger');
   const run = await s.start(a), won = await s.finish(a, run, 45000);

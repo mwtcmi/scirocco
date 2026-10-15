@@ -9,7 +9,7 @@ const PROFILE = '799-podium-driver-v1', PENDING = '799-podium-pending-v1';
 const wait = (page, predicate, argument) => page.waitForFunction(predicate, argument, { polling: 50 });
 (async () => {
  const { createWorker, RULESET } = await import('../leaderboard/worker.mjs');
- const storage = database(); let clock = 1800000000000, failFinishes = false;
+ const storage = database(); let clock = 1800000000000, failFinishes = false, nameRequests = 0;
  const worker = createWorker({ now: () => clock });
  const env = { DB: storage.db, ALLOWED_ORIGINS: new URL(baseURL).origin };
  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] });
@@ -30,6 +30,7 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
   await page.route(API + '/**', async route => {
    const req = route.request(), path = new URL(req.url()).pathname;
+   if (path === '/api/profile' && req.method() === 'POST') nameRequests++;
    if (failFinishes && path.endsWith('/finish')) return route.abort('failed');
    const data = req.postData();
    if (path.endsWith('/finish') && data) clock += JSON.parse(data).timeMs + 100;
@@ -90,6 +91,11 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await a.locator('#podiumContinue').click(); await a.locator('#start').click();
   assert.equal(storage.sqlite.prepare('SELECT COUNT(*) AS n FROM runs').get().n, tickets, 'resuming retains its original run ticket');
   await summit(a); assert.equal(await a.locator('#driverForm').isVisible(), true);
+  const beforeInvalid = nameRequests;
+  await name(a, 'sh1t799');
+  await wait(a, () => document.getElementById('nameError').textContent.includes('without bad language'));
+  assert.equal(nameRequests, beforeInvalid, 'blocked podium names are rejected before an API submission');
+  assert.equal(await a.locator('#driverForm').isVisible(), true);
   await name(a, 'Mike 799');
   await wait(a, () => document.getElementById('podiumStatus').textContent.includes('YOU TOOK THE CROWN'));
   assert.equal(await a.locator('[data-rank="1"] .place-name').innerText(), 'Mike 799');
@@ -166,6 +172,40 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await summit(beforeRace);
   await wait(beforeRace, () => document.getElementById('podiumStatus').textContent.includes('TIME POSTED') || document.getElementById('podiumStatus').textContent.includes('CROWN'));
   assert.equal(await beforeRace.locator('#driverForm').isVisible(), false, 'a name supplied before racing must not prompt again');
+
+  const filtered = await pageFor();
+  const beforeWelcome = nameRequests;
+  await filtered.locator('#welcomeDriverInput').fill('f.u.c.k799');
+  assert.equal(await filtered.locator('#welcomeDriverInput').getAttribute('aria-invalid'), 'true');
+  await filtered.locator('.season-signature').click();
+  assert.equal(nameRequests, beforeWelcome, 'blocked welcome names never reach the profile API');
+  assert.notEqual(await filtered.evaluate(() => JSON.parse(localStorage.getItem('799-podium-name-v1'))), 'f.u.c.k799');
+  await start(filtered);
+  assert.equal((await filtered.evaluate(k => JSON.parse(localStorage.getItem(k)), PROFILE)).name, null);
+  assert.equal(await filtered.locator('#modal').isVisible(), false, 'a rejected name must not prevent racing');
+  await filtered.keyboard.press('r'); await filtered.keyboard.press('Space');
+  // Simulate an older Worker returning an unfiltered public name during rollout.
+  await filtered.route(API + '/api/leaderboard?**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ruleset: RULESET, eventId: 'pine-mountain', total: 1, self: null, entries: [{ rank: 1, playerId: 'abcdef12-1234-4123-8123-123456789012', name: 'Sh1t Driver', timeMs: 45000 }] }) }));
+  await filtered.locator('#podiumOpen').click();
+  await wait(filtered, () => document.querySelector('[data-rank="1"] .place-name').textContent === 'Driver ABCDEF');
+  assert.equal(await filtered.locator('#podiumRows td:nth-child(2)').innerText(), 'Driver ABCDEF');
+
+  const legacy = await api('/api/players', {});
+  storage.sqlite.prepare("UPDATE players SET name = 'Sh1t Driver', name_key = 'sh1t driver' WHERE id = ?").run(legacy.playerId);
+  await filtered.evaluate(({ key, legacy }) => {
+   localStorage.setItem(key, JSON.stringify({ ...legacy, name: 'Sh1t Driver' }));
+   localStorage.setItem('799-podium-name-v1', JSON.stringify('Sh1t Driver'));
+  }, { key: PROFILE, legacy });
+  await filtered.reload(); await wait(filtered, () => window.MountainLeaderboard);
+  const recovered = await filtered.evaluate(k => JSON.parse(localStorage.getItem(k)), PROFILE);
+  assert.equal(recovered.playerId, legacy.playerId); assert.equal(recovered.token, legacy.token);
+  assert.equal(recovered.name, null, 'legacy names can be changed without losing the driver identity');
+  assert.equal(await filtered.locator('#welcomeDriverInput').getAttribute('aria-invalid'), 'true');
+  await filtered.locator('#welcomeDriverInput').fill('Cassidy');
+  assert.equal(await filtered.locator('#welcomeDriverInput').getAttribute('aria-invalid'), 'false');
+  await start(filtered);
+  assert.equal((await filtered.evaluate(k => JSON.parse(localStorage.getItem(k)), PROFILE)).name, 'Cassidy');
+  await filtered.context().close();
   const offline = await pageFor();
   await offline.route(API + '/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"connected":1}' }));
   await offline.reload(); await wait(offline, () => window.MountainLeaderboard);
@@ -183,6 +223,6 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await offline.evaluate(() => stepGame(30));
   assert.equal(await offline.locator('#modal').isVisible(), false, 'racing remains available before Cloudflare publication');
   assert.deepEqual(errors, []);
-  console.log('PASS: real Worker SQL through browser requests; public podiums, two browser identities, unique names, full racing and crown, pause/input isolation, season progress, persistent identity, queued retry after reload, mobile dialogs, and crash exclusion.');
+  console.log('PASS: real Worker SQL through browser requests; profanity prevention in both forms, legacy name protection and identity recovery, public podiums, two browser identities, unique names, full racing and crown, pause/input isolation, season progress, persistent identity, queued retry after reload, mobile dialogs, and crash exclusion.');
  } finally { await browser.close(); storage.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

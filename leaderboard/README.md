@@ -31,6 +31,7 @@ The SQL file starts directly with `CREATE TABLE` so it also works when the conso
 - The full-season podium requires all nine events. It ranks the sum of each driver's event bests. Replaying one event can improve that total. Equal times favor the earlier best; equal season totals favor the earlier completed set of bests, then a stable player ID as the final tiebreaker.
 - Gameplay stays **V5**. Course layouts, length, hazards, physics, and apex behavior stay fixed. Scores use the separate `2027-v5` ruleset. A future physics change would need a different ruleset and leaderboard, while cosmetic changes can keep these records.
 - Names use 2–18 characters and are unique ignoring case. Names appear publicly. The optional driver-name field sits on the game's welcome screen with event selection and remembers a draft even while the service is offline. On connection, it registers the name for shared scores. Anonymous driver credentials are generated when needed; only a hash of the private credential is stored in D1. A driver who leaves the name blank can choose one at the first finish or keep racing. Existing names can be edited in the podium footer.
+- Both name fields and the Worker reject common profanity and slurs, including spaced/punctuated, repeated-letter, accented, lookalike and common number-substitution variants. Short ambiguous terms use word boundaries and common username suffixes to keep ordinary names such as Cassidy and Hancock usable. Existing blocked names appear as a neutral `Driver ABCDEF` alias on both event and season boards; the driver can rename without losing scores or credentials. Such a driver must choose a clean name before posting again. This English-focused filter does not replace owner moderation.
 - The driver credential is remembered in the browser. Clearing browser data, using private browsing, or changing devices loses access to that driver; choose a different name for a new profile. Sign-in/recovery is outside this first version. If browser storage is unavailable, identity lasts for that page visit only.
 - Existing device bests and season completion remain intact. Old device bests are not imported to the public board; a new run with a server ticket is required.
 - Crashes never submit a result. Posted slower attempts never replace a faster best.
@@ -63,6 +64,8 @@ This is a casual browser-game leaderboard. Client simulation cannot be made chea
 
 All moderation stays in the authenticated Cloudflare D1 console; there is no public admin endpoint. `players.id` is the public `playerId` in a standings response.
 
+The shared name policy lives in `mountain-run/name-policy.js`. After editing it, run `node leaderboard/sync-name-policy.mjs` to update the embedded copy in the paste-ready Worker, then run the policy/API checks. Deploy the updated `worker.mjs` through **Edit code → Deploy** to enforce changes on direct API requests too. Existing installations do not need to rerun SQL for the filter.
+
 Remove a driver and their runs/scores (irreversible; inspect the exact ID first):
 
 ```sql
@@ -91,7 +94,9 @@ The next public read recalculates the hill and season podiums. Rerunning a rejec
 Node.js 24 provides SQLite for the tests; the site itself has no build step or new runtime dependencies.
 
 ```sh
-node --test tests/leaderboard.test.mjs tests/mountain-run.test.cjs
+node tests/name-policy.test.cjs
+node tests/leaderboard.test.mjs
+node tests/mountain-run.test.cjs
 ```
 
 With the static site running, Playwright and Chromium available:
@@ -100,6 +105,7 @@ With the static site running, Playwright and Chromium available:
 GAME_URL=http://127.0.0.1:8000/mountain-run/ node tests/leaderboard.browser.cjs
 node tests/mountain-run.browser.cjs
 node tests/mountain-run.mobile.cjs
+node tests/mountain-run.loading.cjs
 ```
 
 The API tests execute the production Worker's fetch handler and real SQL against SQLite through a D1-compatible test adapter. Browser tests route requests to that same handler; they do not publish scores to the live service. They verify two independent player browsers, real driving, naming, podiums, persistence/retry, pause/input isolation, mobile fit, and crash exclusion. Local tests do not substitute for the Cloudflare deployment check above.
