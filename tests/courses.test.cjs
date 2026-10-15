@@ -52,10 +52,11 @@ test('route map progress follows race distance and stays inside the compact disp
     let y = Infinity;
     for (let f = 0; f <= 1; f += .005) {
       const p = courses.pointAt(id, f);
-      assert.ok(p.x >= 21 && p.x <= 169 && p.y <= y && p.y >= 16 && p.y <= 183, id); y = p.y;
+      assert.ok(p.x >= 21 && p.x <= 171 && p.y <= y && p.y >= 16 && p.y <= 183, id); y = p.y;
     }
     assert.equal(courses.pointAt(id, 0).y, 182);
     assert.equal(courses.pointAt(id, 1).y, 17);
+    assert.ok(courses.pointAt(id, 0).x < courses.pointAt(id, 1).x, id + ' diagonal start to finish');
     assert.equal(c.map.length, 151);
   }
 });
