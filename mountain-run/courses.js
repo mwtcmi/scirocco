@@ -88,9 +88,14 @@ function createMountainCourses() {
     const gates = spec.chicanes.flatMap(([start, side]) => Array.from({ length: 3 }, (_, i) => Object.freeze({ d: start + i * 1000, side: i % 2 ? -side : side })));
     const wildlife = spec.wildlife.map(([kind, d], i) => Object.freeze({ kind, d, side: i % 2 ? 1 : -1 }));
     const potholes = spec.potholes.map(([d, lane]) => Object.freeze({ d, lane, radius: 34 }));
-    const samples = Array.from({ length: 151 }, (_, i) => path(id, length * i / 150));
-    const lo = Math.min(...samples), hi = Math.max(...samples), span = Math.max(350, hi - lo);
-    const map = samples.map((x, i) => Object.freeze({ x: 95 + (x - (lo + hi) / 2) * 146 / span, y: 182 - 165 * i / 150 }));
+    // Restore the compact diagonal schematic. Do not stretch lateral road offsets
+    // to fill the map: that turns even gentle bends into near-horizontal zigzags.
+    // Remove the overall sideways drift before adding the bends to the diagonal.
+    const finishOffset = path(id, length);
+    const map = Array.from({ length: 151 }, (_, i) => {
+      const f = i / 150, bend = (path(id, length * f) - finishOffset * f) * Math.sin(Math.PI * f);
+      return Object.freeze({ x: 21 + 149 * f + bend * .07, y: 182 - 165 * f });
+    });
     const mapPath = map.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(2) + ' ' + p.y.toFixed(2)).join(' ');
     events[id] = Object.freeze({ profile: spec.profile, turns: Object.freeze(turns), gates: Object.freeze(gates), wildlife: Object.freeze(wildlife), potholes: Object.freeze(potholes), map: Object.freeze(map), mapPath });
   }
