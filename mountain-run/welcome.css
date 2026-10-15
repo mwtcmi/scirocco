@@ -113,3 +113,19 @@
 .preview-route{position:absolute;z-index:3;right:18px;top:104px;width:70px;height:78px;padding:5px;border:1px solid #8eb59b50;background:#06150bb8;border-radius:3px;pointer-events:none}
 @media(max-width:600px),(pointer:coarse){.preview-route{width:38px;height:44px;padding:3px;right:9px;top:9px}}
 @media(max-height:500px) and (orientation:landscape){.preview-route{display:none}}
+
+
+/* Keep course selection obvious, including the smallest welcome layouts. */
+.welcome .season-picker label{display:flex;color:#20c933;font-size:9px;line-height:1.3}
+.welcome .season-picker label span{color:#92a194;font-size:7px;letter-spacing:0}
+.course-select{position:relative}
+.course-select:after{content:'';position:absolute;right:16px;top:50%;width:8px;height:8px;border-right:2px solid #20c933;border-bottom:2px solid #20c933;transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.welcome .season-picker select{appearance:none;-webkit-appearance:none;padding-right:36px;border-color:#20c933}
+.welcome.needs-course .season-picker select{background:#14271a;color:#e2f3e4}
+.welcome #start:disabled,.welcome #start:disabled:hover{background:#26332b;color:#92a194;border-color:#415146;box-shadow:none;cursor:not-allowed}
+.welcome.needs-course .welcome-crown{visibility:hidden;pointer-events:none}
+@media(max-height:500px) and (orientation:landscape){
+ .panel.welcome{grid-template-rows:60px 44px minmax(44px,1fr) 36px}
+ .welcome .season-picker label{font-size:8px;margin-bottom:4px}
+ .welcome .season-picker label span{display:none}
+}

@@ -19,7 +19,7 @@
   let pending = read(PENDING_KEY, []);
   if (!Array.isArray(pending)) pending = [];
   pending = pending.filter(p => p && p.ruleset === RULESET && p.playerId === profile?.playerId && typeof p.runId === 'string' && p.expiresAt > Date.now()).slice(-10);
-  let selected = game.events[0].id, active = null, finishView = null, readiness = null, readyUntil = 0, profilePromise = null;
+  let selected = game.events[Number($('eventSelect').value) || 0].id, active = null, finishView = null, readiness = null, readyUntil = 0, profilePromise = null;
   let boardGeneration = 0, declinedName = false, serviceIssue = 'offline', nameProblem = nameError(draftName), nameSync = null;
   let welcomeGeneration = 0;
   const welcomeBoards = new Map();
@@ -319,3 +319,4 @@
   refreshHillLeader();
   ready().then(() => flush());
 })();
+
