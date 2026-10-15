@@ -48,6 +48,8 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
     assert.ok(fit.inside && fit.tappable, `${size.width}x${size.height}: Start must be visible and tappable without scrolling`);
     assert.equal(await page.locator('.hud').isVisible(), false, 'hide race instruments until Start');
     assert.equal(await page.locator('#sound').isVisible(), true, 'sound settings remain accessible');
+    const driver = await page.locator('#welcomeDriverInput').boundingBox();
+    assert.ok(driver.height >= 44 && driver.y >= 0 && driver.y + driver.height <= size.height, `${size.width}x${size.height}: optional driver entry must fit with Start`);
     await page.locator('#start').tap();
     const map = await page.locator('.course-map').boundingBox();
     assert.ok(map.width <= 72 && map.height <= 85, `${size.width}x${size.height}: map must be compact`);

@@ -20,18 +20,23 @@ The SQL must run before deploying the Worker. The existing `DB` binding is all t
 
 The game remains playable while the Worker still runs the connection test or the service is unavailable. It displays device-best status instead of a shared ranking. The shared service has only been verified locally until the dashboard publication and live checks above are complete.
 
+If D1 Overview shows **0 tables**, the SQL setup has not run yet. If the Worker's Visit page returns only `{"connected":1}`, it still runs the connection test and needs `worker.mjs`. A “nothing here yet” page is not a leaderboard response: confirm the exact address from the Worker's **Visit** button and that its production deployment and `workers.dev` domain are active. Once publication is complete, use **REFRESH** inside PODIUMS to retry immediately.
+
+The SQL file starts directly with `CREATE TABLE` so it also works when the console collapses pasted newlines. If an older copy begins with a `--` comment and the console reports “Requests without any query are not supported,” remove everything before the first `CREATE TABLE` and run it again. Use `/tables` afterward to confirm the five leaderboard tables exist.
+
 ## Scoring and driver experience
 
 - Each venue has one best time per driver, a top-three podium, top twenty standings, and the driver's own rank even below twentieth.
 - First place holds **King of the Hill** for that event. A new leader gets a crown message after the server accepts the result.
 - The full-season podium requires all nine events. It ranks the sum of each driver's event bests. Replaying one event can improve that total. Equal times favor the earlier best; equal season totals favor the earlier completed set of bests, then a stable player ID as the final tiebreaker.
 - Gameplay stays **V5**. Course layouts, length, hazards, physics, and apex behavior stay fixed. Scores use the separate `2027-v5` ruleset. A future physics change would need a different ruleset and leaderboard, while cosmetic changes can keep these records.
-- Names use 2–18 characters and are unique ignoring case. Names appear publicly. Anonymous driver credentials are generated at the first shared run; only a hash of the private credential is stored in D1. A name is requested at the first finish. Skipping it allows racing to continue; the driver can post through PODIUMS later.
+- Names use 2–18 characters and are unique ignoring case. Names appear publicly. The optional driver-name field sits on the game's welcome screen with event selection and remembers a draft even while the service is offline. On connection, it registers the name for shared scores. Anonymous driver credentials are generated when needed; only a hash of the private credential is stored in D1. A driver who leaves the name blank can choose one at the first finish or keep racing. Existing names can be edited in the podium footer.
 - The driver credential is remembered in the browser. Clearing browser data, using private browsing, or changing devices loses access to that driver; choose a different name for a new profile. Sign-in/recovery is outside this first version. If browser storage is unavailable, identity lasts for that page visit only.
 - Existing device bests and season completion remain intact. Old device bests are not imported to the public board; a new run with a server ticket is required.
 - Crashes never submit a result. Posted slower attempts never replace a faster best.
 - A completed run whose finish request loses its connection waits in the browser and retries on reconnect, Refresh, or reload. Tickets expire two hours after starting. An offline run without a ticket remains a device best. At most ten unposted runs wait in the browser.
 - Opening PODIUMS while racing pauses the game and releases held controls. Closing it leaves the game paused until Resume is pressed. Close/Back controls stay accessible on small screens while the standings scroll.
+- An unavailable service shows a connection message with Refresh, while empty podium cards are hidden. Choosing Full Season always uses the Season Champion title, including before standings arrive.
 
 ## API
 
