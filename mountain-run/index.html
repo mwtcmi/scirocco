@@ -288,6 +288,7 @@ function buildCourse(){
  wildlife.length=0;wildlife.push(...course().wildlife.map(q=>({...q,name:q.kind==='rabbit'?'Uno':q.kind,duration:q.kind==='deer'?2:q.kind==='fox'?1.5:1.1,start:null,passed:false})));
  potholes.length=0;potholes.push(...course().potholes.map(q=>({...q,passed:false})));
  corners.length=0;corners.push(...course().turns.map(q=>({d:q.apex,lane:q.lane,passed:false})));
+ buildSponsorBoards();
 }
 function selectEvent(index){
  if(!Number.isInteger(index)||index<0||index>=EVENTS.length||state==='play'||state==='pause')return false;
@@ -407,10 +408,63 @@ function scenery(d,side,kind){
   for(const xx of [-29,19]){rect(xx,-45,11,14,'#72959b');line([[xx+5,-45],[xx+5,-31]],'#e9e1c5',1)}
  }else if(kind==='wall'){
   for(let row=0;row<3;row++)for(let i=0;i<4;i++){const xx=-40+i*20+(row%2?5:0),yy=-row*11;polygon([[xx,yy],[xx+18,yy],[xx+17,yy-9],[xx+1,yy-10]],(i+row)%2?'#999d8c':'#7d8777','#5e695b',.7)}
- }else if(kind==='banner'){
-  rect(-3,-85,6,85,'#ded8bd');rect(-4,-88,80,29,'#0d1c15');rect(-2,-85,76,23,'#20c933');g.font='bold 12px Arial';g.fillStyle='#0b1a0c';g.fillText('799 MOTORSPORT',2,-69);
  }else{ellipse(0,0,22,9,'#153b20');ellipse(-9,-8,17,14,'#3b8044');ellipse(9,-10,16,16,'#26733c');ellipse(0,-17,15,12,'#4c9c4e')}
  g.restore();
+}
+
+function buildSponsorBoards(){
+ sponsorBoards.length=0;
+ const hazards=[...gates,...wildlife,...potholes,...corners];
+ for(const target of [1000,7500,14000,20500,27500]){
+  let position=null,cost=Infinity;
+  for(let d=900;d<GOAL-1000;d+=50){
+   if(course().turns.some(q=>d>q.start-100&&d<q.end+150))continue;
+   if(hazards.some(q=>Math.abs(q.d-d)<400))continue;
+   if(sponsorBoards.some(q=>Math.abs(q.d-d)<4000))continue;
+   const distance=Math.abs(d-target);
+   if(distance<cost){cost=distance;position=d}
+  }
+  if(position!==null)sponsorBoards.push({d:position,side:-1,style:sponsorBoards.length%3});
+ }
+}
+function drawSponsorBoard(board){
+ const p=project(board.d),aspect=landscapeAspect(),width=232,height=204,legs=62;
+ // Limit growth before the top leaves the camera; keep the inner edge outside the road.
+ const scale=Math.min(p.scale,(p.y-70)/((height+legs)*aspect));
+ const x=p.x+board.side*((ROAD*.5+32)*p.scale+width*scale*.5),y=p.y;
+ const light=board.style===1,green=board.style===2;
+ const face=light?'#f0f1e9':green?'#20c933':'#090f0c',ink=light||green?'#0c1a10':'#f5f5ed';
+ const top=-legs-height,left=-width/2;
+ g.save();g.translate(x,y);g.scale(scale,scale*aspect);
+ ellipse(9,3,width*.53,10,'#07120b45');
+ const metal=g.createLinearGradient(-5,0,5,0);metal.addColorStop(0,'#4b5650');metal.addColorStop(.45,'#c1c8bd');metal.addColorStop(1,'#657369');
+ for(const offset of [-72,72]){
+  rect(offset-4,-legs-8,8,legs+12,metal);rect(offset-9,1,18,5,'#777c6e');
+  line([[offset-4,-legs+8],[-offset+4,-5]],'#56635b',3);
+ }
+ polygon([[left-5,top-5],[width/2+7,top-1],[width/2+7,-legs+6],[left-5,-legs+2]],'#404e46','#17251c',2);
+ rect(left,top,width,height,face);rect(left,top,width,4,green?'#eef1e3':'#20c933');
+ for(const xx of [left+7,width/2-7])for(const yy of [top+10,-legs-7])ellipse(xx,yy,1.7,1.7,light?'#798679':'#aab9a4');
+ g.textAlign='center';g.fillStyle=ink;g.font='900 12px Arial';g.fillText('2027 SPONSOR SPACE',0,top+24);
+ g.font='900 42px Arial';g.fillText('YOUR',0,top+70);g.fillText('BRAND',0,top+114);
+ g.fillStyle=green?'#0c1a10':light?'#16852a':'#20c933';g.font='900 50px Arial';g.fillText('HERE.',0,top+162);
+ rect(left+9,top+175,width-18,21,green?'#0c1a10':light?'#0c1a10':'#20c933');
+ g.fillStyle=green||light?'#f0f1e9':'#0c1a10';g.font='900 12px Arial';g.fillText('SPONSOR SCIROCCO 799',0,top+190);
+ g.restore();
+}
+function roadsideWorld(){
+ const visible=[],start=Math.floor(dist/135),end=Math.ceil((dist+VIEW)/135);
+ for(let n=end;n>=start;n--){
+  const d=n*135;if(d<dist+5)continue;
+  for(const side of [-1,1]){
+   // A clear approach to each board keeps trees and buildings out of the lettering.
+   if(sponsorBoards.some(q=>q.side===side&&d>q.d-950&&d<q.d+300))continue;
+   visible.push({d,side,kind:sceneryKind(n,side)});
+  }
+ }
+ for(const board of sponsorBoards)if(board.d>dist+20&&board.d<dist+VIEW-30)visible.push({...board,kind:'sponsor'});
+ visible.sort((a,b)=>b.d-a.d);
+ for(const q of visible)if(q.kind==='sponsor')drawSponsorBoard(q);else scenery(q.d,q.side,q.kind);
 }
 
 function road(){const c=event();let ground=g.createLinearGradient(0,300,0,H);ground.addColorStop(0,c.ground[0]);ground.addColorStop(1,c.ground[1]);rect(0,300,W,300,ground);
@@ -433,7 +487,7 @@ function roadDeparture(){
  // Use the visible body width, excluding the SVG's transparent margins.
  return clamp((Math.abs(lane)*roadHalf+CAR_HALF_WIDTH-lineHalf)/(2*CAR_HALF_WIDTH),0,1);
 }
-const gates=[],wildlife=[],potholes=[],corners=[];
+const gates=[],wildlife=[],potholes=[],corners=[],sponsorBoards=[];
 function animalLane(animal){
  let progress=animal.start===null?0:clamp((t-animal.start-ANIMAL_WAIT)/animal.duration,0,1);
  // Uno always finds a way out, even if approached faster than his normal crossing.
@@ -594,9 +648,7 @@ function updateCourseMap(){
 function render(){
  updateViewport();g.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.clearRect(0,0,W,H);
  sky();road();roadDetails();
- const start=Math.floor(dist/135),end=Math.ceil((dist+VIEW)/135);
- for(let n=end;n>=start;n--){const d=n*135;if(d<dist+5)continue;for(const side of [-1,1])scenery(d,side,sceneryKind(n,side))}
- for(let d=5000;d<GOAL;d+=5000)if(d>dist&&d<dist+VIEW)scenery(d,1,'banner');
+ roadsideWorld();
  obstacleWorld();finish();drawTireSmoke();g.save();
  if(shake>0)g.translate((Math.random()-.5)*shake*22,(Math.random()-.5)*shake*12);
  car(playerPosition().x,playerPosition().y,(keys.right?1:0)-(keys.left?1:0));g.restore();
