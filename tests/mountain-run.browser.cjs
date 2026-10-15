@@ -5,6 +5,8 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined),headless:true,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1280,height:900}});
+ // Keep gameplay checks independent of the public service, including its pre-launch connection-test response.
+ await page.route('https://scirocco799-leaderboard.mr-mikewhite.workers.dev/**',route=>route.fulfill({status:200,contentType:'application/json',body:'{"connected":1}'}));
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`)});
  await page.addInitScript(()=>{
   const NativeAudioContext=window.AudioContext;
