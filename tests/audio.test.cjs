@@ -45,3 +45,11 @@ test('launch revs are independent of wheel speed, and intake load follows gas an
   assert.ok(drive.step(input(.9, 0, { gas: false })).load < .3);
   assert.ok(drive.step(input(.95, 0, { gas: true, brake: true })).load < .1);
 });
+
+test('shifts still drop in pitch when a fast burnout ends above the next gear range', () => {
+  const drive = powertrain(); let prior;
+  for (let i = 0; i < 18; i++) prior = drive.step(input(i / 20, 650, { launch: true }));
+  const shifted = drive.step(input(.9, 650));
+  assert.equal(shifted.shift, 'up'); assert.equal(shifted.gear, 2);
+  assert.ok(shifted.rpm < prior.rpm - 600, 'clutch release provides a clear rev drop');
+});

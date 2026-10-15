@@ -6,8 +6,8 @@
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
   function powertrain() {
-    let gear, rpm, previous, shiftUntil, lastShift, shift;
-    function reset() { gear = 1; rpm = idle; previous = 0; shiftUntil = 0; lastShift = -1; shift = null; }
+    let gear, rpm, previous, shiftUntil, shiftRpm, lastShift, shift;
+    function reset() { gear = 1; rpm = idle; previous = 0; shiftUntil = 0; shiftRpm = idle; lastShift = -1; shift = null; }
     reset();
     function step({ time, speed, running, gas, brake, launch }) {
       if (time < previous) reset();
@@ -16,12 +16,13 @@
         const wheelRpm = () => idle + Math.max(0, speed) / shiftSpeeds[gear - 1] * (redline - idle);
         if (!launch && time - lastShift > .36 && time >= shiftUntil) {
           if (!brake && gear < 5 && wheelRpm() > 6600) {
-            gear++; shift = 'up'; shiftUntil = time + .18; lastShift = time;
+            gear++; shift = 'up'; shiftRpm = Math.max(2800, rpm * .76); shiftUntil = time + .18; lastShift = time;
           } else if (gear > 1 && wheelRpm() < 2700) {
-            gear--; shift = 'down'; shiftUntil = time + .13; lastShift = time;
+            gear--; shift = 'down'; shiftRpm = Math.min(redline, rpm * 1.2 + 120); shiftUntil = time + .13; lastShift = time;
           }
         }
-        const target = launch ? 5100 + Math.min(1, time / .55) * 1350 : clamp(wheelRpm(), idle, redline + 120);
+        // The clutch frees the revs during a shift, even after a fast burnout launch.
+        const target = launch ? 5100 + Math.min(1, time / .55) * 1350 : time < shiftUntil ? shiftRpm : clamp(wheelRpm(), idle, redline + 120);
         rpm += (target - rpm) * (1 - Math.exp(-dt * (time < shiftUntil ? 24 : 10)));
       }
       const shifting = time < shiftUntil, load = brake ? .03 : gas ? 1 : .22;
