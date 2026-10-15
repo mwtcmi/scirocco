@@ -43,6 +43,19 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
  assert.equal(await page.locator('#damage').count(),0);
  assert.equal(await page.locator('#checkpoint').count(),0, 'distance popups must not obstruct the course');
  assert.equal(await page.locator('#eventSelect option').count(),9);
+ const scenery = new Set();
+ for(let i=0;i<9;i++){
+  await page.locator('#eventSelect').selectOption(String(i));
+  const preview=await page.evaluate(()=>{
+   const e=MountainRun.events[Number(document.getElementById('eventSelect').value)];
+   return {expected:e,actual:document.getElementById('intro').dataset.event,venue:document.getElementById('previewVenue').textContent,habitat:document.querySelector('#previewScene svg').dataset.habitat,art:document.getElementById('previewScene').innerHTML};
+  });
+  assert.equal(preview.actual,preview.expected.id);assert.equal(preview.venue,preview.expected.short);assert.equal(preview.habitat,preview.expected.habitat);scenery.add(preview.art);
+ }
+ assert.equal(scenery.size,9,'every venue has its own start-line preview');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await page.locator('.idle-exhaust i').first().evaluate(el=>getComputedStyle(el).animationName),'none');
+ await page.emulateMedia({reducedMotion:'no-preference'});
  await page.locator('#eventSelect').selectOption('7');assert.match(await page.locator('#courseLocation').innerText(),/Lake Michigan/);
  await page.locator('#eventSelect').selectOption('0');
  await page.screenshot({path:'/tmp/gameplay-v5-start.png'});

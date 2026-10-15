@@ -1,0 +1,111 @@
+/* The welcome scene is separate from the frozen race rendering and physics. */
+.game.menu .modal{padding:12px;background:#050505}
+.panel.welcome{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-areas:'kicker art' 'title art' 'copy art' 'event art' 'driver art' 'start art' 'king king';grid-template-rows:auto auto 1fr auto auto auto auto;gap:12px 32px;width:min(100%,1180px);max-width:1180px;height:min(100%,760px);padding:26px;border:1px solid #2d3b31;background:#080d0a;overflow:hidden;text-align:left}
+.welcome .start-kicker{grid-area:kicker;align-self:end;margin:0;font-size:9px;letter-spacing:.2em}
+.panel.welcome .start-kicker:after{content:' // GAMEPLAY V5';color:#829285}
+.welcome h1{grid-area:title;max-width:none;font-size:clamp(48px,5.6vw,76px);line-height:.86;margin:0;align-self:center;letter-spacing:-.065em}
+.welcome h1 span{color:#20c933;-webkit-text-stroke:0}
+.welcome #msg{grid-area:copy;align-self:center;max-width:none;margin:0}
+.welcome .season-signature{font-size:9px;letter-spacing:.08em;margin-bottom:10px}
+.welcome .quick-guide{gap:10px 14px}
+.welcome .guide-rule{gap:8px;padding-top:8px;border-color:#2b382e}
+.welcome .guide-rule>svg{width:19px;height:19px}
+.welcome .guide-rule b{font-size:7px;margin-bottom:4px}
+.welcome .guide-rule>span>span{font-size:10px;line-height:1.4}
+.welcome .key-hints{font-size:8px;letter-spacing:-.02em}.welcome .key-hints kbd{min-width:14px;height:16px;font-size:9px}
+.welcome .guide-rule small{font-size:8px;line-height:1.35}
+.welcome .season-picker{grid-area:event;max-width:none;width:100%;margin:0;align-self:end}
+.welcome .driver-entry{grid-area:driver;max-width:none;width:100%;margin:0}
+.welcome .driver-entry label,.welcome .season-picker label{font-size:7px;letter-spacing:.1em}
+.welcome .season-picker #courseLocation{font-size:9px;margin:5px 0 0;color:#92a194;line-height:1.3}
+.welcome .driver-entry input,.welcome .season-picker select{background:#111b15;border-color:#415146}
+.welcome .driver-entry-note{font-size:9px;line-height:1.2;color:#849489;margin-top:4px;min-height:11px}
+.welcome .driver-entry-note.error{color:#ffb38c}
+.welcome .panel-actions{grid-area:start;width:100%;align-self:end}
+.welcome .panel-actions #start{width:100%;min-width:0;min-height:48px;padding:13px 14px;font-size:11px;letter-spacing:.13em}
+.welcome #intro{display:block;grid-area:art;position:relative;inset:auto;width:100%;height:100%;min-height:0;overflow:hidden;border:1px solid #3b5142;background:#203c32;isolation:isolate;pointer-events:none}
+.preview-scene,.preview-scene svg{display:block;position:absolute;inset:0;width:100%;height:100%}
+.welcome #intro:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#030e09b5,transparent 32%,transparent 65%,#030b0770);pointer-events:none}
+.scene-caption{position:absolute;z-index:3;top:20px;left:20px;right:20px;color:#fff}
+.scene-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:8px;font-weight:900;letter-spacing:.16em;color:#d9e5da}
+.scene-topline span:last-child{display:flex;align-items:center;gap:6px;font-size:7px;color:#b9dcc1}
+.scene-topline i{width:5px;height:5px;background:#20c933;border-radius:50%;box-shadow:0 0 8px #20c93380}
+.scene-caption h2{font-size:clamp(21px,3vw,34px);line-height:.95;letter-spacing:-.045em;text-transform:uppercase;margin:16px 0 7px;color:#fff}
+.scene-caption p{margin:0;font-size:9px;letter-spacing:.08em;color:#c4d1c5}
+.welcome .hero-car{z-index:2;position:absolute;width:82%;max-width:none;inset:auto 9% 7% auto;transform:none;filter:drop-shadow(0 18px 13px #020804c0)}
+.grid-id{position:absolute;left:17px;right:17px;bottom:13px;z-index:3;display:flex;justify-content:space-between;font-size:7px;font-weight:900;letter-spacing:.2em;color:#bed2be}
+.grid-id span:last-child{color:#20c933}
+.idle-exhaust{position:absolute;z-index:3;left:35%;bottom:14%;width:10px;height:10px}
+.idle-exhaust i{position:absolute;width:10px;height:8px;border-radius:50%;background:#c9d6ca;filter:blur(3px);opacity:0}
+.game.menu .idle-exhaust i{animation:idle-exhaust 4s ease-out infinite}
+.game.menu .idle-exhaust i:nth-child(2){animation-delay:1.3s}.game.menu .idle-exhaust i:nth-child(3){animation-delay:2.6s}
+@keyframes idle-exhaust{0%{transform:translate(0,0) scale(.5);opacity:0}15%{opacity:.19}100%{transform:translate(-30px,-24px) scale(4);opacity:0}}
+.welcome .welcome-crown{grid-area:king;display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:10px 12px;border:1px solid #344d3b;background:#101e15;color:#fff;text-align:left;letter-spacing:0;text-transform:none;font-family:Arial,sans-serif;cursor:pointer}
+.welcome .welcome-crown:hover{border-color:#20c933;background:#142b1b;color:#fff}
+.welcome-crown>svg{flex:none;width:23px;height:23px;fill:none;stroke:#20c933;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.crown-label{flex:none;font-size:8px;font-weight:900;letter-spacing:.12em;color:#9aaf9e}
+.crown-driver{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:900;color:#e1f3df}
+.crown-time{margin-left:auto;white-space:nowrap;font-size:12px;font-weight:700;letter-spacing:.03em;color:#20c933;font-variant-numeric:tabular-nums}
+.crown-arrow{color:#9aaf9e;font-size:14px}
+.panel:not(.welcome) .welcome-crown{display:none}
+@media(max-height:760px) and (min-width:601px){
+ .game.menu .modal{padding:6px}.panel.welcome{padding:16px;gap:9px 22px;grid-template-rows:auto auto 1fr auto auto auto auto}
+ .welcome h1{font-size:clamp(40px,5vw,60px)}.welcome .quick-guide{gap:7px 12px}
+ .welcome .guide-rule{padding-top:6px}.welcome .guide-rule>span>span{font-size:9px}.welcome .guide-rule b{margin-bottom:3px}
+ .welcome .season-signature{font-size:8px;margin-bottom:7px}.welcome .driver-entry-note{display:none}
+ .welcome .season-picker #courseLocation{font-size:8px;margin-top:4px}.welcome .welcome-crown{padding:8px 10px}
+}
+@media(max-width:600px),(pointer:coarse){
+ .game.menu .modal{padding:0}
+ .panel.welcome{grid-template-columns:minmax(0,1fr);grid-template-areas:'kicker' 'art' 'copy' 'event' 'driver' 'start' 'king';grid-template-rows:auto minmax(80px,1fr) auto auto auto auto auto;width:100%;height:100%;padding:12px;gap:7px;border-color:#293c30}
+ .welcome .start-kicker{font-size:7px;letter-spacing:.12em;display:block}
+ .welcome #intro{width:100%;height:100%;min-height:0;align-self:stretch}
+ .welcome h1{grid-area:art;z-index:3;pointer-events:none;align-self:start;justify-self:start;font-size:clamp(30px,9vw,42px);margin:15px 0 0 12px;max-width:65%;text-shadow:0 2px 18px #001305;line-height:.88}
+ .welcome #intro:after{background:linear-gradient(90deg,#021109b0,transparent 65%),linear-gradient(0deg,#020e0780,transparent 40%)}
+ .welcome .hero-car{width:57%;inset:auto 1% 7% auto;transform:none}
+ .scene-caption{top:auto;bottom:13px;left:12px;right:12px}
+ .scene-caption h2{margin:0;font-size:14px;max-width:47%;line-height:1}
+ .scene-caption p,.scene-topline span:last-child,.grid-id{display:none}
+ .scene-topline{position:absolute;bottom:24px;left:0;font-size:6px;letter-spacing:.12em;color:#b5d9b9}
+ .idle-exhaust{left:56%;bottom:14%}
+ .welcome .season-signature{font-size:8px;letter-spacing:.05em;margin-bottom:7px}
+ .welcome .quick-guide{gap:6px 10px}.welcome .guide-rule{padding-top:6px;gap:6px}
+ .welcome .guide-rule>svg{width:16px;height:16px}.welcome .guide-rule b{font-size:6px;letter-spacing:.08em;margin-bottom:3px}
+ .welcome .guide-rule>span>span{font-size:9px;line-height:1.25}.welcome .guide-rule .touch-note{display:block}.welcome .guide-rule .keyboard-note{display:none}
+ .welcome .season-picker,.welcome .driver-entry{margin:0}.welcome .season-picker label,.welcome .driver-entry label{font-size:7px;margin-bottom:4px}
+ .welcome .season-picker #courseLocation{font-size:8px;margin-top:4px}
+ .welcome .driver-entry input,.welcome .season-picker select{min-height:44px;font-size:16px;padding:8px 10px}
+ .welcome .driver-entry-note{font-size:8px;min-height:10px}
+ .welcome .panel-actions #start{min-height:46px;padding:10px 12px;font-size:10px}
+ .welcome .welcome-crown{min-height:40px;gap:7px;padding:7px 8px}
+ .welcome-crown>svg{width:18px;height:18px}.crown-label{font-size:6px;letter-spacing:.06em}.crown-driver{font-size:10px}.crown-time{font-size:10px;letter-spacing:0}.crown-arrow{display:none}
+}
+@media(max-width:600px) and (max-height:750px){
+ .panel.welcome{grid-template-areas:'art' 'copy' 'event' 'driver' 'start' 'king';grid-template-rows:minmax(80px,1fr) auto auto auto auto auto;padding:10px;gap:6px}
+ .welcome .start-kicker,.welcome .driver-entry-note,.welcome .season-picker #courseLocation{display:none}
+ .welcome .guide-rule>span>span{font-size:8px}.welcome .season-signature{margin-bottom:5px}
+}
+@media(max-width:600px) and (max-height:650px){
+ .panel.welcome{padding:6px;gap:4px;grid-template-rows:minmax(76px,1fr) auto auto auto auto auto}
+ .welcome .season-picker label,.welcome .driver-entry label{display:none}
+ .welcome h1{font-size:28px;margin:10px 0 0 10px}
+ .welcome .season-signature{font-size:7px;margin-bottom:4px}.welcome .quick-guide{gap:4px 8px}
+ .welcome .guide-rule{gap:4px;padding-top:4px}.welcome .guide-rule>svg{width:13px;height:13px}
+ .welcome .guide-rule b{font-size:6px;margin-bottom:2px}.welcome .guide-rule>span>span{font-size:7px;line-height:1.2}
+ .welcome .welcome-crown{min-height:34px;padding:5px 7px}.crown-label{font-size:6px}.crown-driver,.crown-time{font-size:9px}
+ .scene-caption{left:10px;bottom:9px}.scene-caption h2{font-size:11px}.scene-topline{bottom:18px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .game.menu .modal{padding:0}
+ .panel.welcome{grid-template-columns:minmax(0,1fr) minmax(190px,.65fr);grid-template-areas:'art event' 'art driver' 'art start' 'king king';grid-template-rows:44px 44px minmax(44px,1fr) 36px;width:100%;height:100%;padding:3px 6px;gap:4px 10px}
+ .welcome .start-kicker,.welcome #msg,.welcome .season-picker label,.welcome .season-picker #courseLocation,.welcome .driver-entry label,.welcome .driver-entry-note{display:none}
+ .welcome h1{grid-area:art;align-self:start;justify-self:start;z-index:3;pointer-events:none;font-size:30px;margin:10px;line-height:.86;text-shadow:0 2px 12px #061209}
+ .welcome #intro{display:block;width:100%;height:100%;min-height:0}
+ .welcome .hero-car{width:57%;inset:auto 1% 6% auto;transform:none}
+ .scene-caption{top:auto;bottom:9px;left:10px;right:10px}.scene-caption h2{font-size:12px;max-width:50%;margin:0}.scene-caption p,.scene-topline span:last-child,.grid-id{display:none}
+ .scene-topline{position:absolute;bottom:20px;left:0;font-size:6px}.idle-exhaust{left:56%;bottom:14%}
+ .welcome .driver-entry,.welcome .season-picker{align-self:stretch;margin:0}.welcome .driver-entry input,.welcome .season-picker select{min-height:44px;font-size:16px;padding:8px 10px}
+ .welcome .panel-actions{align-self:start}.welcome .panel-actions #start{width:100%;min-height:44px;padding:8px;font-size:9px}
+ .welcome .welcome-crown{min-height:36px;padding:5px 10px;gap:10px}.welcome-crown>svg{width:18px;height:18px}.crown-label{font-size:7px}.crown-driver,.crown-time{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.game.menu .idle-exhaust i{animation:none}}
