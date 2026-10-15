@@ -5,11 +5,12 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 // Load the real game in a small DOM harness. Test access is injected in memory only.
-function game() {
+function game(saved = []) {
   const elements = new Map();
-  const storage = new Map([['799mountainrunbest', '12'], ['799mountainrunbest-v2', '15'], ['799mountainrunbest-v3', '17']]);
+  const storage = new Map([['799mountainrunbest', '12'], ['799mountainrunbest-v2', '15'], ['799mountainrunbest-v3', '17'], ['799mountainrunbest-v4', '19'], ...saved]);
   const gradient = { addColorStop() {} };
-  const context = new Proxy({}, { get: (obj, key) => key in obj ? obj[key] : ['createLinearGradient', 'createRadialGradient'].includes(key) ? () => gradient : () => {} });
+  const drawnText = [];
+  const context = new Proxy({fillText: value => drawnText.push(value)}, { get: (obj, key) => key in obj ? obj[key] : ['createLinearGradient', 'createRadialGradient'].includes(key) ? () => gradient : () => {} });
   function element(id) {
     if (!elements.has(id)) {
       const classes = new Set();
@@ -34,8 +35,8 @@ function game() {
   const html = fs.readFileSync(path.join(__dirname, '..', 'mountain-run', 'index.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const exposed = `window.gameTest = {
-    reset, update, render, togglePause, gates, wildlife, corners, potholes, keys, animalLane, playerPosition, project, path, roadDeparture, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,
-    get: () => ({ state, t, dist, speed, lane, apexes, animalHits, boostUntil, skidUntil, skidDirection, best }),
+    reset, update, render, togglePause, openSeason, selectEvent, nextEvent, seasonCount, scoreKey, EVENTS, event, gates, wildlife, corners, potholes, keys, animalLane, playerPosition, project, path, roadDeparture, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,
+    get: () => ({ state, t, dist, speed, lane, apexes, animalHits, boostUntil, skidUntil, skidDirection, foxSlowUntil, eventIndex, won, best }),
     set: values => {
       if ('dist' in values) dist=values.dist;
       if ('speed' in values) speed=values.speed;
@@ -44,7 +45,7 @@ function game() {
     }
   };`;
   vm.runInNewContext(script.replace('})();', exposed + '})();'), sandbox);
-  return { ...sandbox.gameTest, element, storage };
+  return { ...sandbox.gameTest, element, storage, drawnText };
 }
 
 function approach(g, event, lane, speed = 500) {
@@ -56,7 +57,8 @@ test('chicanes slow contact once, leave a usable alternating gap, and never end 
   const g = game(); g.reset();
   assert.equal(g.gates.length, 15);
   g.set({ dist: g.gates[0].d - 140 - 800 }); g.update(.05);
-  assert.equal(g.element('feedback').textContent, 'CHICANE · PASS RIGHT', 'warn for the nearest gate, not the opposite gap behind it');
+  assert.doesNotMatch(g.element('feedback').textContent, /CHICANE|PASS LEFT|PASS RIGHT/, 'hay gates do not add direction notifications');
+  g.render(); assert.ok(g.drawnText.every(text => !/PASS LEFT|PASS RIGHT/.test(text)), 'no floating hay-bale directions');
   g.reset();
   assert.ok(g.gates.every((q, i) => i % 3 === 0 || q.side === -g.gates[i - 1].side));
   approach(g, g.gates[0], -.6);
@@ -135,28 +137,46 @@ test('pothole skids drift briefly, allow counter-steering, settle sooner with br
   paused.reset(); assert.equal(paused.get().skidUntil, 0); assert.equal(paused.get().skidDirection, 0);
 });
 
-test('deer, foxes, and rabbits warn on approach and cross once; braking allows them to clear', () => {
-  const g = game(); g.reset();
-  assert.deepEqual(Array.from(new Set(g.wildlife.map(q => q.kind))).sort(), ['deer', 'fox', 'rabbit']);
-  for (const animal of g.wildlife) {
-    assert.ok(g.gates.every(q => Math.abs(q.d - animal.d) > 1000), 'crossings should not overlap chicanes');
+test('a deer collision ends the run immediately; a cleared crossing stays safe', () => {
+  const g = game(); g.reset(); const deer = g.wildlife.find(q => q.kind === 'deer');
+  g.set({ dist: deer.d - g.CAR_AHEAD - 1200 }); g.update(.05);
+  assert.notEqual(deer.start, null); assert.match(g.element('feedback').textContent, /DEER CROSSING/);
+  deer.start = g.get().t - g.ANIMAL_WAIT - deer.duration / 2 + .05;
+  approach(g, deer, 0);
+  assert.equal(g.get().state, 'end'); assert.match(g.element('title').innerHTML, /DEER HIT/);
+  assert.equal(g.storage.get(g.scoreKey()), undefined, 'a deer crash must not save a finish');
+  g.reset(); deer.start = 0; g.set({ t: deer.duration + 1 }); approach(g, deer, 0);
+  assert.equal(g.get().state, 'play'); assert.ok(g.get().speed > 450);
+});
+
+test('foxes nearly stop the car, interrupt boosts, and never use a three-hit game-over rule', () => {
+  const g = game(); const fox = g.wildlife.find(q => q.kind === 'fox');
+  g.reset(); g.keys.up = true; approach(g, g.corners[0], g.corners[0].lane, 750);
+  for (let i = 0; i < 3; i++) {
+    fox.passed = false; fox.start = g.get().t - g.ANIMAL_WAIT - fox.duration / 2 + .05;
+    approach(g, fox, 0, 750);
+    assert.equal(g.get().state, 'play'); assert.ok(g.get().speed <= 45, 'fox contact should leave the car near a standstill');
+    assert.equal(g.get().boostUntil, 0);
   }
-  const animal = g.wildlife[0];
-  g.set({ dist: animal.d - 140 - 1200 }); g.update(.05);
-  assert.notEqual(animal.start, null);
-  assert.match(g.element('feedback').textContent, /DEER CROSSING/);
-  assert.ok(Math.abs(g.animalLane(animal)) > 1, 'warning starts on the shoulder');
-  const started = animal.start;
-  g.set({ t: started + g.ANIMAL_WAIT + animal.duration / 2 - .05 });
-  approach(g, animal, 0);
-  assert.ok(g.get().speed < 350, 'contact costs speed');
-  assert.equal(g.get().state, 'play');
-  g.reset();
-  animal.start = 0;
-  g.set({ t: animal.duration + 1 });
-  approach(g, animal, 0);
-  assert.ok(g.get().speed > 450, 'a cleared crossing must not cause a phantom collision');
-  assert.equal(animal.start, 0, 'crossings must not respawn');
+  for (let i = 0; i < 12; i++) { g.set({ lane: 0 }); g.update(.05); }
+  assert.ok(g.get().speed < 60, 'do not instantly accelerate out of the slowdown');
+  for (let i = 0; i < 35; i++) { g.set({ lane: 0 }); g.update(.05); }
+  assert.ok(g.get().speed > 300, 'normal acceleration must return');
+  g.reset(); assert.equal(g.get().foxSlowUntil, 0);
+});
+
+test('Uno is named, clears the road quickly and is always safe even at the collision plane', () => {
+  const g = game(); g.reset(); const uno = g.wildlife.find(q => q.kind === 'rabbit');
+  assert.equal(uno.name, 'Uno');
+  g.set({ dist: uno.d - g.CAR_AHEAD - 1400, speed: 960 }); g.update(.05);
+  assert.notEqual(uno.start, null, 'give Uno enough warning distance to escape');
+  for (const speed of [250, 750, 960]) {
+    g.reset(); uno.start = g.get().t - g.ANIMAL_WAIT - uno.duration / 2 + .05;
+    approach(g, uno, 0, speed);
+    assert.equal(g.get().state, 'play'); assert.equal(g.get().animalHits, 0);
+    assert.ok(Math.abs(g.animalLane(uno)) > 1, 'Uno is already safely beyond the road');
+    assert.ok(g.get().speed > speed * .85, 'Uno must not cause a slowdown');
+  }
 });
 
 test('apex markers sit at the inside edge of actual corners and boost a full-speed touch', () => {
@@ -212,23 +232,49 @@ test('chicane gaps leave steering time and wildlife crosses briskly after its wa
   }
 });
 
-test('a driven run finishes the longer course and saves a personal best under the new rules', () => {
-  const g = game(); g.reset();
-  assert.equal(g.GOAL, 30000, 'extend the climb by 25 percent');
+function driveToFinish(g) {
   for (let i = 0; i < 12000 && g.get().state === 'play'; i++) {
     const run = g.get();
     g.keys.left = run.lane > .06; g.keys.right = run.lane < -.06;
-    g.keys.down = g.wildlife.some(q => q.start !== null && !q.passed && run.t < q.start + g.ANIMAL_WAIT + q.duration);
-    g.keys.up = !g.keys.down;
-    g.update(.05);
+    g.keys.down = g.wildlife.some(q => q.kind !== 'rabbit' && q.start !== null && !q.passed && run.t < q.start + g.ANIMAL_WAIT + q.duration);
+    g.keys.up = !g.keys.down; g.update(.05);
   }
-  assert.equal(g.get().state, 'end');
-  assert.equal(g.get().dist, 30000);
-  assert.match(g.element('title').innerHTML, /SUMMIT/);
-  assert.ok(Number(g.storage.get('799mountainrunbest-v4')) > 17);
+}
+
+test('all nine scheduled venues are selectable, themed and complete a saved season without a difficulty ladder', () => {
+  const g = game();
+  const schedule = fs.readFileSync(path.join(__dirname, '..', 'schedule-2027.html'), 'utf8');
+  const names = Array.from(schedule.matchAll(/class="event">([^<]+)</g), match => match[1]);
+  assert.deepEqual(Array.from(g.EVENTS, q => q.name), names, 'include the full planned website schedule in order');
+  assert.equal(g.EVENTS.length, 9); assert.equal(new Set(g.EVENTS.map(q => q.habitat)).size, 9);
+  assert.equal(g.EVENTS.find(q => q.id === 'empire').habitat, 'dunes');
+  g.selectEvent(7); assert.equal(g.get().eventIndex, 7, 'Empire is available before winning earlier events');
+  g.selectEvent(0); g.reset();
+  const paths = [];
+  for (let i = 0; i < 9; i++) {
+    assert.equal(g.get().eventIndex, i); assert.equal(g.GOAL, 30000); assert.equal(g.gates.length, 15); assert.equal(g.potholes.length, 3);
+    paths.push(g.path(4200)); assert.ok(g.corners.length >= 5, 'every event has inside apex opportunities');
+    for (const q of g.corners) {
+      assert.ok(g.gates.every(h => Math.abs(h.d-q.d) >= 650));
+      assert.ok(g.potholes.every(h => Math.abs(h.d-q.d) >= 650));
+      assert.equal(Math.sign(q.lane), Math.sign(g.path(q.d+200)-2*g.path(q.d)+g.path(q.d-200)));
+    }
+    driveToFinish(g);
+    assert.equal(g.get().state, 'end', g.EVENTS[i].name); assert.equal(g.get().won, true, g.EVENTS[i].name);
+    assert.equal(g.get().dist, 30000); assert.ok(Number(g.storage.get(g.scoreKey())) > 0);
+    assert.equal(g.seasonCount(), i+1);
+    if (i < 8) { g.element('start').onclick(); assert.equal(g.get().dist, 0); }
+  }
+  assert.equal(new Set(paths).size, 9, 'venues should have distinct road profiles');
+  assert.match(g.element('title').innerHTML, /SEASON/); assert.match(g.element('msg').innerHTML, /9 \/ 9/);
+  const restored = game(g.storage); assert.equal(restored.seasonCount(), 9); assert.ok(restored.get().best > 0);
+  restored.reset(); driveToFinish(restored);
+  assert.equal(restored.element('start').textContent, 'BACK TO SEASON →');
+  restored.element('start').onclick(); assert.equal(restored.get().state, 'menu', 'a completed season returns to event selection even when replayed out of order');
+  g.element('start').onclick(); assert.equal(g.get().state, 'menu');
+  assert.equal(g.storage.get('799mountainrunbest-v4'), '19');
   assert.equal(g.storage.get('799mountainrunbest-v3'), '17');
-  assert.equal(g.storage.get('799mountainrunbest-v2'), '15');
-  assert.equal(g.storage.get('799mountainrunbest'), '12', 'preserve earlier records without comparing different courses');
+  assert.equal(g.storage.get('799mountainrunbest-v2'), '15'); assert.equal(g.storage.get('799mountainrunbest'), '12');
 });
 
 test('crash only after three-quarters of the car is outside either road edge', () => {
@@ -246,7 +292,7 @@ test('crash only after three-quarters of the car is outside either road edge', (
       else {
         assert.equal(g.get().state, 'end');
         assert.match(g.element('title').innerHTML, /OFF ROAD/);
-        assert.equal(g.storage.get('799mountainrunbest-v4'), undefined, 'a crash is not a finish');
+        assert.equal(g.storage.get(g.scoreKey()), undefined, 'a crash is not a finish');
         const stopped = g.get(); g.update(.05);
         assert.equal(g.get().dist, stopped.dist); assert.equal(g.get().t, stopped.t);
       }
@@ -254,19 +300,15 @@ test('crash only after three-quarters of the car is outside either road edge', (
   }
 });
 
-test('two wildlife contacts are survivable; a third ends the run, and replay clears the count', () => {
-  const g = game(); g.reset();
-  for (let i = 0; i < 3; i++) {
-    const animal = g.wildlife[i];
-    animal.start = g.get().t - g.ANIMAL_WAIT - animal.duration / 2 + .05;
-    approach(g, animal, 0);
-    assert.equal(g.get().animalHits, i + 1);
-    assert.equal(g.get().state, i < 2 ? 'play' : 'end');
-  }
-  assert.match(g.element('msg').innerHTML, /THREE WILDLIFE HITS/);
-  assert.equal(g.storage.get('799mountainrunbest-v4'), undefined);
-  g.reset();
-  assert.equal(g.get().animalHits, 0); assert.equal(g.get().state, 'play');
+test('replay keeps the selected event, and the season menu clears held input and active effects', () => {
+  const g = game(); g.selectEvent(7); g.reset();
+  g.keys.left = true; g.keys.up = true; g.update(.05); g.togglePause();
+  g.element('eventMenu').onclick();
+  assert.equal(g.get().state, 'menu'); assert.equal(g.get().eventIndex, 7);
+  assert.ok(Object.values(g.keys).every(v => !v));
+  assert.equal(g.get().skidUntil, 0); assert.equal(g.get().boostUntil, 0);
+  g.element('start').onclick(); assert.equal(g.get().state, 'play'); assert.equal(g.get().eventIndex, 7);
+  assert.equal(g.selectEvent(0), false, 'changing the hidden selector must not replace an active race');
 });
 
 test('pause freezes the run and restart clears every event, hit, and bonus', () => {
@@ -278,7 +320,7 @@ test('pause freezes the run and restart clears every event, hit, and bonus', () 
   g.togglePause(); assert.equal(g.get().state, 'play');
   g.reset();
   assert.equal(g.get().apexes, 0); assert.equal(g.get().boostUntil, 0); assert.equal(g.get().animalHits, 0);
-  assert.ok(g.gates.every(q => !q.passed && !q.warned));
+  assert.ok(g.gates.every(q => !q.passed));
   assert.ok(g.wildlife.every(q => !q.passed && q.start === null));
   assert.ok(g.corners.every(q => !q.passed));
   assert.ok(g.potholes.every(q => !q.passed));

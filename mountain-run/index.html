@@ -2,7 +2,7 @@
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#090f10;color:#f2f6ef;font-family:Arial,Helvetica,sans-serif;overflow:hidden}main{height:100%;height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);place-items:center;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}.game{width:min(100%,1280px);height:min(100%,1000px);display:flex;flex-direction:column;gap:7px}.bar{display:flex;justify-content:space-between;align-items:center;gap:10px}.logo{font-weight:1000;font-style:italic;letter-spacing:-.055em;font-size:clamp(24px,4vw,40px)}.logo b{color:#20c933}.eyebrow{font-size:10px;letter-spacing:.17em;color:#a6bba8;text-align:right}.hud{display:flex;justify-content:space-around;gap:5px;background:#101e18;border:1px solid #3c5843;padding:9px 5px}.metric{text-align:center;font-size:10px;color:#8ba88e;letter-spacing:.12em}.metric strong{display:block;color:#fff;font-size:clamp(15px,3vw,25px);font-variant-numeric:tabular-nums;margin-top:3px}.stage{position:relative;flex:1;min-height:0;border:2px solid #3a5b40;overflow:hidden;background:#8cb9bd}canvas{display:block;width:100%;height:100%}.shade{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 70px #0008}.modal{position:absolute;z-index:5;inset:0;display:grid;grid-template-rows:minmax(0,1fr);place-items:center;background:#06110de6;padding:18px;text-align:center}.modal.off{display:none}.panel{border:2px solid #20c933;background:#0e2119;padding:clamp(16px,3vw,30px);max-width:490px;max-height:100%;overflow-y:auto;box-shadow:10px 10px #0008}.panel h1{font-size:clamp(32px,6vw,62px);font-style:italic;line-height:.93;margin:0 0 15px}.panel h1 span{color:#20c933}.panel p{font-size:13px;line-height:1.8;color:#d2e4d3}.panel button,.controls button{background:#20c933;color:#07140b;border:0;padding:13px 20px;font-weight:900;cursor:pointer;touch-action:none}.controls{display:flex;justify-content:space-between;align-items:center;gap:10px}.pads{display:flex;gap:6px}.pads button{min-width:54px;font-size:20px;padding:10px}.hint{color:#9eae9e;font-size:11px;text-align:right}.brake{background:#e7ac44!important}.controls .pause{background:#243b2d;color:#eaf9e8;border:1px solid #52795a}@media(max-width:560px){.hint{display:none}.pads button{min-width:47px;padding:9px}.eyebrow{font-size:8px}.game{gap:4px}.hud{padding:5px}}@media(max-height:590px){.eyebrow,.hint{display:none}.logo{font-size:21px}.controls button{padding:5px 12px}}
  .stage-tag{position:absolute;z-index:2;top:16px;right:18px;font-size:11px;font-weight:900;letter-spacing:.15em;color:#efffe7;text-shadow:0 2px 8px #000}.stage-tag span{color:#75ff5a}.controls .sound{background:#182d20;color:#c3edc6;border:1px solid #52795a;font-size:11px;padding:12px}.stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#05130c35,transparent 18%,transparent 78%,#07180d42)}@media(max-width:560px){.controls .sound{font-size:9px;padding:7px}.stage-tag{font-size:8px;right:8px;top:8px}} .course-map{position:absolute;z-index:3;right:12px;top:47px;width:clamp(125px,19vw,205px);padding:10px 11px;background:#081711b8;border:1px solid #ffffff3d;border-radius:8px;box-shadow:0 6px 22px #0005;backdrop-filter:blur(7px);pointer-events:none}.course-map svg{display:block;width:100%;max-height:180px}.map-heading,.map-bottom{font-size:10px;font-weight:900;letter-spacing:.1em;color:#e5f2e6;display:flex;justify-content:space-between}.map-heading b,.map-bottom strong{color:#20c933}.map-bottom{padding-top:5px;border-top:1px solid #ffffff30}@media(max-width:600px){.course-map{width:105px;right:5px;top:26px;padding:5px}.course-map svg{max-height:100px}.map-heading,.map-bottom{font-size:7px}} .driving-feedback{position:absolute;z-index:3;bottom:17px;left:50%;transform:translateX(-50%);padding:9px 16px;border:1px solid #b3cd9b80;border-radius:5px;background:#081810de;color:#e7f2db;font-size:12px;font-weight:900;letter-spacing:.08em;opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap}.driving-feedback.visible{opacity:1}.driving-feedback[data-kind="reward"]{color:#a9ff80;border-color:#75ed50}.driving-feedback[data-kind="warning"]{color:#ffdc8a;border-color:#d2a552}@media(max-width:560px){.driving-feedback{font-size:9px;padding:7px 9px;bottom:10px}.panel p{font-size:12px;line-height:1.6}.eyebrow{max-width:50%;white-space:normal}}
  @media(max-height:590px){.modal{padding:10px}.panel{padding:12px;max-width:620px}.panel h1{font-size:28px;margin-bottom:8px}.panel p{font-size:11px;line-height:1.4;margin:8px 0}.panel button{padding:8px 16px}}
-[hidden]{display:none!important}.metric{min-width:0}.metric strong{white-space:nowrap}button:focus-visible,.home-link:focus-visible{outline:2px solid #e3ffae;outline-offset:3px}.panel.welcome{width:min(100%,820px);max-width:820px;background:radial-gradient(ellipse at 76% 35%,#224d27 0,transparent 55%),linear-gradient(145deg,#091b13,#07100d);border:1px solid #618956;box-shadow:0 25px 70px #0009;text-align:left;padding:28px;position:relative}.welcome h1{font-size:clamp(38px,5vw,70px);max-width:470px;margin-top:7px;position:relative;z-index:1}.welcome #msg{max-width:390px;position:relative;z-index:1;font-size:12px;line-height:1.55}.welcome #start{position:relative;z-index:1;min-width:205px;background:linear-gradient(120deg,#80f950,#20c933);box-shadow:0 5px 22px #4dc93230}.welcome #intro{position:absolute;inset:0;pointer-events:none;overflow:hidden}.hero-car{position:absolute;width:48%;right:-2%;bottom:48px;filter:drop-shadow(0 14px 18px #0009);transform:rotate(-3deg)}.hero-road{position:absolute;right:-15%;bottom:-105px;width:65%;height:240px;background:repeating-linear-gradient(0deg,#2c352f 0px,#2c352f 5px,#313c34 6px);transform:skewX(-27deg) rotate(-7deg);border:3px solid #97a58e38}.hero-road:before{content:"";position:absolute;left:48%;height:100%;width:5px;background:repeating-linear-gradient(0deg,#e9e6c8 0 20px,transparent 20px 42px)}.start-kicker{position:relative;z-index:1;color:#c7dbb7;font-size:10px;letter-spacing:.2em}.start-rules{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 15px;max-width:450px}.start-rules span{padding:6px 8px;border:1px solid #617851;background:#0b1b14b8;color:#bceaa4;font-size:9px;font-weight:900;letter-spacing:.07em}.panel:not(.welcome) .start-kicker,.panel:not(.welcome) .start-rules{display:none}.panel.welcome .start-kicker:after{content:" // GAMEPLAY V4.1";color:#81f05b}@media(max-width:600px){.panel.welcome{padding:20px}.welcome h1{font-size:44px;margin-top:140px;max-width:none}.hero-car{width:65%;right:17%;top:18px;bottom:auto;transform:none}.hero-road{top:88px;right:2%;width:90%;height:120px;bottom:auto}.welcome #msg{max-width:none}.start-rules{margin:12px 0}.welcome #start{width:100%}.metric{font-size:8px}}@media(max-height:590px){.panel.welcome{padding:10px 16px}.welcome .start-kicker{font-size:8px}.welcome h1{font-size:30px;margin:4px 0 7px;max-width:55%}.welcome #msg{max-width:56%;font-size:9px;line-height:1.25;margin:3px 0}.hero-car{top:auto;bottom:20px;right:-1%;width:40%}.hero-road{top:auto;bottom:-130px;right:-15%;width:60%;height:240px}.start-rules{margin:6px 0;gap:4px}.start-rules span{font-size:7px;padding:3px}.welcome #start{min-width:170px;padding:7px 14px}}
+[hidden]{display:none!important}.metric{min-width:0}.metric strong{white-space:nowrap}button:focus-visible,.home-link:focus-visible{outline:2px solid #e3ffae;outline-offset:3px}.panel.welcome{width:min(100%,820px);max-width:820px;background:radial-gradient(ellipse at 76% 35%,#224d27 0,transparent 55%),linear-gradient(145deg,#091b13,#07100d);border:1px solid #618956;box-shadow:0 25px 70px #0009;text-align:left;padding:28px;position:relative}.welcome h1{font-size:clamp(38px,5vw,70px);max-width:470px;margin-top:7px;position:relative;z-index:1}.welcome #msg{max-width:390px;position:relative;z-index:1;font-size:12px;line-height:1.55}.welcome #start{position:relative;z-index:1;min-width:205px;background:linear-gradient(120deg,#80f950,#20c933);box-shadow:0 5px 22px #4dc93230}.welcome #intro{position:absolute;inset:0;pointer-events:none;overflow:hidden}.hero-car{position:absolute;width:48%;right:-2%;bottom:48px;filter:drop-shadow(0 14px 18px #0009);transform:rotate(-3deg)}.hero-road{position:absolute;right:-15%;bottom:-105px;width:65%;height:240px;background:repeating-linear-gradient(0deg,#2c352f 0px,#2c352f 5px,#313c34 6px);transform:skewX(-27deg) rotate(-7deg);border:3px solid #97a58e38}.hero-road:before{content:"";position:absolute;left:48%;height:100%;width:5px;background:repeating-linear-gradient(0deg,#e9e6c8 0 20px,transparent 20px 42px)}.start-kicker{position:relative;z-index:1;color:#c7dbb7;font-size:10px;letter-spacing:.2em}.start-rules{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 15px;max-width:450px}.start-rules span{padding:6px 8px;border:1px solid #617851;background:#0b1b14b8;color:#bceaa4;font-size:9px;font-weight:900;letter-spacing:.07em}.panel:not(.welcome) .start-kicker,.panel:not(.welcome) .start-rules{display:none}.panel.welcome .start-kicker:after{content:" // GAMEPLAY V5";color:#81f05b}@media(max-width:600px){.panel.welcome{padding:20px}.welcome h1{font-size:44px;margin-top:140px;max-width:none}.hero-car{width:65%;right:17%;top:18px;bottom:auto;transform:none}.hero-road{top:88px;right:2%;width:90%;height:120px;bottom:auto}.welcome #msg{max-width:none}.start-rules{margin:12px 0}.welcome #start{width:100%}.metric{font-size:8px}}@media(max-height:590px){.panel.welcome{padding:10px 16px}.welcome .start-kicker{font-size:8px}.welcome h1{font-size:30px;margin:4px 0 7px;max-width:55%}.welcome #msg{max-width:56%;font-size:9px;line-height:1.25;margin:3px 0}.hero-car{top:auto;bottom:20px;right:-1%;width:40%}.hero-road{top:auto;bottom:-130px;right:-15%;width:60%;height:240px}.start-rules{margin:6px 0;gap:4px}.start-rules span{font-size:7px;padding:3px}.welcome #start{min-width:170px;padding:7px 14px}}
 
 .steering-pads,.driving-pads{display:flex;gap:6px}#left,#right{font-size:34px}.pads{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.touch-note{display:none}
 @media(max-width:600px),(pointer:coarse){
@@ -153,7 +153,38 @@ button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
  .welcome #start{grid-area:start;width:220px;min-height:44px;padding:10px 14px}
  .welcome .intro-copy,.welcome .start-rules{display:none}.welcome .mobile-rules{display:inline}
 }
- </style></head><body><main><div class="game menu" id="game"><div class="bar"><div class="logo">799 <span>MOTORSPORT</span></div><div class="eyebrow">MOUNTAIN RUN<br>1976 VOLKSWAGEN SCIROCCO</div><a class="home-link" href="https://scirocco799.com/" aria-label="Back to Scirocco 799 home">← Home</a></div><div class="hud"><div class="metric">TIME<strong id="time">00:00.0</strong></div><div class="metric">SPEED<strong id="speed">0 MPH</strong></div><div class="metric">DISTANCE<strong id="dist">0%</strong></div><div class="metric">CLEAN APEX<strong id="apexes">0</strong></div><div class="metric">WILDLIFE<strong id="strikes">0 / 3</strong></div><div class="metric">BEST<strong id="best">--</strong></div></div><div class="stage"><div class="course-map"><div class="map-heading">POINT TO POINT <b>↗</b></div><svg viewBox="0 0 190 200" aria-label="Open hill climb route from start to summit"><path id="coursePath" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#ffffff42" stroke-width="11" stroke-linecap="round"/><path d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#e4e8df" stroke-width="4" stroke-linecap="round"/><path id="courseProgress" fill="none" stroke="#20c933" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="182" r="5" fill="#20c933"/><circle cx="170" cy="17" r="6" fill="#fff"/><circle id="mapDot" cx="21" cy="182" r="7" fill="#20c933" stroke="#061b0b" stroke-width="3"/><text x="4" y="199" font-size="11" font-weight="bold" fill="white">START</text><text x="122" y="10" font-size="11" font-weight="bold" fill="white">SUMMIT</text></svg><div class="map-bottom">ASCENT <strong id="elevation">0 FT</strong></div></div><div class="stage-tag">GAMEPLAY V4.1 <span>SUMMIT CHALLENGE</span></div><div class="driving-feedback" id="feedback" role="status" aria-live="polite"></div><canvas id="scene" tabindex="-1" width="1920" height="1200" aria-label="Third-person mountain racing game starring the green Scirocco 799"></canvas><div class="shade"></div><div class="modal" id="modal"><div class="panel welcome" id="gamePanel"><div id="intro"><div class="hero-road"></div><img class="hero-car" src="../images/799-scirocco-rear.svg?v=4233c019" alt="Green 799 Scirocco ready for the mountain"></div><div class="start-kicker">THE MOUNTAIN IS CALLING</div><h1 id="title">MOUNTAIN<br><span>RUN.</span></h1><p id="msg"><span class="intro-copy">ONE CAR. ONE SUMMIT. ONE SHOT.<br>Hit inside apexes for instant speed boosts.<br>Hay bales and potholes cost speed. Three animal hits end your run.<br>Crash when three-quarters of the car crosses the white road line.<br><span class="keyboard-note"><b>← →</b> STEER &nbsp; <b>↑</b> GAS &nbsp; <b>↓</b> BRAKE<br>A/D and W/S also work. Space pauses. R restarts.</span></span><span class="mobile-rules">Hit apexes for speed. Three animal hits end the run.<br>Crash when three-quarters of the car crosses the white line.<br></span><span class="touch-note">STEER WITH YOUR LEFT THUMB.<br>GAS AND BRAKE WITH YOUR RIGHT.</span></p><div class="start-rules"><span>25% LONGER CLIMB</span><span>INSTANT APEX BOOSTS</span><span>3 WILDLIFE HITS = OUT</span></div><button id="start">START THE CLIMB →</button></div></div></div><div class="controls"><div class="pads"><div class="steering-pads">
+
+/* Event selection and season results stay inside the game. */
+.season-picker{position:relative;z-index:1;max-width:460px;margin:20px 0;grid-area:event}
+.season-picker label{display:flex;justify-content:space-between;gap:8px;margin-bottom:7px;color:#aaa;font:900 8px Arial;letter-spacing:.12em}
+#seasonProgress{color:var(--green);letter-spacing:.02em;text-transform:uppercase}
+.season-picker select{width:100%;min-height:44px;padding:10px 30px 10px 12px;border:1px solid #666;border-radius:0;background:#141414;color:#fff;font:700 12px Arial;cursor:pointer;color-scheme:dark}
+.season-picker select:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.season-picker #courseLocation{margin:7px 0 0;font-size:10px;line-height:1.35;color:#aaa}
+.panel-actions{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:8px;grid-area:start}
+.panel-actions .secondary{min-height:44px;padding:10px 14px;border:1px solid #444;background:transparent;color:#111;font-size:9px;letter-spacing:.1em}
+.game.results .hud,.game.results .pads,.game.results .pause,.game.results .hint{display:none}
+.game.results .controls{display:flex;justify-content:flex-end}
+.stage-tag{max-width:calc(100% - 110px);text-align:right;line-height:1.3}
+.stage-tag small{display:block;margin-top:3px;color:#f2f6ef;font-size:8px;letter-spacing:.1em}
+@media(max-width:600px),(pointer:coarse){
+ .panel.welcome{grid-template-areas:'kicker kicker' 'title art' 'copy copy' 'event event' 'start start';gap:8px}
+ .welcome .season-picker{max-width:none;margin:2px 0}
+ .welcome #msg{font-size:10px;line-height:1.3}
+ .welcome .panel-actions{width:100%}
+ .season-picker label{font-size:7px}.season-picker #courseLocation{font-size:9px}
+ .course-map{top:42px}
+}
+@media(max-height:700px) and (min-width:601px){.welcome .season-picker{margin:12px 0}}
+@media(max-height:500px) and (orientation:landscape){
+ .panel.welcome{grid-template-columns:minmax(0,1fr) 190px;grid-template-areas:'kicker event' 'title event' 'copy event' 'start event';gap:6px}
+ .welcome #intro{display:none}.welcome .season-picker{margin:0;align-self:center}
+ .welcome .touch-note{display:none}.welcome #msg{font-size:9px;line-height:1.2}
+ .welcome h1{font-size:24px}.welcome #start{width:220px}
+ .season-picker label{display:block;line-height:1.6}.season-picker label span{display:block}
+ .course-map{top:42px}
+}
+ </style></head><body><main><div class="game menu" id="game"><div class="bar"><div class="logo">799 <span>MOTORSPORT</span></div><div class="eyebrow">MOUNTAIN RUN<br>1976 VOLKSWAGEN SCIROCCO</div><a class="home-link" href="https://scirocco799.com/" aria-label="Back to Scirocco 799 home">← Home</a></div><div class="hud"><div class="metric">TIME<strong id="time">00:00.0</strong></div><div class="metric">SPEED<strong id="speed">0 MPH</strong></div><div class="metric">DISTANCE<strong id="dist">0%</strong></div><div class="metric">CLEAN APEX<strong id="apexes">0</strong></div><div class="metric">EVENT<strong id="round">1 / 9</strong></div><div class="metric">BEST<strong id="best">--</strong></div></div><div class="stage"><div class="course-map"><div class="map-heading">POINT TO POINT <b>↗</b></div><svg viewBox="0 0 190 200" aria-label="Open hill climb route from start to summit"><path id="coursePath" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#ffffff42" stroke-width="11" stroke-linecap="round"/><path id="courseOutline" d="M21 182 C48 183 65 192 79 168 S43 135 67 115 S119 149 139 113 S105 63 143 49 S167 57 170 17" fill="none" stroke="#e4e8df" stroke-width="4" stroke-linecap="round"/><path id="courseProgress" fill="none" stroke="#20c933" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="182" r="5" fill="#20c933"/><circle cx="170" cy="17" r="6" fill="#fff"/><circle id="mapDot" cx="21" cy="182" r="7" fill="#20c933" stroke="#061b0b" stroke-width="3"/><text x="4" y="199" font-size="11" font-weight="bold" fill="white">START</text><text x="122" y="10" font-size="11" font-weight="bold" fill="white">SUMMIT</text></svg><div class="map-bottom">ASCENT <strong id="elevation">0 FT</strong></div></div><div class="stage-tag"><span id="stageVenue">PINE MOUNTAIN</span><small id="stageVersion">GAMEPLAY V5 · EVENT 1 / 9</small></div><div class="driving-feedback" id="feedback" role="status" aria-live="polite"></div><canvas id="scene" tabindex="-1" width="1920" height="1200" aria-label="Third-person mountain racing game starring the green Scirocco 799"></canvas><div class="shade"></div><div class="modal" id="modal"><div class="panel welcome" id="gamePanel"><div id="intro"><div class="hero-road"></div><img class="hero-car" src="../images/799-scirocco-rear.svg?v=4233c019" alt="Green 799 Scirocco ready for the mountain"></div><div class="start-kicker">THE MOUNTAIN IS CALLING</div><h1 id="title">MOUNTAIN<br><span>RUN.</span></h1><p id="msg"><span class="intro-copy">NINE EVENTS. ONE 2027 SEASON.<br>Touch inside arrows for instant speed boosts.<br>Deer end the run. Foxes nearly stop you. Uno always gets away.<br>Crash when three-quarters of the car crosses the white road line.<br><span class="keyboard-note"><b>← →</b> STEER &nbsp; <b>↑</b> GAS &nbsp; <b>↓</b> BRAKE<br>A/D and W/S also work. Space pauses. R restarts.</span></span><span class="mobile-rules">Touch inside arrows for speed.<br>Deer end the run. Foxes nearly stop you.<br>Crash when three-quarters of the car crosses the white line.<br></span><span class="touch-note">STEER WITH YOUR LEFT THUMB.<br>GAS AND BRAKE WITH YOUR RIGHT.</span></p><div class="season-picker" id="seasonPicker"><label for="eventSelect">2027 PLANNED SEASON <span id="seasonProgress">0 / 9 events finished</span></label><select id="eventSelect" aria-label="Choose a 2027 event"><option value="0">01 · Pine Mountain HillClimb</option></select><p id="courseLocation">Pineville, Kentucky · Pines &amp; limestone</p></div><div class="panel-actions"><button id="start">START THIS EVENT →</button><button class="secondary" id="replay" hidden>RACE AGAIN ↻</button><button class="secondary" id="eventMenu" hidden>SEASON MENU</button></div></div></div></div><div class="controls"><div class="pads"><div class="steering-pads">
 <svg class="wheel-art" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
  <defs><linearGradient id="wheel-metal" x2="0" y2="1"><stop stop-color="#7e8784"/><stop offset=".4" stop-color="#3c4341"/><stop offset="1" stop-color="#1a211e"/></linearGradient><linearGradient id="wheel-rim" x2="0" y2="1"><stop stop-color="#343936"/><stop offset=".5" stop-color="#171b19"/><stop offset="1" stop-color="#080c0a"/></linearGradient></defs>
  <circle cx="60" cy="50" r="43" fill="none" stroke="#020504" stroke-width="13"/>
@@ -188,7 +219,7 @@ button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
 </svg><span class="pedal-label" aria-hidden="true">GAS</span></button>
 </div></div><div class="hint">← → STEER · ↑ GAS · ↓ BRAKE<br>SPACE PAUSE · R RESTART · M SOUND</div><button class="sound" id="sound" aria-label="Toggle engine sound" aria-pressed="true">SOUND ON ♪</button><button class="pause" id="pause">PAUSE</button></div></div></main>
 <script>
-(()=>{'use strict';const canvas=document.getElementById('scene'),g=canvas.getContext('2d',{alpha:false});let W=960;const H=600,GOAL=30000,VIEW=1650,ROAD=420,CAR_AHEAD=140,CAR_HALF_WIDTH=83,ROAD_LINE_INSET=9,APEX_RADIUS=32,ANIMAL_WAIT=.25,SKID_DURATION=.55,BURNOUT_DURATION=.9,BEST_KEY='799mountainrunbest-v4';const $=id=>document.getElementById(id);let state='menu',t=0,dist=0,speed=0,lane=0,apexes=0,animalHits=0,boostUntil=0,skidUntil=0,skidDirection=0,burnoutUntil=0,smokeTimer=0,tireSmoke=[],feedbackUntil=0,feedbackPriority=0,wasNearEdge=false,shake=0,flash=0,last=0,particles=[],best=null,soundOn=true,audio=null,osc=null,gain=null,tireOsc=null,tireGain=null;const keys={left:false,right:false,up:false,down:false};try{best=Number(localStorage.getItem(BEST_KEY))||null}catch(e){}const rand=n=>{let x=Math.sin(n*127.17+71.71)*43758.545;return x-Math.floor(x)};const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));function fmt(v){return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.floor(v%60)).padStart(2,'0')+'.'+Math.floor(v%1*10)}
+(()=>{'use strict';const canvas=document.getElementById('scene'),g=canvas.getContext('2d',{alpha:false});let W=960;const H=600,GOAL=30000,VIEW=1650,ROAD=420,CAR_AHEAD=140,CAR_HALF_WIDTH=83,ROAD_LINE_INSET=9,APEX_RADIUS=32,ANIMAL_WAIT=.25,SKID_DURATION=.55,BURNOUT_DURATION=.9,BEST_KEY='799mountainrunbest-v5';const $=id=>document.getElementById(id);let state='menu',t=0,dist=0,speed=0,lane=0,apexes=0,animalHits=0,boostUntil=0,skidUntil=0,skidDirection=0,burnoutUntil=0,smokeTimer=0,tireSmoke=[],feedbackUntil=0,feedbackPriority=0,wasNearEdge=false,shake=0,flash=0,last=0,particles=[],best=null,soundOn=true,audio=null,osc=null,gain=null,tireOsc=null,tireGain=null;const keys={left:false,right:false,up:false,down:false};const rand=n=>{let x=Math.sin(n*127.17+71.71)*43758.545;return x-Math.floor(x)};const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));function fmt(v){return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.floor(v%60)).padStart(2,'0')+'.'+Math.floor(v%1*10)}
 function audioStart(){
  if(audio)return;
  try{
@@ -215,7 +246,63 @@ function audioUpdate(){
  tireGain.gain.setTargetAtTime(active?.035*tireLevel:0,audio.currentTime,.035);
 }
 $('sound').onclick=()=>{soundOn=!soundOn;if(soundOn)audioStart();$('sound').textContent=soundOn?'SOUND ON ♪':'SOUND OFF ♪';$('sound').setAttribute('aria-pressed',String(soundOn));audioUpdate()};
-function path(d){return Math.sin(d/1200)*175+Math.sin(d/490)*67+Math.sin(d/2500)*100}function project(d){let z=clamp((d-dist)/VIEW,0,1),depth=1-z,scale=.16+depth*1.6;return {y:240+Math.pow(depth,1.48)*350,x:W/2+(path(d)-path(dist))*depth*1.2,scale,depth}}
+const EVENTS=[
+ {id:'pine-mountain',name:'Pine Mountain HillClimb',short:'Pine Mountain',place:'Pineville, Kentucky',scene:'Pines & limestone',habitat:'pine',phase:0,scale:1,sky:['#559eae','#d4e7cd'],ground:['#607e4f','#2b5136'],ridges:['#8aa4a0','#638573','#3d654b'],shoulder:'#a5a18a'},
+ {id:'spring-weatherly',name:'Spring Weatherly Hillclimb',short:'Spring Weatherly',place:'Weatherly, Pennsylvania',scene:'Spring woodland & village streets',habitat:'village',phase:.1,scale:1,sky:['#72b9d3','#e1efdc'],ground:['#8fad62','#476d3b'],ridges:['#a4bcaa','#84a075','#638c50'],shoulder:'#aaa58e'},
+ {id:'pagoda',name:'Pagoda Hillclimb',short:'Pagoda',place:'Reading, Pennsylvania',scene:'The red pagoda & Reading skyline',habitat:'pagoda',phase:.2,scale:1,sky:['#69a2c3','#e8e3ce'],ground:['#80925c','#3a633f'],ridges:['#9aa9ab','#748e83','#537561'],shoulder:'#a39c86'},
+ {id:'flag-rock',name:'Flag Rock HillClimb',short:'Flag Rock',place:'Norton, Virginia',scene:'Rock overlooks & Appalachian forest',habitat:'flag',phase:3.8,scale:1,sky:['#4d91ad','#d7e4d5'],ground:['#6b7954','#344d36'],ridges:['#88999e','#5c7980','#3d5e59'],shoulder:'#99988c'},
+ {id:'giants-despair',name:'Giants Despair Hillclimb',short:'Giants Despair',place:'Laurel Run, Pennsylvania',scene:'Deep woods & rocky hillsides',habitat:'rock',phase:3.9,scale:1,sky:['#819fac','#e0e5d5'],ground:['#71785b','#344637'],ridges:['#9fa9a5','#74857c','#4b6858'],shoulder:'#99968b'},
+ {id:'duryea',name:'Duryea Hillclimb',short:'Duryea',place:'Reading, Pennsylvania',scene:'Stone walls & city overlooks',habitat:'city',phase:4,scale:1,sky:['#b58b73','#f1d7af'],ground:['#8a895b','#4d603d'],ridges:['#b2a69a','#8c9687','#6c8565'],shoulder:'#aaa18d'},
+ {id:'waumandee',name:'Waumandee Time Trials',short:'Waumandee',place:'Waumandee, Wisconsin',scene:'Rolling farmland, barns & cornfields',habitat:'farm',phase:4.1,scale:.96,sky:['#70b5d3','#e9eed4'],ground:['#b3ad5d','#6c823f'],ridges:['#b7c48e','#9eb36d','#7f9e54'],shoulder:'#b2a78b'},
+ {id:'empire',name:'Empire Hill Climb',short:'Empire',place:'Empire, Michigan',scene:'Lake Michigan, dunes & beach grass',habitat:'dunes',phase:4.2,scale:.96,sky:['#64b5d9','#d9edf0'],ground:['#e2cea0','#bea97a'],ridges:['#b9d5d1','#dfcfaa','#cdbb8e'],shoulder:'#e6d4a7'},
+ {id:'shamrock-mountain',name:'Shamrock Mountain HillClimb',short:'Shamrock Mountain',place:'Manchester, Kentucky',scene:'Lush green ridges & woodland',habitat:'shamrock',phase:4.3,scale:1,sky:['#539ba6','#d2e8c5'],ground:['#79a05b','#2d5839'],ridges:['#91b2a3','#679279','#3e7556'],shoulder:'#aaa38b'}
+];
+let eventIndex=0,foxSlowUntil=0,won=false;const sessionBests=new Map();
+const welcomeTitle=$('title').innerHTML,welcomeMessage=$('msg').innerHTML;
+function event(){return EVENTS[eventIndex]}
+function scoreKey(index=eventIndex){return BEST_KEY+'-'+EVENTS[index].id}
+function readBest(index=eventIndex){if(sessionBests.has(index))return sessionBests.get(index);try{const value=Number(localStorage.getItem(scoreKey(index)));return Number.isFinite(value)&&value>0?value:null}catch(e){return null}}
+function seasonCount(){return EVENTS.filter((_,i)=>readBest(i)!==null).length}
+function buildCorners(){
+ corners.length=0;
+ for(let d=1200;d<GOAL-1200;d+=60){
+  const strength=Math.abs(bend(d));
+  if(strength<.04||strength<Math.abs(bend(d-60))||strength<Math.abs(bend(d+60)))continue;
+  if(gates.some(q=>Math.abs(q.d-d)<650)||wildlife.some(q=>Math.abs(q.d-d)<550)||potholes.some(q=>Math.abs(q.d-d)<650))continue;
+  if(corners.some(q=>Math.abs(q.d-d)<900))continue;
+  corners.push({d,lane:Math.sign(bend(d))*.8,passed:false});
+ }
+}
+function selectEvent(index){
+ if(!Number.isInteger(index)||index<0||index>=EVENTS.length||state==='play'||state==='pause')return false;
+ eventIndex=index;best=readBest();buildCorners();
+ $('eventSelect').value=String(index);
+ $('courseLocation').textContent=event().place+' · '+event().scene;
+ $('seasonProgress').textContent=seasonCount()+' / '+EVENTS.length+' events finished';
+ $('stageVenue').textContent=event().short;
+ $('stageVersion').textContent='GAMEPLAY V5 · EVENT '+(index+1)+' / '+EVENTS.length;
+ $('round').textContent=(index+1)+' / '+EVENTS.length;
+ $('eventSelect').innerHTML=EVENTS.map((c,i)=>'<option value="'+i+'">'+(readBest(i)!==null?'✓ ':'')+String(i+1).padStart(2,'0')+' · '+c.name+'</option>').join('');$('eventSelect').value=String(index);
+ const points=[];
+ for(let i=0;i<=130;i++){const f=i/130;points.push((i?'L':'M')+(21+149*f+Math.sin(Math.PI*f)*path(f*GOAL)*.13).toFixed(1)+' '+(182-165*f).toFixed(1))}
+ route.setAttribute('d',points.join(' '));$('courseOutline').setAttribute('d',points.join(' '));routeLength=route.getTotalLength();
+ return true;
+}
+function openSeason(){
+ state='menu';won=false;t=0;dist=0;speed=0;lane=0;boostUntil=0;skidUntil=0;burnoutUntil=0;foxSlowUntil=0;
+ $('game').classList.remove('results');
+ particles=[];tireSmoke=[];for(const k of Object.keys(keys))keys[k]=false;
+ $('feedback').classList.remove('visible');$('game').classList.add('menu');$('gamePanel').classList.add('welcome');
+ $('intro').hidden=false;$('seasonPicker').hidden=false;$('eventMenu').hidden=true;$('replay').hidden=true;
+ $('title').innerHTML=welcomeTitle;$('msg').innerHTML=welcomeMessage;$('start').textContent='START THIS EVENT →';$('pause').textContent='PAUSE';$('modal').classList.remove('off');
+ selectEvent(eventIndex);audioUpdate();
+}
+function nextEvent(){
+ if(seasonCount()===EVENTS.length){openSeason();return}
+ if(eventIndex<EVENTS.length-1){selectEvent(eventIndex+1);reset()}else openSeason();
+}
+
+function path(d){const c=event();return (Math.sin(d/1200+c.phase)*175+Math.sin(d/490+c.phase*.7)*67+Math.sin(d/2500+c.phase*.4)*100)*c.scale}function project(d){let z=clamp((d-dist)/VIEW,0,1),depth=1-z,scale=.16+depth*1.6;return {y:240+Math.pow(depth,1.48)*350,x:W/2+(path(d)-path(dist))*depth*1.2,scale,depth}}
 function updateViewport(){
  const bounds=canvas.getBoundingClientRect();
  const previousW=W;
@@ -226,11 +313,96 @@ function updateViewport(){
  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}
 }
 function polygon(points,fill,stroke,line=1){g.beginPath();points.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fillStyle=fill;g.fill();if(stroke){g.strokeStyle=stroke;g.lineWidth=line;g.stroke()}}function line(points,color,width){g.beginPath();points.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.strokeStyle=color;g.lineWidth=width;g.stroke()}function rect(x,y,w,h,color){g.fillStyle=color;g.fillRect(x,y,w,h)}function ellipse(x,y,rx,ry,fill){g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fillStyle=fill;g.fill()}
-function sky(){let zone=Math.min(3,Math.floor(dist/(GOAL/4)));let sky=g.createLinearGradient(0,0,0,420);const top=['#4a9fb4','#5b99ac','#729da2','#e1a078'][zone],bottom=['#cce9d7','#c8dfbf','#d9dbb4','#ffe2ad'][zone];sky.addColorStop(0,top);sky.addColorStop(1,bottom);rect(0,0,W,600,sky);ellipse(790,100,45,45,'#fff4bc88');for(let layer=0;layer<3;layer++){g.beginPath();g.moveTo(0,330);for(let x=0;x<=W;x+=12){let yy=240+layer*36+Math.sin(x/80+layer*3)*25+Math.sin(x/37+layer)*11+Math.sin(dist/6500+layer)*8;g.lineTo(x,yy)}g.lineTo(W,420);g.lineTo(0,420);g.closePath();const ridge=g.createLinearGradient(0,180+layer*25,0,420);ridge.addColorStop(0,['#79969a','#608779','#4a7555'][layer]);ridge.addColorStop(1,['#49686d','#365e52','#244d38'][layer]);g.fillStyle=ridge;g.fill()}for(let i=0;i<15;i++){let x=i*79-70-(dist*.015%(79));let y=245+(i%3)*15;polygon([[x,y],[x+26,y-62-(i%4)*13],[x+50,y]],'#214e3d');polygon([[x+9,y-25],[x+26,y-62-(i%4)*13],[x+43,y-25]],'#397b51')}}
-function scenery(d,side,kind){let p=project(d);if(p.depth<=0)return;let x=p.x+side*(ROAD*p.scale*.52+45*p.scale),y=p.y;g.save();g.translate(x,y);g.scale(p.scale,p.scale);if(kind==='tree'){ellipse(8,5,29,11,'#061b12aa');rect(-7,-70,14,75,'#503d27');for(let i=0;i<5;i++){let cy=-55-i*24,rx=43-i*6;polygon([[-rx,cy+28],[0,cy-40],[rx,cy+28]],['#102e24','#184c2d','#226d37','#31834a','#479d53'][i]);line([[-rx*.55,cy+12],[0,cy-35],[rx*.55,cy+12]],'#80ae6350',1.3)}}else if(kind==='rock'){ellipse(4,4,31,11,'#0d201aaa');polygon([[-32,0],[-22,-31],[-4,-44],[22,-31],[36,0]],'#69716b','#323e38',2);polygon([[-22,-31],[-4,-44],[7,-18],[-12,-12]],'#a3a99c')}else if(kind==='banner'){rect(-3,-85,6,85,'#ded8bd');rect(-4,-88,80,29,'#0d1c15');rect(-2,-85,76,23,'#20c933');g.font='bold 12px Arial';g.fillStyle='#0b1a0c';g.fillText('799 MOTORSPORT',2,-69)}else{ellipse(0,0,22,9,'#153b20');ellipse(-9,-8,17,14,'#3b8044');ellipse(9,-10,16,16,'#26733c');ellipse(0,-17,15,12,'#4c9c4e')}g.restore()}
-function road(){let zone=Math.min(3,Math.floor(dist/(GOAL/4)));let ground=g.createLinearGradient(0,300,0,H);ground.addColorStop(0,['#527951','#8c935f','#a1966e','#5a7860'][zone]);ground.addColorStop(1,['#234b34','#526236','#645d42','#2c4f3d'][zone]);rect(0,300,W,300,ground);
+function landscapeAspect(){const b=canvas.getBoundingClientRect();return (b.width/W)/(b.height/H)}
+function pagoda(x,y,scale){
+ g.save();g.translate(x,y);g.scale(scale,scale*landscapeAspect());
+ rect(-23,-68,46,68,'#b44732');
+ for(let level=0;level<3;level++){const yy=-22-level*25,w=36-level*5;polygon([[-w-9,yy+3],[-w,yy-6],[0,yy-13],[w,yy-6],[w+9,yy+3]],'#4b2924','#d7aa77',1.5);rect(-17,yy+5,34,8,'#efcaa0');for(const wx of [-11,5])rect(wx,yy+7,6,6,'#342a25')}
+ line([[0,-90],[0,-104]],'#4b2924',2);g.restore();
+}
+function sky(){
+ const c=event(),gradient=g.createLinearGradient(0,0,0,420);
+ gradient.addColorStop(0,c.sky[0]);gradient.addColorStop(1,c.sky[1]);rect(0,0,W,H,gradient);
+ ellipse(W*.82,104,34,34*landscapeAspect(),'#fff4c488');
+ if(c.habitat==='dunes'){
+  rect(0,248,W,91,'#388eaf');rect(0,249,W,2,'#a9d8dd');
+  for(let i=0;i<11;i++){const yy=258+i*6;line([[0,yy],[W,yy]],i%2?'#b7e1dc38':'#296d9850',1)}
+ }
+ for(let layer=0;layer<3;layer++){
+  const coast=c.habitat==='dunes',farm=c.habitat==='farm',base=coast?290+layer*30:240+layer*34;
+  g.beginPath();g.moveTo(0,420);
+  for(let x=0;x<=W;x+=12){const hills=Math.sin(x/(coast?155:85)+layer*2+c.phase)*(farm?13:coast?19:27)+Math.sin(x/47+layer)*7;g.lineTo(x,base+hills)}
+  g.lineTo(W,420);g.closePath();g.fillStyle=c.ridges[layer];g.fill();
+ }
+ if(['pagoda','city','village'].includes(c.habitat)){
+  const center=W*.73;
+  for(let i=0;i<22;i++){const x=center-150+i*15,h=8+rand(i+eventIndex*17)*26;rect(x,280-h,11,h,['#7d8b88','#a09c8c','#b2b0a0'][i%3]);rect(x+3,284-h,2,2,'#e2ddbd')}
+  if(c.habitat==='village'){
+   rect(W*.28,243,10,40,'#c8c3b2');polygon([[W*.28-2,243],[W*.28+5,224],[W*.28+12,243]],'#6c665c');
+  }else pagoda(W*(c.habitat==='pagoda'?.65:.61),277,c.habitat==='pagoda'?.95:.55);
+ }
+ if(c.habitat==='flag'){
+  polygon([[W*.67,290],[W*.7,231],[W*.76,210],[W*.81,276]],'#75817a','#4f625b',1);
+  const x=W*.755;line([[x,232],[x,164]],'#d3d4c8',2);rect(x,165,32,18,'#eee8d5');
+  for(let i=0;i<5;i++)rect(x,165+i*4,32,2,'#a84e44');rect(x,165,13,10,'#354e6d');
+ }
+ if(c.habitat==='farm'){
+  rect(W*.76,265,41,25,'#a24232');polygon([[W*.76-4,266],[W*.76+20,248],[W*.76+45,266]],'#eee3ca');
+  rect(W*.76+16,276,11,14,'#503c30');rect(W*.76+50,250,12,40,'#a9b3aa');ellipse(W*.76+56,250,6,4,'#d2d4bf');
+ }
+}
+function sceneryKind(n,side){
+ const r=rand(n*9+side*33+eventIndex*41),h=event().habitat;
+ if(h==='dunes')return r<.76?'grass':r<.9?'log':'rock';
+ if(h==='farm')return n%17===0?'barn':r<.8?'corn':'oak';
+ if(h==='village')return n%9===0?'house':r<.8?'oak':'bush';
+ if(h==='pagoda'||h==='city')return n%8===0?'wall':r<.65?'oak':'bush';
+ if(h==='flag')return r<.43?'rock':r<.82?'tree':'oak';
+ if(h==='rock')return r<.5?'rock':'oak';
+ if(h==='shamrock')return r<.55?'oak':r<.88?'tree':'rock';
+ return r<.76?'tree':'rock';
+}
+function scenery(d,side,kind){
+ const p=project(d);if(p.depth<=0)return;
+ const x=p.x+side*(ROAD*p.scale*.52+45*p.scale),y=p.y,c=event();
+ g.save();g.translate(x,y);g.scale(p.scale,p.scale*landscapeAspect());
+ if(kind==='tree'){
+  ellipse(8,5,29,11,'#061b1244');rect(-6,-80,12,85,'#594634');
+  for(let i=0;i<5;i++){const cy=-55-i*24,rx=43-i*6;polygon([[-rx,cy+28],[0,cy-40],[rx,cy+28]],['#18382a','#245337','#2d6c3e','#43894d','#5a9d58'][i])}
+ }else if(kind==='oak'){
+  ellipse(5,3,32,9,'#10231440');rect(-5,-71,10,73,'#665039');line([[-1,-37],[-23,-71]],'#665039',5);
+  const spring=c.habitat==='village';
+  for(const [xx,yy,r] of [[-19,-76,24],[19,-81,25],[0,-105,27],[0,-69,28]]){ellipse(xx,yy,r,r*.85,spring?'#91b86a':'#3f7e48');ellipse(xx-5,yy-7,r*.7,r*.5,spring?'#b8cc8d88':'#78a75b88')}
+ }else if(kind==='rock'){
+  ellipse(4,4,31,11,'#0d201a44');polygon([[-32,0],[-22,-31],[-4,-44],[22,-31],[36,0]],c.habitat==='pine'?'#b2b2a0':'#7e877c','#4f5a50',2);polygon([[-22,-31],[-4,-44],[7,-18],[-12,-12]],'#c6c5ae');
+ }else if(kind==='grass'){
+  ellipse(0,0,34,7,'#d7c493');
+  for(let i=0;i<13;i++){const xx=(rand(d+i)-.5)*48,h=17+rand(d+i*7)*28;line([[xx,0],[xx-3,-h*.6],[xx+side*7,-h]],i%2?'#89935a':'#a4a56b',1.7)}
+ }else if(kind==='log'){
+  line([[-30,-2],[30,-12]],'#8f8061',9);line([[-26,-5],[27,-14]],'#b0a17e',3);line([[4,-8],[15,-25]],'#8f8061',4);
+ }else if(kind==='corn'){
+  for(let i=0;i<5;i++){const xx=(i-2)*13;line([[xx,2],[xx,-55]],'#667735',2);for(let j=0;j<3;j++){const yy=-12-j*13;line([[xx,yy],[xx-10,yy-9]],'#9aab50',3);line([[xx,yy-4],[xx+10,yy-15]],'#b2ba5d',3)}line([[xx,-55],[xx+3,-65]],'#d4bf72',2)}
+ }else if(kind==='barn'||kind==='house'){
+  const barn=kind==='barn';rect(-40,-56,80,56,barn?'#ac4939':'#d8c9a7');polygon([[-46,-56],[0,-90],[46,-56]],barn?'#ddd7bf':'#756456','#4f4f40',1.5);
+  rect(-12,-35,24,35,barn?'#6e332c':'#695444');
+  if(barn){line([[-12,-35],[12,0]],'#e9d9b3',2);line([[12,-35],[-12,0]],'#e9d9b3',2)}
+  for(const xx of [-29,19]){rect(xx,-45,11,14,'#72959b');line([[xx+5,-45],[xx+5,-31]],'#e9e1c5',1)}
+ }else if(kind==='wall'){
+  for(let row=0;row<3;row++)for(let i=0;i<4;i++){const xx=-40+i*20+(row%2?5:0),yy=-row*11;polygon([[xx,yy],[xx+18,yy],[xx+17,yy-9],[xx+1,yy-10]],(i+row)%2?'#999d8c':'#7d8777','#5e695b',.7)}
+ }else if(kind==='banner'){
+  rect(-3,-85,6,85,'#ded8bd');rect(-4,-88,80,29,'#0d1c15');rect(-2,-85,76,23,'#20c933');g.font='bold 12px Arial';g.fillStyle='#0b1a0c';g.fillText('799 MOTORSPORT',2,-69);
+ }else{ellipse(0,0,22,9,'#153b20');ellipse(-9,-8,17,14,'#3b8044');ellipse(9,-10,16,16,'#26733c');ellipse(0,-17,15,12,'#4c9c4e')}
+ g.restore();
+}
+
+function road(){const c=event();let ground=g.createLinearGradient(0,300,0,H);ground.addColorStop(0,c.ground[0]);ground.addColorStop(1,c.ground[1]);rect(0,300,W,300,ground);
+if(c.habitat==='dunes'){
+ g.beginPath();g.moveTo(0,310);g.quadraticCurveTo(W*.15,245,W*.33,346);g.lineTo(W*.33,H);g.lineTo(0,H);g.closePath();g.fillStyle='#e5d0a0';g.fill();
+ g.beginPath();g.moveTo(W,335);g.quadraticCurveTo(W*.88,265,W*.7,355);g.lineTo(W*.7,H);g.lineTo(W,H);g.closePath();g.fillStyle='#d7c494';g.fill();
+ g.beginPath();g.moveTo(0,310);g.quadraticCurveTo(W*.15,245,W*.33,346);g.strokeStyle='#f6e5ba99';g.lineWidth=3;g.stroke();
+}
 let slices=180;for(let i=slices-1;i>=0;i--){let a=dist+VIEW*(i/slices),b=dist+VIEW*((i+1)/slices),p=project(a),q=project(b);let halfA=ROAD*p.scale*.5,halfB=ROAD*q.scale*.5;
-polygon([[q.x-halfB-24*q.scale,q.y],[q.x+halfB+24*q.scale,q.y],[p.x+halfA+24*p.scale,p.y],[p.x-halfA-24*p.scale,p.y]],i%4===0?'#a3a38e':'#9b9d88');
+polygon([[q.x-halfB-24*q.scale,q.y],[q.x+halfB+24*q.scale,q.y],[p.x+halfA+24*p.scale,p.y],[p.x-halfA-24*p.scale,p.y]],c.shoulder);
 polygon([[q.x-halfB,q.y],[q.x+halfB,q.y],[p.x+halfA,p.y],[p.x-halfA,p.y]],'#42494b');
 polygon([[q.x-halfB+7*q.scale,q.y],[q.x-halfB+11*q.scale,q.y],[p.x-halfA+11*p.scale,p.y],[p.x-halfA+7*p.scale,p.y]],'#e8e6ce');
 polygon([[q.x+halfB-11*q.scale,q.y],[q.x+halfB-7*q.scale,q.y],[p.x+halfA-7*p.scale,p.y],[p.x+halfA-11*p.scale,p.y]],'#e8e6ce')}
@@ -247,22 +419,16 @@ function bend(d){return (path(d+200)-2*path(d)+path(d-200))/200}
 const gates=[];
 for(let group=0;group<5;group++)for(let leg=0;leg<3;leg++){
  const side=(group+leg)%2?1:-1;
- gates.push({d:1500+group*5500+leg*1000,side,passed:false,warned:false});
+ gates.push({d:1500+group*5500+leg*1000,side,passed:false});
 }
-const wildlife=[['deer',4650],['fox',10750],['rabbit',16875],['deer',21600],['fox',28250]].map(([kind,d],i)=>({kind,d,side:i%2?1:-1,duration:kind==='deer'?2:kind==='fox'?1.5:1.1,start:null,passed:false}));
+const wildlife=[['deer',4650],['fox',10750],['rabbit',16875],['deer',21600],['fox',28250]].map(([kind,d],i)=>({kind,name:kind==='rabbit'?'Uno':kind,d,side:i%2?1:-1,duration:kind==='deer'?2:kind==='fox'?1.5:1.1,start:null,passed:false}));
 // Three isolated surface hazards, with room between chicanes, crossings and apexes.
 const potholes=[[6200,-.5],[15500,.35],[26300,-.25]].map(([d,lane])=>({d,lane,radius:34,passed:false}));
 const corners=[];
-for(let d=1200;d<GOAL-1200;d+=60){
- const strength=Math.abs(bend(d));
- if(strength<.04||strength<Math.abs(bend(d-60))||strength<Math.abs(bend(d+60)))continue;
- // Keep markers at the actual turn peak, next to its inside edge; skip obstructed corners.
- if(gates.some(q=>Math.abs(q.d-d)<650)||wildlife.some(q=>Math.abs(q.d-d)<550))continue;
- if(corners.some(q=>Math.abs(q.d-d)<900))continue;
- corners.push({d,lane:Math.sign(bend(d))*.8,passed:false});
-}
 function animalLane(animal){
- const progress=animal.start===null?0:clamp((t-animal.start-ANIMAL_WAIT)/animal.duration,0,1);
+ let progress=animal.start===null?0:clamp((t-animal.start-ANIMAL_WAIT)/animal.duration,0,1);
+ // Uno always finds a way out, even if approached faster than his normal crossing.
+ if(animal.kind==='rabbit')progress=Math.max(progress,clamp(1-(animal.d-dist-CAR_AHEAD)/250,0,1));
  return animal.side*(1.5-3*progress);
 }
 function notice(text,kind='warning',duration=2,priority=1){
@@ -303,18 +469,22 @@ function drawAnimal(animal,p){
   ellipse(0,-25,28,13,fur);ellipse(25,-35,13,11,fur);polygon([[18,-41],[17,-58],[29,-44]],'#a75329','#3c2c20',1);polygon([[29,-42],[34,-56],[37,-38]],'#d08b50','#3c2c20',1);
   polygon([[27,-35],[49,-29],[38,-23],[23,-26]],'#ddd1b3');ellipse(46,-29,3,2,'#211c18');ellipse(29,-36,1.8,1.5,'#171710');
  }else{
-  ellipse(-7,-15,22,14,fur);ellipse(13,-26,11,11,fur);ellipse(8,-44,4,16,fur);ellipse(18,-44,4,17,fur);line([[8,-51],[8,-36]],'#cab4a0',2);line([[18,-54],[18,-38]],'#cab4a0',2);
-  ellipse(-14-stride*.45,-2,10,4,'#72695a');ellipse(14+stride*.45,-2,7,3,'#958a75');ellipse(-28,-17,6,6,'#e1dfd3');ellipse(18,-28,2,2,'#151813');ellipse(23,-24,2,1.5,'#69584c');
+  const white='#f0f1e9',black='#1b211e';
+  ellipse(-7,-15,22,14,white);ellipse(13,-26,11,11,white);
+  // A single upright ear, with bold irregular black-and-white dappling.
+  ellipse(10,-45,4,17,white);line([[10,-56],[10,-36]],'#c5afa9',2);
+  ellipse(-17,-20,8,7,black);ellipse(-4,-9,6,5,black);ellipse(3,-20,5,4,black);ellipse(12,-29,5,7,black);
+  ellipse(-14-stride*.45,-2,10,4,white);ellipse(14+stride*.45,-2,7,3,black);ellipse(-28,-17,6,6,white);
+  ellipse(18,-28,1.5,1.5,'#090d0a');ellipse(23,-24,2,1.5,'#aaa097');
+  g.scale(direction,1);g.font='bold 11px Arial';g.textAlign='center';g.lineWidth=3;g.strokeStyle='#102017';g.strokeText('UNO',0,-69);g.fillStyle='#fff';g.fillText('UNO',0,-69);
  }
  g.restore();
 }
 function drawApex(corner,p){
  const x=p.x+corner.lane*ROAD*p.scale*.5;
- g.save();g.globalAlpha=corner.passed?.25:.75;
- ellipse(x,p.y,APEX_RADIUS*1.5*p.scale,12*p.scale,'#8df87033');
- g.beginPath();g.ellipse(x,p.y,APEX_RADIUS*p.scale,9*p.scale,0,0,Math.PI*2);g.strokeStyle='#baff81';g.lineWidth=2*p.scale;g.stroke();
- if(p.depth>.35){g.font='bold '+Math.max(9,10*p.scale)+'px Arial';g.fillStyle='#ddffc9';g.textAlign='center';g.fillText('APEX + SPEED',x,p.y-16*p.scale)}
- g.restore();
+ g.save();g.translate(x,p.y);g.scale(Math.sign(corner.lane)*p.scale,p.scale*landscapeAspect()*.45);g.globalAlpha=corner.passed?.22:.95;
+ polygon([[-30,-9],[-3,-9],[-3,-23],[32,0],[-3,23],[-3,9],[-30,9]],'#b5ff69','#1e4723',2);
+ line([[-23,-3],[-8,-3]],'#efffd5',2);g.restore();
 }
 const carSprite=new Image();
 carSprite.src='../images/799-scirocco-rear.svg?v=4233c019';
@@ -399,16 +569,39 @@ function obstacleWorld(){
   if(kind==='apex'){drawApex(q,p);continue}
   const low=q.side<0?-1:-.18,high=q.side<0?.18:1,count=6,width=(high-low)*ROAD*.5/count;
   for(let i=0;i<count;i++){const center=low+(i+.5)*(high-low)/count;drawHayBale(p.x+center*ROAD*p.scale*.5,p.y,p.scale,width,q.d+i*137)}
-  if(p.depth>.25){g.save();g.font='bold '+Math.max(10,14*p.scale)+'px Arial';g.fillStyle='#fff0be';g.textAlign='center';g.fillText(q.side<0?'PASS RIGHT →':'← PASS LEFT',p.x-q.side*ROAD*p.scale*.28,p.y-55*p.scale);g.restore()}
  }
 }
 function finish(){let d=GOAL;if(d<dist||d>dist+VIEW)return;let p=project(d),half=ROAD*p.scale*.5;for(let row=0;row<4;row++){let near=project(d-row*12),far=project(d-(row+1)*12);for(let k=0;k<14;k++){let x0=(k/14-.5)*ROAD,x1=((k+1)/14-.5)*ROAD;polygon([[far.x+x0*far.scale,far.y],[far.x+x1*far.scale,far.y],[near.x+x1*near.scale,near.y],[near.x+x0*near.scale,near.y]],(row+k)%2?'#111':'#fff')}}let pole=p.scale*120;rect(p.x-half-13*p.scale,p.y-pole,7*p.scale,pole,'#f5f5e9');rect(p.x+half+6*p.scale,p.y-pole,7*p.scale,pole,'#f5f5e9');rect(p.x-half-12*p.scale,p.y-pole,ROAD*p.scale+25*p.scale,27*p.scale,'#10291a');g.fillStyle='#f4f5e9';g.textAlign='center';g.font='bold '+Math.max(10,15*p.scale)+'px Arial';g.fillText('799 // FINISH',p.x,p.y-pole+20*p.scale);g.textAlign='left'}
-const route=$('coursePath'),routeProgress=$('courseProgress'),mapDot=$('mapDot'),routeLength=route.getTotalLength();function updateCourseMap(){let fraction=clamp(dist/GOAL,0,1),pt=route.getPointAtLength(routeLength*fraction);mapDot.setAttribute('cx',pt.x);mapDot.setAttribute('cy',pt.y);let samples=Math.max(2,Math.ceil(fraction*130)),d='';for(let i=0;i<=samples;i++){let p=route.getPointAtLength(routeLength*fraction*i/samples);d+=(i?' L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}routeProgress.setAttribute('d',d);$('elevation').textContent=Math.round(fraction*1500).toLocaleString()+' FT'}function render(){updateViewport();g.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.clearRect(0,0,W,H);sky();road();roadDetails();let zone=Math.min(3,Math.floor(dist/(GOAL/4)));let start=Math.floor(dist/135),end=Math.ceil((dist+VIEW)/135);for(let n=end;n>=start;n--){let d=n*135;if(d<dist+5)continue;for(let side of [-1,1]){let r=rand(n*9+side*33),kind=zone===0?(r>.24?'tree':'bush'):zone===1?(r>.43?'tree':'bush'):zone===2?(r>.48?'rock':'tree'):(r>.65?'tree':'rock');scenery(d,side,kind)}}for(let d=5000;d<GOAL;d+=5000){if(d>dist&&d<dist+VIEW)scenery(d,1,'banner')}obstacleWorld();finish();drawTireSmoke();g.save();if(shake>0)g.translate((Math.random()-.5)*shake*22,(Math.random()-.5)*shake*12);car(playerPosition().x,playerPosition().y,(keys.right?1:0)-(keys.left?1:0));g.restore();for(let q of particles){g.globalAlpha=Math.min(1,q.life*2);ellipse(q.x,q.y,q.r,q.r,q.color)}g.globalAlpha=1;updateCourseMap();if(flash>0)rect(0,0,W,H,'rgba(255,240,194,'+flash*.5+')');rect(16,16,140,11,'#11291e');rect(16,16,140*clamp((boostUntil-t)/2.5,0,1),11,'#a8ff79');g.font='bold 10px Arial';g.fillStyle='#d6ecc8';g.textAlign='left';g.fillText(boostUntil>t?'APEX SPEED BOOST':'HIT THE INSIDE APEX · GET A BOOST',16,42);$('time').textContent=fmt(t);$('speed').textContent=Math.round(speed*.15)+' MPH';$('dist').textContent=Math.min(100,Math.floor(dist/GOAL*100))+'%';$('apexes').textContent=String(apexes);$('strikes').textContent=animalHits+' / 3';$('best').textContent=best?fmt(best):'--'}
+const route=$('coursePath'),routeProgress=$('courseProgress'),mapDot=$('mapDot');let routeLength=route.getTotalLength();
+function updateCourseMap(){
+ const fraction=clamp(dist/GOAL,0,1),pt=route.getPointAtLength(routeLength*fraction);mapDot.setAttribute('cx',pt.x);mapDot.setAttribute('cy',pt.y);
+ const samples=Math.max(2,Math.ceil(fraction*130));let d='';
+ for(let i=0;i<=samples;i++){const p=route.getPointAtLength(routeLength*fraction*i/samples);d+=(i?' L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}
+ routeProgress.setAttribute('d',d);$('elevation').textContent=Math.round(fraction*1500).toLocaleString()+' FT';
+}
+function render(){
+ updateViewport();g.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.clearRect(0,0,W,H);
+ sky();road();roadDetails();
+ const start=Math.floor(dist/135),end=Math.ceil((dist+VIEW)/135);
+ for(let n=end;n>=start;n--){const d=n*135;if(d<dist+5)continue;for(const side of [-1,1])scenery(d,side,sceneryKind(n,side))}
+ for(let d=5000;d<GOAL;d+=5000)if(d>dist&&d<dist+VIEW)scenery(d,1,'banner');
+ obstacleWorld();finish();drawTireSmoke();g.save();
+ if(shake>0)g.translate((Math.random()-.5)*shake*22,(Math.random()-.5)*shake*12);
+ car(playerPosition().x,playerPosition().y,(keys.right?1:0)-(keys.left?1:0));g.restore();
+ for(const q of particles){g.globalAlpha=Math.min(1,q.life*2);ellipse(q.x,q.y,q.r,q.r,q.color)}
+ g.globalAlpha=1;updateCourseMap();
+ if(flash>0)rect(0,0,W,H,'rgba(255,240,194,'+flash*.5+')');
+ rect(16,16,140,11,'#11291e');rect(16,16,140*clamp((boostUntil-t)/2.5,0,1),11,'#a8ff79');
+ g.font='bold 10px Arial';g.fillStyle='#d6ecc8';g.textAlign='left';g.fillText(boostUntil>t?'APEX SPEED BOOST':'TOUCH INSIDE ARROWS · SPEED BOOST',16,42);
+ $('time').textContent=fmt(t);$('speed').textContent=Math.round(speed*.15)+' MPH';$('dist').textContent=Math.min(100,Math.floor(dist/GOAL*100))+'%';
+ $('apexes').textContent=String(apexes);$('round').textContent=(eventIndex+1)+' / '+EVENTS.length;$('best').textContent=best?fmt(best):'--';
+}
+
 function slowContact(kind){
- const pothole=kind==='pothole';
- speed=Math.max(85,speed*(pothole?.75:kind==='bale'?.48:.62));boostUntil=0;shake=pothole?.22:.35;flash=pothole?0:.12;
- if(kind==='animal')animalHits++;
- notice(pothole?'POTHOLE · SKID · STEER + BRAKE':kind==='bale'?'HAY BALE · SPEED LOST':'WILDLIFE HIT '+animalHits+' / 3','warning',pothole?1.2:1.7,3);
+ const pothole=kind==='pothole',fox=kind==='fox';
+ speed=fox?30:Math.max(85,speed*(pothole?.75:.48));boostUntil=0;shake=pothole?.22:.35;flash=pothole?0:.12;
+ if(fox){animalHits++;foxSlowUntil=t+1.2;}
+ notice(pothole?'POTHOLE · SKID · STEER + BRAKE':kind==='bale'?'HAY BALE · SPEED LOST':'FOX · NEAR STOP','warning',pothole?1.2:1.7,3);
  const pos=playerPosition();
  for(let i=0;i<(pothole?8:18);i++){const a=Math.random()*Math.PI*2;particles.push({x:pos.x,y:535,vx:Math.cos(a)*100,vy:Math.sin(a)*65,life:.3+Math.random()*.5,r:1+Math.random()*3,color:pothole?'#7c8478':kind==='bale'?'#d5b777':'#c6ba98'})}
 }
@@ -416,7 +609,7 @@ function update(dt){
  if(state!=='play')return;
  t+=dt;
  const was=dist+CAR_AHEAD,boosted=t<boostUntil&&!keys.down;
- const target=keys.down?85:boosted?900:keys.up?750:350;
+ const target=t<foxSlowUntil?45:keys.down?85:boosted?900:keys.up?750:350;
  speed+=(target-speed)*Math.min(1,dt*(keys.down?3.2:boosted?2.8:1.6));
  dist=Math.min(GOAL,dist+speed*dt);
  const steer=(keys.right?1:0)-(keys.left?1:0),curvature=(path(dist+110)-path(dist-50))/600;
@@ -428,21 +621,20 @@ function update(dt){
  if(departure>=.75){end(false,'offroad');return}
  if(departure>.35&&!wasNearEdge)notice('ROAD EDGE · GET BACK ON LINE');
  wasNearEdge=departure>.35;
- const nextGate=gates.find(q=>!q.passed&&q.d>now);
  for(const gate of gates){
-  if(!gate.warned&&gate===nextGate&&gate.d-now<1100){gate.warned=notice(gate.side<0?'CHICANE · PASS RIGHT':'CHICANE · PASS LEFT','warning',2.2)}
   if(gate.passed||now<gate.d)continue;
   gate.passed=true;
   const low=gate.side<0?-1:-.18,high=gate.side<0?.18:1;
   if(was<=gate.d&&lane+halfCar>low&&lane-halfCar<high)slowContact('bale');
  }
  for(const animal of wildlife){
-  if(animal.start===null&&animal.d-now<1250&&animal.d>now){animal.start=t;notice(animal.kind.toUpperCase()+' CROSSING · WATCH AHEAD','warning',2.8,3)}
+  if(animal.start===null&&animal.d-now<(animal.kind==='rabbit'?1450:1250)&&animal.d>now){animal.start=t;if(animal.kind!=='rabbit')notice(animal.kind.toUpperCase()+' CROSSING · WATCH AHEAD','warning',2.8,3)}
   if(animal.passed||now<animal.d)continue;
   animal.passed=true;
   const animalHalf=animal.kind==='rabbit'?.09:animal.kind==='fox'?.15:.18;
-  if(was<=animal.d&&Math.abs(lane-animalLane(animal))<halfCar+animalHalf){
-   slowContact('animal');if(animalHits>=3){end(false,'wildlife');return}
+  if(animal.kind!=='rabbit'&&was<=animal.d&&Math.abs(lane-animalLane(animal))<halfCar+animalHalf){
+   if(animal.kind==='deer'){animalHits++;shake=.5;flash=.22;end(false,'deer');return}
+   slowContact('fox');
   }
  }
  for(const corner of corners){
@@ -468,26 +660,34 @@ function update(dt){
  if(dist>=GOAL)end(true);
 }
 function show(title,msg,button){
- $('intro').hidden=true;$('gamePanel').classList.remove('welcome');
+ $('intro').hidden=true;$('seasonPicker').hidden=true;$('gamePanel').classList.remove('welcome');
  $('title').innerHTML=title;$('msg').innerHTML=msg;$('start').textContent=button;$('modal').classList.remove('off');
+ $('replay').hidden=!(state==='end'&&won);$('eventMenu').hidden=false;
 }
 function end(win,reason){
- state='end';boostUntil=0;skidUntil=0;skidDirection=0;burnoutUntil=0;
+ state='end';won=win;boostUntil=0;skidUntil=0;skidDirection=0;burnoutUntil=0;foxSlowUntil=0;
+ $('game').classList.add('results');
  if(!win){
-  show(reason==='offroad'?'OFF ROAD <span>799</span>':'RUN <span>OVER</span>',
-   (reason==='offroad'?'THREE-QUARTERS OF THE CAR CROSSED THE ROAD LINE.':'THREE WILDLIFE HITS. THE RUN IS OVER.')
-   +'<br>YOU REACHED '+Math.floor(dist/GOAL*100)+'% OF THE CLIMB.<br>RESET AND TAKE ANOTHER SHOT.','TRY AGAIN ↻');
+  speed=0;
+  show(reason==='deer'?'DEER HIT <span>799</span>':'OFF ROAD <span>799</span>',
+   (reason==='deer'?'A DEER COLLISION ENDS THE RUN.':'THREE-QUARTERS OF THE CAR CROSSED THE ROAD LINE.')
+   +'<br>'+event().name.toUpperCase()+' · '+Math.floor(dist/GOAL*100)+'% COMPLETE.<br>TRY THIS EVENT AGAIN.','TRY AGAIN ↻');
   return;
  }
- if(!best||t<best){best=t;try{localStorage.setItem(BEST_KEY,String(best))}catch(e){}}
- show('SUMMIT <span>799!</span>','FINISH TIME: '+fmt(t)+'<br>BEST: '+fmt(best)+'<br>CLEAN APEXES: '+apexes+' / '+corners.length+'<br>THE MOUNTAIN HAS BEEN CONQUERED.','RACE AGAIN ↻');
+ if(!best||t<best){best=t;sessionBests.set(eventIndex,best);try{localStorage.setItem(scoreKey(),String(best))}catch(e){}}
+ const complete=seasonCount()===EVENTS.length;
+ show(complete?'SEASON <span>COMPLETE!</span>':'FINISH <span>799!</span>',
+  event().name.toUpperCase()+'<br>FINISH TIME: '+fmt(t)+' · BEST: '+fmt(best)
+  +'<br>CLEAN APEXES: '+apexes+' / '+corners.length+'<br>2027 SEASON: '+seasonCount()+' / '+EVENTS.length+' EVENTS FINISHED.',
+  !complete&&eventIndex<EVENTS.length-1?'NEXT EVENT →':'BACK TO SEASON →');
 }
 function reset(){
- feedbackUntil=0;feedbackPriority=0;wasNearEdge=false;
- $('feedback').classList.remove('visible');
+ feedbackUntil=0;feedbackPriority=0;wasNearEdge=false;won=false;foxSlowUntil=0;
+ $('game').classList.remove('results');
+ $('feedback').classList.remove('visible');$('seasonPicker').hidden=true;$('replay').hidden=true;$('eventMenu').hidden=true;
  $('intro').hidden=true;$('gamePanel').classList.remove('welcome');$('game').classList.remove('menu');
  t=0;dist=0;speed=250;lane=0;apexes=0;animalHits=0;boostUntil=0;skidUntil=0;skidDirection=0;burnoutUntil=BURNOUT_DURATION;smokeTimer=0;tireSmoke=[];shake=0;flash=0;particles=[];
- for(const q of gates){q.passed=false;q.warned=false}
+ for(const q of gates)q.passed=false;
  for(const q of wildlife){q.start=null;q.passed=false}
  for(const q of corners)q.passed=false;
  for(const q of potholes)q.passed=false;
@@ -496,12 +696,17 @@ function reset(){
  if(soundOn)audioStart();audioUpdate();
 }
 function togglePause(){
- if(state==='play'){state='pause';show('PAUSED <span>799</span>','CATCH YOUR BREATH. THE MOUNTAIN CAN WAIT.','RESUME');$('pause').textContent='RESUME'}
+ if(state==='play'){state='pause';show('PAUSED <span>799</span>',event().name.toUpperCase()+'<br>THE SEASON CAN WAIT.','RESUME');$('pause').textContent='RESUME'}
  else if(state==='pause'){state='play';$('modal').classList.add('off');$('pause').textContent='PAUSE';if(soundOn)audioStart()}
  audioUpdate();
 }
-$('start').onclick=()=>{if(state==='pause')togglePause();else reset()};$('pause').onclick=togglePause;
-addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['INPUT','TEXTAREA'].includes(e.target?.tagName))return;if(['arrowleft','arrowright','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k==='arrowup'||k==='w')keys.up=true;if(k==='arrowdown'||k==='s')keys.down=true;if(k==='r')reset();if(k==='m')$('sound').click();if(k===' ')togglePause()});addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k==='arrowup'||k==='w')keys.up=false;if(k==='arrowdown'||k==='s')keys.down=false});addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});addEventListener('orientationchange',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});
+$('start').onclick=()=>{if(state==='pause')togglePause();else if(state==='end'&&won)nextEvent();else reset()};$('pause').onclick=togglePause;
+$('replay').onclick=reset;$('eventMenu').onclick=openSeason;
+$('eventSelect').onchange=e=>selectEvent(Number(e.target.value));
+$('eventSelect').innerHTML=EVENTS.map((c,i)=>'<option value="'+i+'">'+String(i+1).padStart(2,'0')+' · '+c.name+'</option>').join('');
+selectEvent(0);
+
+addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;if(['arrowleft','arrowright','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k==='arrowup'||k==='w')keys.up=true;if(k==='arrowdown'||k==='s')keys.down=true;if(k==='r')reset();if(k==='m')$('sound').click();if(k===' ')togglePause()});addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k==='arrowup'||k==='w')keys.up=false;if(k==='arrowdown'||k==='s')keys.down=false});addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});addEventListener('orientationchange',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});
 for(let k of Object.keys(keys)){let b=$(k);b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;b.setPointerCapture(e.pointerId)});for(let event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>keys[k]=false)}
 function frame(now){let dt=Math.min(.05,(now-last)/1000||0);last=now;if(state==='play')update(dt);audioUpdate();render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
 })();</script></body></html>
