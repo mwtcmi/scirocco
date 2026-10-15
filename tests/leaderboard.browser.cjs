@@ -75,6 +75,16 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
  try {
   await seed('Silver Fox', 120000); await seed('Hill Runner', 150000);
   const a = await pageFor();
+  await wait(a, () => document.getElementById('hillLeader').textContent === 'Silver Fox');
+  assert.equal(await a.locator('#hillRecord').innerText(), '02:00.000');
+  await a.locator('#eventSelect').selectOption('2');
+  await wait(a, () => document.getElementById('hillLeader').textContent === 'Crown unclaimed');
+  assert.equal(await a.locator('#previewVenue').textContent(), 'Pagoda');
+  await a.locator('#welcomeCrown').click();
+  assert.equal(await a.locator('#podiumEvent').inputValue(), 'pagoda', 'the crown strip opens the selected event standings');
+  await a.locator('#podiumClose').click();
+  await a.locator('#eventSelect').selectOption('0');
+  await wait(a, () => document.getElementById('hillLeader').textContent === 'Silver Fox');
   assert.equal(await a.locator('.logo').getAttribute('href'), 'https://scirocco799.com/');
   assert.equal(await a.locator('#welcomeDriverInput').isVisible(), true);
   await a.locator('#podiumOpen').focus(); await a.keyboard.press('Space');
@@ -98,6 +108,7 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   assert.equal(await a.locator('#driverForm').isVisible(), true);
   await name(a, 'Mike 799');
   await wait(a, () => document.getElementById('podiumStatus').textContent.includes('YOU TOOK THE CROWN'));
+  assert.equal(await a.locator('#hillLeader').textContent(), 'Mike 799', 'a new crown also updates the welcome record');
   assert.equal(await a.locator('[data-rank="1"] .place-name').innerText(), 'Mike 799');
   assert.match(await a.locator('[data-rank="1"] .place-time').innerText(), /^\d\d:\d\d\.\d{3}$/);
   assert.equal(await a.evaluate(k => JSON.parse(localStorage.getItem(k)).length, PENDING), 0);
@@ -189,6 +200,7 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await filtered.locator('#podiumOpen').click();
   await wait(filtered, () => document.querySelector('[data-rank="1"] .place-name').textContent === 'Driver ABCDEF');
   assert.equal(await filtered.locator('#podiumRows td:nth-child(2)').innerText(), 'Driver ABCDEF');
+  assert.equal(await filtered.locator('#hillLeader').textContent(), 'Driver ABCDEF', 'legacy public names are also filtered on the welcome screen');
 
   const legacy = await api('/api/players', {});
   storage.sqlite.prepare("UPDATE players SET name = 'Sh1t Driver', name_key = 'sh1t driver' WHERE id = ?").run(legacy.playerId);
@@ -206,6 +218,25 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await start(filtered);
   assert.equal((await filtered.evaluate(k => JSON.parse(localStorage.getItem(k)), PROFILE)).name, 'Cassidy');
   await filtered.context().close();
+
+  // Delay a real public read to check stale event responses and a usable Start button.
+  const rotating = await pageFor(); let held;
+  await rotating.route(API + '/api/leaderboard?event=pine-mountain', route => { held = route; });
+  const initialRead = rotating.waitForRequest(r => r.url() === API + '/api/leaderboard?event=pine-mountain');
+  await rotating.reload({ waitUntil: 'domcontentloaded' }); await initialRead;
+  await wait(rotating, () => !document.documentElement.hasAttribute('data-loading'));
+  assert.equal(await rotating.locator('#start').isVisible(), true, 'welcome must not wait for a leaderboard response');
+  await rotating.locator('#eventSelect').selectOption('2');
+  const pagodaLeader = (await api('/api/leaderboard?event=pagoda')).entries[0].name;
+  await wait(rotating, name => document.getElementById('hillLeader').textContent === name && document.getElementById('intro').dataset.event === 'pagoda', pagodaLeader);
+  await held.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(await api('/api/leaderboard?event=pine-mountain')) });
+  await rotating.waitForTimeout(100);
+  assert.equal(await rotating.locator('#hillLeader').textContent(), pagodaLeader, 'a late response for the prior hill cannot replace the selected hill record');
+  const nextRead = rotating.waitForRequest(r => r.url() === API + '/api/leaderboard?event=pine-mountain');
+  await rotating.locator('#eventSelect').selectOption('0'); await nextRead;
+  await start(rotating);
+  assert.equal(await rotating.locator('#modal').isVisible(), false, 'a pending public record lookup must not block racing');
+  await held.abort(); await rotating.context().close();
   const offline = await pageFor();
   await offline.route(API + '/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"connected":1}' }));
   await offline.reload(); await wait(offline, () => window.MountainLeaderboard);

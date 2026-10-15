@@ -20,6 +20,8 @@
   pending = pending.filter(p => p && p.playerId === profile?.playerId && typeof p.runId === 'string' && p.expiresAt > Date.now()).slice(-10);
   let selected = game.events[0].id, active = null, finishView = null, readiness = null, readyUntil = 0, profilePromise = null;
   let boardGeneration = 0, declinedName = false, serviceIssue = 'offline', nameProblem = nameError(draftName), nameSync = null;
+  let welcomeGeneration = 0;
+  const welcomeBoards = new Map();
   const submitting = new Map();
   class ServiceError extends Error { constructor(message, status = 0) { super(message); this.status = status; } }
   function time(ms) {
@@ -47,6 +49,36 @@
       serviceIssue = r.ok === true ? 'version' : 'setup'; return false;
     }).catch(() => { serviceIssue = 'offline'; return false; });
     return readiness;
+  }
+  function showHillLeader(board) {
+    if (!$('welcomeCrown')) return;
+    const leader = board?.entries?.find(entry => entry.rank === 1);
+    $('hillLeader').textContent = leader ? publicName(leader) : 'Crown unclaimed';
+    $('hillRecord').textContent = leader ? time(leader.timeMs) : 'Set the first time';
+    $('welcomeCrown').dataset.state = 'ready';
+  }
+  function rememberHillLeader(board) {
+    if (board.eventId === 'season') return;
+    welcomeBoards.set(board.eventId, { board, expires: Date.now() + 30000 });
+    if (board.eventId === selected) { ++welcomeGeneration; showHillLeader(board); }
+  }
+  async function refreshHillLeader() {
+    if (!$('welcomeCrown')) return;
+    const generation = ++welcomeGeneration, eventId = selected, cached = welcomeBoards.get(eventId);
+    if (cached && cached.expires > Date.now()) { showHillLeader(cached.board); return; }
+    $('hillLeader').textContent = 'Checking the hill…'; $('hillRecord').textContent = '—';
+    $('welcomeCrown').dataset.state = 'loading';
+    try {
+      if (!await ready()) throw new ServiceError('offline');
+      const board = await request('/api/leaderboard?event=' + encodeURIComponent(eventId));
+      if (board.ruleset !== RULESET || board.eventId !== eventId || !Array.isArray(board.entries)) throw new ServiceError('offline');
+      if (generation !== welcomeGeneration || selected !== eventId) return;
+      rememberHillLeader(board);
+    } catch {
+      if (generation !== welcomeGeneration || selected !== eventId) return;
+      $('hillLeader').textContent = 'Race for the crown'; $('hillRecord').textContent = 'Times reconnect later';
+      $('welcomeCrown').dataset.state = 'offline';
+    }
   }
   async function identity() {
     if (profile) return profile;
@@ -113,6 +145,7 @@
     $('podiumRows').replaceChildren(); $('podiumSelf').textContent = season ? 'Finish and post all nine events to qualify for the season podium.' : 'Finish this hill to post your first time.';
   }
   function renderBoard(board) {
+    rememberHillLeader(board);
     for (const place of dialog.querySelectorAll('.podium-place')) {
       const entry = board.entries.find(p => p.rank === Number(place.dataset.rank));
       place.querySelector('.place-name').textContent = entry ? publicName(entry) : 'Open spot';
@@ -184,6 +217,7 @@
         if (result.accepted !== true || !result.leaderboard) throw new ServiceError('The result could not be confirmed.');
         pending = pending.filter(p => p.runId !== entry.runId); persistPending();
         const board = result.leaderboard;
+        rememberHillLeader(board);
         if (board.self && profile) { profile.name = nameError(board.self.name) ? null : board.self.name; save(PROFILE_KEY, profile); updateDriver(); }
         const text = (result.newKing ? 'YOU TOOK THE CROWN! · ' : 'TIME POSTED · ') + (board.self ? '#' + board.self.rank + ' · ' + time(board.self.timeMs) : time(entry.timeMs));
         finishStatus(view, text, 'posted');
@@ -215,7 +249,7 @@
   }
   window.MountainLeaderboard = {
     isOpen: () => dialog.open,
-    select: eventId => { selected = eventId; },
+    select: eventId => { selected = eventId; refreshHillLeader(); },
     start(eventId) {
       rememberName();
       close(); finishView = null; $('sharedFinish').hidden = true; selected = eventId;
@@ -248,6 +282,10 @@
     const option = document.createElement('option'); option.value = event.id; option.textContent = event.name; $('podiumEvent').append(option);
   }
   $('podiumOpen').hidden = false; $('podiumOpen').onclick = () => open();
+  if ($('welcomeCrown')) {
+    $('welcomeCrown').onclick = () => open(selected);
+    $('welcomeCrown').addEventListener('keydown', event => { if (event.key === ' ') event.stopPropagation(); });
+  }
   $('podiumOpen').addEventListener('keydown', event => { if (event.key === ' ') event.stopPropagation(); });
   $('podiumClose').onclick = close; $('podiumContinue').onclick = close;
   dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
@@ -276,6 +314,7 @@
   };
   updateDriver();
   if (nameProblem) nameNote(nameProblem, true);
-  addEventListener('online', () => { ready(true).then(() => flush()); });
+  addEventListener('online', () => { ready(true).then(() => { flush(); refreshHillLeader(); }); });
+  refreshHillLeader();
   ready().then(() => flush());
 })();
