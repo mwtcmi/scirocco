@@ -250,7 +250,7 @@ test('all nine scheduled venues are selectable, themed and complete a saved seas
   const names = Array.from(schedule.matchAll(/class="event">([^<]+)</g), match => match[1]);
   assert.deepEqual(Array.from(g.EVENTS, q => q.name), names, 'include the full planned website schedule in order');
   assert.equal(g.EVENTS.length, 9); assert.equal(new Set(g.EVENTS.map(q => q.habitat)).size, 9);
-  assert.equal(g.EVENTS.find(q => q.id === 'empire').habitat, 'dunes');
+  assert.equal(g.EVENTS.find(q => q.id === 'empire').habitat, 'ravine');
   g.selectEvent(7); assert.equal(g.get().eventIndex, 7, 'Empire is available before winning earlier events');
   g.selectEvent(0); g.reset();
   const paths = [];

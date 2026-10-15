@@ -7,7 +7,7 @@
   const noise = n => { const x = Math.sin(n * 127.1 + 37.7) * 43758.545; return x - Math.floor(x); };
   function scene(c, aspect, index, compact) {
     const w = 1000, h = Math.round(w / aspect), wide = aspect > 1.35, cx = compact ? 740 : 500, horizon = h * .41;
-    const dunes = c.habitat === 'dunes', farm = c.habitat === 'farm', city = ['pagoda', 'city', 'village'].includes(c.habitat);
+    const ravine = c.habitat === 'ravine', dunes = c.habitat === 'dunes', farm = c.habitat === 'farm', city = ['pagoda', 'city', 'village'].includes(c.habitat);
     const poly = (points, fill, extra = '') => '<path d="M' + points.map(p => p.join(',')).join('L') + 'Z" fill="' + fill + '" ' + extra + '/>';
     const tree = (x, y, scale, pine) => {
       const trunk = '<path d="M-4 0h8v-80h-8z" fill="#443e2e"/>';
@@ -23,12 +23,19 @@
       + '<linearGradient id="gridVignette" x2="0" y2="1"><stop stop-color="#07130d" stop-opacity=".14"/><stop offset=".6" stop-color="#07130d" stop-opacity="0"/><stop offset="1" stop-color="#020b07" stop-opacity=".55"/></linearGradient>'
       + '<pattern id="gridChecks" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M0 0h32v32H0z" fill="#e5e8d9"/><path d="M0 0h16v16H0zm16 16h16v16H16z" fill="#18241f"/></pattern>'
       + '<pattern id="gridGrain" width="9" height="11" patternUnits="userSpaceOnUse"><path d="M1 3h2m4 5h1M4 0h1" stroke="#d5dec1" stroke-opacity=".12"/></pattern></defs>'
-      + '<path d="M0 0h1000v' + h + 'H0z" fill="url(#gridSky)"/><circle cx="' + (wide ? 560 : 740) + '" cy="' + h * .19 + '" r="' + Math.min(45, h * .07) + '" fill="#f4eac1" opacity=".65"/>';
+      + '<path d="M0 0h1000v' + h + 'H0z" fill="url(#gridSky)"/><circle cx="' + (wide ? 560 : 740) + '" cy="' + h * .19 + '" r="' + Math.min(45, h * .07) + '" fill="#f4eac1" opacity="' + (ravine ? 0 : .65) + '"/>';
     for (let layer = 0; layer < 3; layer++) {
       const base = h * (.29 + layer * .065), points = [[0, h]];
       for (let x = 0; x <= w; x += 20) points.push([x, +(base + Math.sin(x / (dunes ? 220 : 150) + layer * 2 + index) * (farm ? 20 : dunes ? 29 : 49) + Math.sin(x / 65 + layer) * 10).toFixed(1)]);
       points.push([w, h]); s += poly(points, c.ridges[layer]);
       if (dunes && layer === 0) s += '<path d="M0 ' + h * .35 + 'h1000v' + h * .15 + 'H0z" fill="#387e96"/><path d="M0 ' + h * .375 + 'h1000m-900 11h300m150 9h300m-860 8h400" stroke="#a3c8bf" stroke-opacity=".55" fill="none"/>';
+    }
+    if(ravine){
+      for(let i=0;i<27;i++){
+        const x=i*w/26,top=h*(.07+noise(i+11)*.16);
+        s+='<path d="M'+x+' '+horizon+'L'+(x+18)+' '+top+'" stroke="#42563c" stroke-width="'+(5+noise(i)*9)+'"/>';
+        s+='<ellipse cx="'+x+'" cy="'+top+'" rx="65" ry="'+(h*.14)+'" fill="'+['#3c603c','#496a41','#557447'][i%3]+'"/>';
+      }
     }
     s += '<path d="M0 ' + horizon + 'h1000v' + h + 'H0z" fill="url(#gridGround)"/>';
     if (city) {
@@ -43,7 +50,19 @@
     }
     const edge = (depth, side, extra = 0) => [+(cx + Math.sin(depth * Math.PI) * 24 + side * (22 + Math.pow(depth, 1.4) * (h * .56 + 110) + extra)).toFixed(1), +(horizon + (h - horizon) * depth).toFixed(1)];
     const edges = extra => [...Array.from({ length: 21 }, (_, i) => edge(i / 20, -1, extra)), ...Array.from({ length: 21 }, (_, i) => edge(1 - i / 20, 1, extra))];
+    if (ravine) {
+      for (const side of [-1, 1]) {
+        const inner=Array.from({length:21},(_,i)=>edge(i/20,side,20));
+        const outer=Array.from({length:21},(_,i)=>{const d=1-i/20,p=edge(d,side,65+d*220);return [p[0],p[1]-25-d*h*.21]});
+        s += poly([...inner,...outer],side<0?'#425438':'#304b32');
+      }
+    }
     s += poly(edges(17), dunes ? '#cdbb91' : '#8c9680') + poly(edges(0), 'url(#gridRoad)') + poly(edges(0), 'url(#gridGrain)');
+    if (ravine) {
+      s += '<defs><clipPath id="ravineRoad"><path d="M'+edges(-12).map(p=>p.join(',')).join('L')+'Z"/></clipPath></defs><g clip-path="url(#ravineRoad)">';
+      for (let i=0;i<36;i++) {const d=.1+noise(i)*.9,p=edge(d,(noise(i+80)-.5)*1.5);s+='<ellipse cx="'+p[0]+'" cy="'+p[1]+'" rx="'+(4+d*29)+'" ry="'+(2+d*7)+'" fill="#dce8ad" opacity=".13"/>';}
+      s+='</g>';
+    }
     for (const side of [-1, 1]) s += '<path d="M' + Array.from({ length: 21 }, (_, i) => edge(i / 20, side, -9).join(',')).join('L') + '" fill="none" stroke="#d6d8be" stroke-width="' + Math.max(3, h * .005) + '" opacity=".8"/>';
     for (let d = .07; d < .85; d += .13) {
       const a = edge(d, 0), b = edge(d + .06, 0);
@@ -59,7 +78,19 @@
         const x = cx + side * (92 + Math.pow(depth, 1.1) * (h * .8 + 100) + noise(i * 7 + side) * 65);
         if (dunes) {
           s += '<g transform="translate(' + x + ' ' + y + ') scale(' + size + ')"><path d="M0 0-20-65M0 0 5-86M0 0 31-52M0 0-37-35" stroke="#758552" stroke-width="4" fill="none"/><path d="M-12 0-8-45M8 0 24-29" stroke="#c6b780" stroke-width="3"/></g>';
+        } else if (ravine) {
+          const tipX=x-side*(50+depth*170),tipY=y-size*(compact?320:480);
+          s+='<path d="M'+x+' '+y+'Q'+(x-side*12)+' '+(y-size*(compact?200:330))+' '+tipX+' '+tipY+'" fill="none" stroke="#454b35" stroke-width="'+(4+size*10)+'"/>';
+          s+='<path d="M'+(x-side*15)+' '+(y-size*(compact?190:300))+'Q'+(tipX-side*60)+' '+(tipY+10)+' '+(tipX-side*110)+' '+(tipY+28)+'" fill="none" stroke="#4d563b" stroke-width="'+(3+size*4)+'"/>';
+          for(let j=0;j<4;j++)s+='<ellipse cx="'+(tipX-side*j*38)+'" cy="'+(tipY+Math.sin(j)*16)+'" rx="'+(32+size*35)+'" ry="'+(20+size*20)+'" fill="'+['#284b30','#365e36','#49723f','#355831'][j]+'"/>';
         } else if (!farm || i % 3 === 0) s += tree(x, y, size, ['pine', 'flag', 'shamrock'].includes(c.habitat));
+      }
+    }
+    if(ravine){
+      for(let i=0;i<18;i++){
+        const x=i*w/17,y=h*(.025+Math.abs(x-cx)/w*.12);
+        s+='<ellipse cx="'+x+'" cy="'+y+'" rx="95" ry="'+(h*.095)+'" fill="'+['#1c3e2b','#294d30','#365c36'][i%3]+'"/>';
+        s+='<ellipse cx="'+(x-14)+'" cy="'+(y-18)+'" rx="48" ry="18" fill="#8ba258" opacity=".2"/>';
       }
     }
     return s + '<path d="M0 0h1000v' + h + 'H0z" fill="url(#gridVignette)"/></svg>';
