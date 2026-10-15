@@ -273,7 +273,7 @@ const EVENTS=[
  {id:'giants-despair',name:'Giants Despair Hillclimb',short:'Giants Despair',place:'Laurel Run, Pennsylvania',scene:'Deep woods & rocky hillsides',habitat:'rock',phase:3.9,scale:1,sky:['#819fac','#e0e5d5'],ground:['#71785b','#344637'],ridges:['#9fa9a5','#74857c','#4b6858'],shoulder:'#99968b'},
  {id:'duryea',name:'Duryea Hillclimb',short:'Duryea',place:'Reading, Pennsylvania',scene:'Stone walls & city overlooks',habitat:'city',phase:4,scale:1,sky:['#b58b73','#f1d7af'],ground:['#8a895b','#4d603d'],ridges:['#b2a69a','#8c9687','#6c8565'],shoulder:'#aaa18d'},
  {id:'waumandee',name:'Waumandee Time Trials',short:'Waumandee',place:'Waumandee, Wisconsin',scene:'Rolling farmland, barns & cornfields',habitat:'farm',phase:4.1,scale:.96,sky:['#70b5d3','#e9eed4'],ground:['#b3ad5d','#6c823f'],ridges:['#b7c48e','#9eb36d','#7f9e54'],shoulder:'#b2a78b'},
- {id:'empire',name:'Empire Hill Climb',short:'Empire',place:'Empire, Michigan',scene:'Lake Michigan, dunes & beach grass',habitat:'dunes',phase:4.2,scale:.96,sky:['#64b5d9','#d9edf0'],ground:['#e2cea0','#bea97a'],ridges:['#b9d5d1','#dfcfaa','#cdbb8e'],shoulder:'#e6d4a7'},
+ {id:'empire',name:'Empire Hill Climb',short:'Empire',place:'Empire, Michigan',scene:'Wooded ravine, tunnel of trees & dappled light',habitat:'ravine',phase:4.2,scale:.96,sky:['#385b46','#b0c49a'],ground:['#4b603b','#283e29'],ridges:['#6c8560','#4b6946','#304d35'],shoulder:'#685f44'},
  {id:'shamrock-mountain',name:'Shamrock Mountain HillClimb',short:'Shamrock Mountain',place:'Manchester, Kentucky',scene:'Lush green ridges & woodland',habitat:'shamrock',phase:4.3,scale:1,sky:['#539ba6','#d2e8c5'],ground:['#79a05b','#2d5839'],ridges:['#91b2a3','#679279','#3e7556'],shoulder:'#aaa38b'}
 ];
 const LAST_COURSE_KEY='799mountainrun-last-course';
@@ -348,7 +348,7 @@ function pagoda(x,y,scale){
 function sky(){
  const c=event(),gradient=g.createLinearGradient(0,0,0,420);
  gradient.addColorStop(0,c.sky[0]);gradient.addColorStop(1,c.sky[1]);rect(0,0,W,H,gradient);
- ellipse(W*.82,104,34,34*landscapeAspect(),'#fff4c488');
+ if(c.habitat!=='ravine')ellipse(W*.82,104,34,34*landscapeAspect(),'#fff4c488');
  if(c.habitat==='dunes'){
   rect(0,248,W,91,'#388eaf');rect(0,249,W,2,'#a9d8dd');
   for(let i=0;i<11;i++){const yy=258+i*6;line([[0,yy],[W,yy]],i%2?'#b7e1dc38':'#296d9850',1)}
@@ -359,6 +359,7 @@ function sky(){
   for(let x=0;x<=W;x+=12){const hills=Math.sin(x/(coast?155:85)+layer*2+c.phase)*(farm?13:coast?19:27)+Math.sin(x/47+layer)*7;g.lineTo(x,base+hills)}
   g.lineTo(W,420);g.closePath();g.fillStyle=c.ridges[layer];g.fill();
  }
+ if(c.habitat==='ravine')ravineCanopy();
  if(['pagoda','city','village'].includes(c.habitat)){
   const center=W*.73;
   for(let i=0;i<22;i++){const x=center-150+i*15,h=8+rand(i+eventIndex*17)*26;rect(x,280-h,11,h,['#7d8b88','#a09c8c','#b2b0a0'][i%3]);rect(x+3,284-h,2,2,'#e2ddbd')}
@@ -376,8 +377,57 @@ function sky(){
   rect(W*.76+16,276,11,14,'#503c30');rect(W*.76+50,250,12,40,'#a9b3aa');ellipse(W*.76+56,250,6,4,'#d2d4bf');
  }
 }
+// Empire's canopy stays above the sightline; banks and light follow the course.
+function ravineCanopy(){
+ const center=project(dist+VIEW*.8).x;
+ for(let layer=0;layer<3;layer++){
+  for(let i=0;i<18;i++){
+   const x=i*W/17,edge=Math.abs(x-center)/(W*.5);
+   const y=34+layer*35+Math.min(1,edge)*80+Math.sin(i*2.7+layer)*12;
+   ellipse(x,y,W/14,42+layer*9,['#304e32','#24432c','#183a29'][layer]);
+   ellipse(x-12,y-24,W/24,18,['#6c8c4c55','#56774266','#42643a66'][layer]);
+  }
+ }
+ // Small openings, not an exposed sun or broad sky.
+ for(let i=0;i<13;i++)ellipse(W*(.12+rand(i*7)*.76),28+rand(i*31)*85,5+rand(i)*9,3+rand(i+2)*4,'#d4dfad55');
+}
+function ravineBanks(){
+ for(const side of [-1,1]){
+  const bankEdge=[],bankTop=[],bankToe=[];
+  for(let i=0;i<=48;i++){
+   const p=project(dist+VIEW*i/48),x=p.x+side*(ROAD*.5+26)*p.scale;
+   bankEdge.push([x,p.y]);bankTop.push([x+side*220*p.scale,p.y-112*p.scale]);bankToe.push([x+side*70*p.scale,p.y-34*p.scale]);
+  }
+  polygon([...bankEdge,...bankTop.reverse()],side<0?'#425438':'#354a32');
+  polygon([...bankEdge,...bankToe.reverse()],'#625e4255');
+  for(let n=Math.floor(dist/90);n<(dist+VIEW)/90;n++){
+   const d=n*90;if(d<dist)continue;const p=project(d),x=p.x+side*(ROAD*.5+38+rand(n)*55)*p.scale;
+   ellipse(x,p.y-12*p.scale,7*p.scale,2*p.scale,n%2?'#9a865366':'#bd9b5a55');
+  }
+ }
+}
+function ravineLight(){
+ if(event().habitat!=='ravine')return;
+ g.save();g.beginPath();
+ for(let i=70;i>=0;i--){const p=project(dist+VIEW*i/70);g.lineTo(p.x-(ROAD*.5-14)*p.scale,p.y)}
+ for(let i=0;i<=70;i++){const p=project(dist+VIEW*i/70);g.lineTo(p.x+(ROAD*.5-14)*p.scale,p.y)}
+ g.closePath();g.clip();
+ // Fixed world positions slide under the car; no flicker or time-based flashing.
+ for(let n=Math.floor(dist/115);n<(dist+VIEW)/115;n++){
+  for(let j=0;j<3;j++){
+   const seed=n*19+j*53,d=n*115+rand(seed)*75;if(d<dist)continue;
+   const p=project(d),x=p.x+(rand(seed+3)-.5)*ROAD*.9*p.scale;
+   const rx=(14+rand(seed+4)*32)*p.scale,ry=(4+rand(seed+6)*8)*p.scale;
+   const glow=g.createRadialGradient(x,p.y,0,x,p.y,rx);
+   glow.addColorStop(0,'#e6e8ab38');glow.addColorStop(1,'#e6e8ab00');
+   ellipse(x,p.y,rx,ry,glow);
+  }
+ }
+ g.restore();
+}
 function sceneryKind(n,side){
  const r=rand(n*9+side*33+eventIndex*41),h=event().habitat;
+ if(h==='ravine')return n%4===0?'fern':'ravine-tree';
  if(h==='dunes')return r<.76?'grass':r<.9?'log':'rock';
  if(h==='farm')return n%17===0?'barn':r<.8?'corn':'oak';
  if(h==='village')return n%9===0?'house':r<.8?'oak':'bush';
@@ -391,7 +441,26 @@ function scenery(d,side,kind){
  const p=project(d);if(p.depth<=0)return;
  const x=p.x+side*(ROAD*p.scale*.52+45*p.scale),y=p.y,c=event();
  g.save();g.translate(x,y);g.scale(p.scale,p.scale*landscapeAspect());
- if(kind==='tree'){
+ if(kind==='ravine-tree'){
+  const lean=-side,ht=280+rand(d)*65;
+  // Tall hardwoods grow up the banks and lean inward above the racing line.
+  line([[0,0],[lean*9,-ht*.55],[lean*34,-ht]],'#393c2b',13);
+  line([[side*3,-7],[lean*12,-ht*.58],[lean*34,-ht]],'#73715a',3);
+  line([[lean*12,-ht*.62],[lean*72,-ht*.85],[lean*123,-ht*.88]],'#414731',7);
+  line([[lean*25,-ht*.88],[-lean*37,-ht*1.06]],'#424a33',5);
+  for(let i=0;i<7;i++){
+   const xx=lean*(22+i*19),yy=-ht-14+Math.sin(i*1.8+d)*22;
+   ellipse(xx,yy,42+rand(d+i)*18,26+rand(d+i*3)*15,['#25452d','#345b36','#456c3c'][i%3]);
+   ellipse(xx-7,yy-10,23,10,'#71925255');
+  }
+  for(let i=0;i<5;i++)line([[side*3,0],[side*(12+i*8),-4-i*2]],'#77674a',2);
+ }else if(kind==='fern'){
+  for(let i=0;i<7;i++){
+   const dx=(i-3)*10,dy=-14-Math.sin(i/6*Math.PI)*23;
+   line([[0,1],[dx*.6,dy*.6],[dx,dy]],'#789557',2);
+   for(let j=1;j<5;j++){const f=j/5;line([[dx*f-6,dy*f+3],[dx*f,dy*f],[dx*f+6,dy*f+4]],j%2?'#4c773f':'#6d8c48',2)}
+  }
+ }else if(kind==='tree'){
   ellipse(8,5,29,11,'#061b1244');rect(-6,-80,12,85,'#594634');
   for(let i=0;i<5;i++){const cy=-55-i*24,rx=43-i*6;polygon([[-rx,cy+28],[0,cy-40],[rx,cy+28]],['#18382a','#245337','#2d6c3e','#43894d','#5a9d58'][i])}
  }else if(kind==='oak'){
@@ -487,6 +556,7 @@ function roadsideWorld(){
 }
 
 function road(){const c=event();let ground=g.createLinearGradient(0,300,0,H);ground.addColorStop(0,c.ground[0]);ground.addColorStop(1,c.ground[1]);rect(0,300,W,300,ground);
+if(c.habitat==='ravine')ravineBanks();
 if(c.habitat==='dunes'){
  g.beginPath();g.moveTo(0,310);g.quadraticCurveTo(W*.15,245,W*.33,346);g.lineTo(W*.33,H);g.lineTo(0,H);g.closePath();g.fillStyle='#e5d0a0';g.fill();
  g.beginPath();g.moveTo(W,335);g.quadraticCurveTo(W*.88,265,W*.7,355);g.lineTo(W*.7,H);g.lineTo(W,H);g.closePath();g.fillStyle='#d7c494';g.fill();
@@ -673,7 +743,7 @@ function updateCourseMap(){
 }
 function render(){
  updateViewport();g.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.clearRect(0,0,W,H);
- sky();road();roadDetails();
+ sky();road();roadDetails();ravineLight();
  roadsideWorld();
  obstacleWorld();finish();drawTireSmoke();g.save();
  if(shake>0)g.translate((Math.random()-.5)*shake*22,(Math.random()-.5)*shake*12);
@@ -806,7 +876,7 @@ selectEvent(rememberedIndex>=0?rememberedIndex:0,rememberedIndex>=0);
 addEventListener('keydown',e=>{if(window.MountainLeaderboard?.isOpen())return;let k=e.key.toLowerCase();if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;if(['arrowleft','arrowright','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k==='arrowup'||k==='w')keys.up=true;if(k==='arrowdown'||k==='s')keys.down=true;if(k==='r')reset();if(k==='m')$('sound').click();if(k===' ')togglePause()});addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k==='arrowup'||k==='w')keys.up=false;if(k==='arrowdown'||k==='s')keys.down=false});addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});addEventListener('orientationchange',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});
 for(let k of Object.keys(keys)){let b=$(k);b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;b.setPointerCapture(e.pointerId)});for(let event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>keys[k]=false)}
 function frame(now){let dt=Math.min(.05,(now-last)/1000||0);last=now;if(state==='play')update(dt);audioUpdate();render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
-})();</script><script src="welcome.js?v=3" defer></script><script src="name-policy.js?v=1" defer></script><script src="leaderboard.js?v=6.1" defer></script><script>
+})();</script><script src="welcome.js?v=4" defer></script><script src="name-policy.js?v=1" defer></script><script src="leaderboard.js?v=6.1" defer></script><script>
 // Reveal the complete welcome screen after styles, controls and its car image are ready.
 document.addEventListener('DOMContentLoaded',()=>{
  const car=document.querySelector('.hero-car');
