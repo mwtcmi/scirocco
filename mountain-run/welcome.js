@@ -65,19 +65,22 @@
     return s + '<path d="M0 0h1000v' + h + 'H0z" fill="url(#gridVignette)"/></svg>';
   }
   function update() {
-    const index = Number(picker.value), c = game.events[index], bounds = intro.getBoundingClientRect();
+    const chosen = picker.value !== '', index = chosen ? Number(picker.value) : 0, c = game.events[index], bounds = intro.getBoundingClientRect();
     if (!c?.sky || bounds.width < 1 || bounds.height < 1) return;
     const compact = matchMedia('(max-width:600px),(pointer:coarse),(max-height:500px) and (orientation:landscape)').matches;
-    const key = index + ':' + Math.round(bounds.width) + ':' + Math.round(bounds.height) + ':' + compact;
+    const key = chosen + ':' + index + ':' + Math.round(bounds.width) + ':' + Math.round(bounds.height) + ':' + compact;
     if (key === last) return;
     last = key; intro.dataset.event = c.id;
     $('previewScene').innerHTML = scene(c, bounds.width / bounds.height, index, compact);
-    $('previewVenue').textContent = c.short; $('previewPlace').textContent = [c.place, c.profile].filter(Boolean).join(' · ');
+    $('previewVenue').textContent = chosen ? c.short : 'Choose your course'; $('previewPlace').textContent = [c.place, c.profile].filter(Boolean).join(' · ');
     $('previewRoute')?.setAttribute('d', c.mapPath || '');
-    $('previewNumber').textContent = 'EVENT ' + String(index + 1).padStart(2, '0') + ' / 09';
+    $('previewNumber').textContent = chosen ? 'EVENT ' + String(index + 1).padStart(2, '0') + ' / 09' : 'NINE HILLS. YOUR CHOICE.';
+    if (!chosen) $('previewPlace').textContent = 'Select a hill below to get on the grid.';
+    document.querySelector('.preview-route').style.visibility = chosen ? '' : 'hidden';
   }
   picker.addEventListener('change', update);
   new MutationObserver(update).observe(picker, { childList: true });
   new ResizeObserver(update).observe(intro);
   update();
 })();
+

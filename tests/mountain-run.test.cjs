@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 // Load the real game in a small DOM harness. Test access is injected in memory only.
-function game(saved = []) {
+function game(saved = [], chooseDefault = true) {
   const elements = new Map();
   const storage = new Map([['799mountainrunbest', '12'], ['799mountainrunbest-v2', '15'], ['799mountainrunbest-v3', '17'], ['799mountainrunbest-v4', '19'], ['799mountainrunbest-v5-pine-mountain', '42'], ...saved]);
   const gradient = { addColorStop() {} };
@@ -16,8 +16,8 @@ function game(saved = []) {
       const classes = new Set();
       elements.set(id, {
         textContent: '', innerHTML: '', dataset: {},
-        classList: { add: c => classes.add(c), remove: c => classes.delete(c), contains: c => classes.has(c) },
-        addEventListener() {}, setAttribute() {}, setPointerCapture() {},
+        classList: { add: c => classes.add(c), remove: c => classes.delete(c), contains: c => classes.has(c), toggle: (c, on) => on ? classes.add(c) : classes.delete(c) },
+        focus() {}, addEventListener() {}, setAttribute() {}, setPointerCapture() {},
         getContext: () => context,
         getBoundingClientRect: () => ({ width: 960, height: 600 }),
         getTotalLength: () => 100, getPointAtLength: d => ({ x: d, y: d })
@@ -46,6 +46,7 @@ function game(saved = []) {
   };`;
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../mountain-run/courses.js'), 'utf8'), sandbox);
   vm.runInNewContext(script.replace('})();', exposed + '})();'), sandbox);
+  if (chooseDefault) sandbox.gameTest.selectEvent(0);
   return { ...sandbox.gameTest, element, storage, drawnText };
 }
 
@@ -329,4 +330,27 @@ test('pause freezes the run and restart clears every event, hit, and bonus', () 
   assert.ok(g.potholes.every(q => !q.passed));
   assert.ok(Object.values(g.keys).every(v => !v));
   assert.doesNotThrow(() => g.render());
+});
+
+
+
+test('welcome requires a course choice, remembers it, and preserves menu and replay flows', () => {
+  const g = game([], false);
+  assert.equal(g.element('eventSelect').value, '');
+  assert.equal(g.element('start').disabled, true);
+  g.reset(); assert.equal(g.get().state, 'menu');
+  g.selectEvent(7);
+  assert.equal(g.element('eventSelect').value, '7');
+  assert.equal(g.element('start').disabled, false);
+  assert.equal(g.storage.get('799mountainrun-last-course'), 'empire');
+  g.reset(); assert.equal(g.get().state, 'play');
+  g.togglePause(); g.openSeason();
+  assert.equal(g.element('eventSelect').value, '7');
+  assert.equal(g.element('start').disabled, false);
+  const returning = game([['799mountainrun-last-course', 'empire']], false);
+  assert.equal(returning.get().eventIndex, 7);
+  assert.equal(returning.element('start').disabled, false);
+  const invalid = game([['799mountainrun-last-course', 'removed-course']], false);
+  assert.equal(invalid.element('eventSelect').value, '');
+  assert.equal(invalid.element('start').disabled, true);
 });
