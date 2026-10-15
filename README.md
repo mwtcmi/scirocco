@@ -39,6 +39,8 @@ Steering uses the left and right halves of an unbranded quick-release wheel with
 
 Three chipped-asphalt potholes are spread across each dry course, clear of other hazards and apexes. Contact costs 25% of speed, cancels an apex boost, and causes a sideways skid with reduced grip for about half a second. Counter-steering still works and braking restores grip sooner. Each pothole can be avoided and only applies its penalty once per run. Screen-wide speed streaks have been removed.
 
+Five freestanding sponsor billboards replace the small roadside 799 signs on each course. Large “YOUR BRAND HERE” lettering, a “2027 SPONSOR SPACE” header and “SPONSOR SCIROCCO 799” footer advertise space for future partners in the site’s black, white and green. Their positions are chosen on straights, away from hazards and boost markers, with clear scenery approaches. The signs are decorative and do not change courses, collisions, scoring or the current ruleset.
+
 Starting a run gives a brief front-wheel burnout with smoke and tire squeal. Pothole skids also squeal. Tire sound follows the same mute, pause, and end-of-run behavior as the engine.
 
 Serve the static site from the repository root:
