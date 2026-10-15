@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+const scope = {};
+vm.runInNewContext(fs.readFileSync(new URL('../mountain-run/courses.js', import.meta.url), 'utf8'), scope);
+const courses = scope.MountainCourses;
+const manifest = 'export const RULESET = ' + JSON.stringify(courses.ruleset) + ';\nexport const EVENTS = Object.freeze(' + JSON.stringify(Object.fromEntries(Object.entries(courses.events).map(([id, c]) => [id, c.turns.length])), null, 2) + ');\n';
+const worker = new URL('./worker.mjs', import.meta.url), source = fs.readFileSync(worker, 'utf8');
+const begin = '// BEGIN COURSE MANIFEST', end = '// END COURSE MANIFEST';
+const a = source.indexOf(begin), b = source.indexOf(end);
+if (a < 0 || b <= a) throw new Error('Missing Worker course manifest markers');
+fs.writeFileSync(worker, source.slice(0, a) + begin + '\n' + manifest + source.slice(b));

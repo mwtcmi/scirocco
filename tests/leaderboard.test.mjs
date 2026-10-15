@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import { DatabaseSync } from 'node:sqlite';
 import { database } from './helpers/d1.cjs';
 import { createWorker, RULESET, EVENTS } from '../leaderboard/worker.mjs';
@@ -81,9 +82,9 @@ test('only ticketed, named, authenticated runs can publish; times, apex counts a
   assert.equal((await s.call(url, { method: 'POST', player: b, data: { timeMs: 45000, apexes: 2 } })).status, 404);
   assert.equal((await s.call(url, { method: 'POST', player: a, data: { timeMs: 45000, apexes: 2 } })).status, 400);
   await s.call('/api/profile', { method: 'POST', player: a, data: { name: 'Uno' } });
-  for (const [timeMs, apexes] of [[1000, 0], [45000.5, 2], [45000, 6], [45000, -1], [45000, 2.5], [1200001, 1]])
+  for (const [timeMs, apexes] of [[1000, 0], [45000.5, 2], [45000, EVENTS.pagoda + 1], [45000, -1], [45000, 2.5], [1200001, 1]])
     assert.equal((await s.call(url, { method: 'POST', player: a, data: { timeMs, apexes } })).status, 400);
-  const accepted = await s.call(url, { method: 'POST', player: a, data: { timeMs: 45000, apexes: 5 } });
+  const accepted = await s.call(url, { method: 'POST', player: a, data: { timeMs: 45000, apexes: EVENTS.pagoda } });
   assert.equal(accepted.status, 200); assert.equal(accepted.body.accepted, true);
 });
 
@@ -204,21 +205,33 @@ test('malformed and oversized payloads fail without a storage mutation; SQL-like
   assert.equal((await s.call('/api/leaderboard?event=pine-mountain')).body.entries[0].name, "Mike' OR 1--");
 });
 
-test('frozen course manifest agrees with the actual game and theoretical speed limit', () => {
-  const game = fs.readFileSync(new URL('../mountain-run/index.html', import.meta.url), 'utf8');
-  const events = Function('return ' + game.match(/const EVENTS=(\[[\s\S]*?\n\]);/)[1])();
-  assert.deepEqual(events.map(e => e.id), Object.keys(EVENTS));
-  for (const e of events) {
-    const path = d => (Math.sin(d / 1200 + e.phase) * 175 + Math.sin(d / 490 + e.phase * .7) * 67 + Math.sin(d / 2500 + e.phase * .4) * 100) * e.scale;
-    const bend = d => (path(d + 200) - 2 * path(d) + path(d - 200)) / 200;
-    const excluded = [...Array.from({ length: 15 }, (_, i) => [1500 + Math.floor(i / 3) * 5500 + i % 3 * 1000, 650]), ...[4650, 10750, 16875, 21600, 28250].map(d => [d, 550]), ...[6200, 15500, 26300].map(d => [d, 650])];
-    const corners = [];
-    for (let d = 1200; d < 28800; d += 60) {
-      const strength = Math.abs(bend(d));
-      if (strength < .04 || strength < Math.abs(bend(d - 60)) || strength < Math.abs(bend(d + 60)) || excluded.some(([q, gap]) => Math.abs(q - d) < gap) || corners.some(q => Math.abs(q - d) < 900)) continue;
-      corners.push(d);
-    }
-    assert.equal(EVENTS[e.id], corners.length, e.id + ' scoring limits must match the frozen course');
+test('course manifest agrees with authored routes, UI rules and the theoretical speed limit', () => {
+  const courses = createRequire(import.meta.url)('./helpers/courses.cjs');
+  assert.equal(RULESET, courses.ruleset); assert.equal(RULESET, '2027-v6');
+  assert.deepEqual(Object.keys(courses.events), Object.keys(EVENTS));
+  for (const [id, course] of Object.entries(courses.events)) assert.equal(EVENTS[id], course.turns.length, id);
+  assert.equal(courses.length / 960 * 1000, 31250);
+});
+
+test('V5 scores and identities remain stored while the new courses get separate V6 rankings', async t => {
+  const s = service(t), p = await s.player('Returning Driver');
+  const oldRuns = [];
+  for (const eventId of Object.keys(EVENTS)) {
+    const run = await s.start(p, eventId); oldRuns.push(run);
+    assert.equal((await s.finish(p, run, 45000)).status, 200);
   }
-  assert.equal(30000 / 960 * 1000, 31250);
+  s.sqlite.prepare("UPDATE runs SET ruleset = '2027-v5' WHERE player_id = ?").run(p.playerId);
+  s.sqlite.prepare("UPDATE event_bests SET ruleset = '2027-v5' WHERE player_id = ?").run(p.playerId);
+  let season = (await s.call('/api/leaderboard?event=season&player=' + p.playerId)).body;
+  assert.equal(season.total, 0); assert.equal(season.progress.completed, 0);
+  assert.equal((await s.call('/api/runs', { method: 'POST', player: p, data: { eventId: 'pine-mountain', ruleset: '2027-v5' } })).status, 409);
+  assert.equal((await s.finish(p, oldRuns[0], 45000)).status, 409);
+  const posted = await s.finish(p, await s.start(p), 60000);
+  assert.equal(posted.status, 200); assert.equal(posted.body.leaderboard.self.timeMs, 60000);
+  assert.equal(posted.body.leaderboard.self.name, 'Returning Driver');
+  season = (await s.call('/api/leaderboard?event=season&player=' + p.playerId)).body;
+  assert.equal(season.progress.completed, 1); assert.equal(season.total, 0);
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM event_bests WHERE player_id = ? AND ruleset = '2027-v5'").get(p.playerId).n, 9);
+  assert.equal(s.sqlite.prepare("SELECT time_ms FROM event_bests WHERE player_id = ? AND event_id = 'pine-mountain' AND ruleset = '2027-v5'").get(p.playerId).time_ms, 45000);
+  assert.equal(s.sqlite.prepare('SELECT COUNT(*) AS n FROM players').get().n, 1);
 });

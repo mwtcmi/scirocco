@@ -7,7 +7,7 @@ const vm = require('node:vm');
 // Load the real game in a small DOM harness. Test access is injected in memory only.
 function game(saved = []) {
   const elements = new Map();
-  const storage = new Map([['799mountainrunbest', '12'], ['799mountainrunbest-v2', '15'], ['799mountainrunbest-v3', '17'], ['799mountainrunbest-v4', '19'], ...saved]);
+  const storage = new Map([['799mountainrunbest', '12'], ['799mountainrunbest-v2', '15'], ['799mountainrunbest-v3', '17'], ['799mountainrunbest-v4', '19'], ['799mountainrunbest-v5-pine-mountain', '42'], ...saved]);
   const gradient = { addColorStop() {} };
   const drawnText = [];
   const context = new Proxy({fillText: value => drawnText.push(value)}, { get: (obj, key) => key in obj ? obj[key] : ['createLinearGradient', 'createRadialGradient'].includes(key) ? () => gradient : () => {} });
@@ -44,6 +44,7 @@ function game(saved = []) {
       if ('t' in values) t=values.t;
     }
   };`;
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../mountain-run/courses.js'), 'utf8'), sandbox);
   vm.runInNewContext(script.replace('})();', exposed + '})();'), sandbox);
   return { ...sandbox.gameTest, element, storage, drawnText };
 }
@@ -55,7 +56,7 @@ function approach(g, event, lane, speed = 500) {
 
 test('chicanes slow contact once, leave a usable alternating gap, and never end a run', () => {
   const g = game(); g.reset();
-  assert.equal(g.gates.length, 15);
+  assert.equal(g.gates.length, 12);
   g.set({ dist: g.gates[0].d - 140 - 800 }); g.update(.05);
   assert.doesNotMatch(g.element('feedback').textContent, /CHICANE|PASS LEFT|PASS RIGHT/, 'hay gates do not add direction notifications');
   g.render(); assert.ok(g.drawnText.every(text => !/PASS LEFT|PASS RIGHT/.test(text)), 'no floating hay-bale directions');
@@ -214,7 +215,8 @@ test('brushing a marker is enough, coasting gets boosted, and a missed marker ea
   g.reset(); approach(g, corner, 0, 750);
   assert.equal(g.get().apexes, 0, 'driving down the middle should not collect an inside-edge marker');
   g.reset(); approach(g, g.gates[0], -.6);
-  approach(g, corner, corner.lane, 500);
+  const later = g.corners.find(q => q.d > g.gates[0].d + 650);
+  approach(g, later, later.lane, 500);
   assert.equal(g.get().apexes, 1, 'hay contact must not silently disqualify a later marker');
 });
 
@@ -252,7 +254,7 @@ test('all nine scheduled venues are selectable, themed and complete a saved seas
   g.selectEvent(0); g.reset();
   const paths = [];
   for (let i = 0; i < 9; i++) {
-    assert.equal(g.get().eventIndex, i); assert.equal(g.GOAL, 30000); assert.equal(g.gates.length, 15); assert.equal(g.potholes.length, 3);
+    assert.equal(g.get().eventIndex, i); assert.equal(g.GOAL, 30000); assert.equal(g.gates.length, require('./helpers/courses.cjs').events[g.event().id].gates.length); assert.equal(g.potholes.length, 3);
     paths.push(g.path(4200)); assert.ok(g.corners.length >= 5, 'every event has inside apex opportunities');
     for (const q of g.corners) {
       assert.ok(g.gates.every(h => Math.abs(h.d-q.d) >= 650));
@@ -272,6 +274,7 @@ test('all nine scheduled venues are selectable, themed and complete a saved seas
   assert.equal(restored.element('start').textContent, 'BACK TO SEASON →');
   restored.element('start').onclick(); assert.equal(restored.get().state, 'menu', 'a completed season returns to event selection even when replayed out of order');
   g.element('start').onclick(); assert.equal(g.get().state, 'menu');
+  assert.equal(g.storage.get('799mountainrunbest-v5-pine-mountain'), '42');
   assert.equal(g.storage.get('799mountainrunbest-v4'), '19');
   assert.equal(g.storage.get('799mountainrunbest-v3'), '17');
   assert.equal(g.storage.get('799mountainrunbest-v2'), '15'); assert.equal(g.storage.get('799mountainrunbest'), '12');

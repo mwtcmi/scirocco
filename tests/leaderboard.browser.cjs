@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const { database } = require('./helpers/d1.cjs');
 const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
 const API = 'https://scirocco799-leaderboard.mr-mikewhite.workers.dev';
-const PROFILE = '799-podium-driver-v1', PENDING = '799-podium-pending-v1';
+const PROFILE = '799-podium-driver-v1', PENDING = '799-podium-pending-v6';
 // Game frames are controlled explicitly; network/UI waits must poll independently.
 const wait = (page, predicate, argument) => page.waitForFunction(predicate, argument, { polling: 50 });
 (async () => {
@@ -75,6 +75,10 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
  try {
   await seed('Silver Fox', 120000); await seed('Hill Runner', 150000);
   const a = await pageFor();
+  await a.evaluate(() => {
+   localStorage.setItem('799mountainrunbest-v5-pine-mountain', '12.3');
+   localStorage.setItem('799-podium-pending-v1', JSON.stringify([{ runId: 'old-ticket', ruleset: '2027-v5' }]));
+  });
   await wait(a, () => document.getElementById('hillLeader').textContent === 'Silver Fox');
   assert.equal(await a.locator('#hillRecord').innerText(), '02:00.000');
   await a.locator('#eventSelect').selectOption('2');
@@ -112,6 +116,8 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   assert.equal(await a.locator('[data-rank="1"] .place-name').innerText(), 'Mike 799');
   assert.match(await a.locator('[data-rank="1"] .place-time').innerText(), /^\d\d:\d\d\.\d{3}$/);
   assert.equal(await a.evaluate(k => JSON.parse(localStorage.getItem(k)).length, PENDING), 0);
+  assert.equal(await a.evaluate(() => localStorage.getItem('799mountainrunbest-v5-pine-mountain')), '12.3');
+  assert.equal(await a.evaluate(() => JSON.parse(localStorage.getItem('799-podium-pending-v1'))[0].runId), 'old-ticket');
   await a.screenshot({ path: '/tmp/podium-desktop.png' });
   await a.locator('#podiumEvent').selectOption('season');
   await wait(a, () => document.getElementById('podiumSelf').textContent.includes('1 / 9'));
@@ -171,7 +177,7 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
    clock += 60000; await api('/api/runs/' + ticket.runId + '/finish', { timeMs: 60000, apexes: 2 }, remembered.token);
   }
   await a.locator('#podiumOpen').click(); await a.locator('#podiumEvent').selectOption('season');
-  await wait(a, () => document.querySelector('[data-rank="1"] .place-title').textContent === 'SEASON CHAMPION');
+  await wait(a, () => document.getElementById('podiumDialog').dataset.state === 'ready' && document.querySelector('[data-rank="1"] .place-title').textContent === 'SEASON CHAMPION');
   assert.equal(await a.locator('[data-rank="1"] .place-name').innerText(), 'Mike 799');
   assert.match(await a.locator('#podiumSelf').innerText(), /YOU HOLD THE CROWN/);
   await a.screenshot({ path: '/tmp/podium-season.png' });
@@ -253,7 +259,33 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await offline.locator('#podiumClose').click(); await offline.locator('#start').click();
   await offline.evaluate(() => stepGame(30));
   assert.equal(await offline.locator('#modal').isVisible(), false, 'racing remains available before Cloudflare publication');
+  await offline.route(API + '/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"ruleset":"2027-v5"}' }));
+  await offline.reload(); await wait(offline, () => window.MountainLeaderboard);
+  await offline.locator('#podiumOpen').click();
+  await wait(offline, () => document.getElementById('podiumStatus').textContent.includes('new courses'));
+  await offline.locator('#podiumClose').click(); await offline.locator('#start').click();
+  assert.equal(await offline.locator('#modal').isVisible(), false, 'the old Worker cannot mix records or prevent a new-course race');
+  // A cached V5 document receiving the newer controller must not acquire a V6 ticket.
+  const cached = await browser.newPage();
+  cached.on('pageerror', error => errors.push(error.message));
+  await cached.addInitScript(() => { window.requestAnimationFrame = () => 1; });
+  const source = fs.readFileSync(require.resolve('../mountain-run/index.html'), 'utf8');
+  await cached.route(baseURL, route => route.fulfill({ status: 200, contentType: 'text/html', body: source.replace('<script src="welcome.js?v=2" defer>', '<script>delete window.MountainCourses;</script><script src="welcome.js?v=2" defer>') }));
+  let staleTickets = 0;
+  await cached.route(API + '/**', async route => {
+   const req = route.request();
+   if (new URL(req.url()).pathname === '/api/runs') staleTickets++;
+   const response = await worker.fetch(new Request(req.url(), { method: req.method(), headers: req.headers(), body: ['GET', 'HEAD'].includes(req.method()) ? undefined : req.postData() }), env);
+   await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: await response.text() });
+  });
+  await cached.goto(baseURL); await wait(cached, () => window.MountainLeaderboard);
+  await cached.locator('#podiumOpen').click();
+  await wait(cached, () => document.getElementById('podiumDialog').dataset.state === 'offline');
+  await cached.locator('#podiumClose').click();
+  await cached.evaluate(() => MountainLeaderboard.start('pine-mountain'));
+  await cached.waitForTimeout(100); assert.equal(staleTickets, 0);
+  await cached.close();
   assert.deepEqual(errors, []);
-  console.log('PASS: real Worker SQL through browser requests; profanity prevention in both forms, legacy name protection and identity recovery, public podiums, two browser identities, unique names, full racing and crown, pause/input isolation, season progress, persistent identity, queued retry after reload, mobile dialogs, and crash exclusion.');
+  console.log('PASS: V6 Worker SQL through browser requests; V5 data and identity preservation, cached-page isolation, naming filters, public podiums, full racing and crown, season progress, queued retry after reload, mobile dialogs, and crash exclusion.');
  } finally { await browser.close(); storage.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

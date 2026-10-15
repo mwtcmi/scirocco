@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const API = 'https://scirocco799-leaderboard.mr-mikewhite.workers.dev';
-  const RULESET = '2027-v5', PROFILE_KEY = '799-podium-driver-v1', PENDING_KEY = '799-podium-pending-v1', NAME_KEY = '799-podium-name-v1';
+  // Cached V5 HTML can receive this newer script; it must keep its old scoring rules.
+  const RULESET = window.MountainCourses?.ruleset || '2027-v5', PROFILE_KEY = '799-podium-driver-v1', PENDING_KEY = RULESET === '2027-v5' ? '799-podium-pending-v1' : '799-podium-pending-v6', NAME_KEY = '799-podium-name-v1';
   const $ = id => document.getElementById(id), game = window.MountainRun, dialog = $('podiumDialog');
   if (!game || !dialog) return;
   const namePolicy = window.createDriverNamePolicy?.();
@@ -17,7 +18,7 @@
   if (profile?.name && nameError(profile.name)) { profile.name = null; save(PROFILE_KEY, profile); }
   let pending = read(PENDING_KEY, []);
   if (!Array.isArray(pending)) pending = [];
-  pending = pending.filter(p => p && p.playerId === profile?.playerId && typeof p.runId === 'string' && p.expiresAt > Date.now()).slice(-10);
+  pending = pending.filter(p => p && p.ruleset === RULESET && p.playerId === profile?.playerId && typeof p.runId === 'string' && p.expiresAt > Date.now()).slice(-10);
   let selected = game.events[0].id, active = null, finishView = null, readiness = null, readyUntil = 0, profilePromise = null;
   let boardGeneration = 0, declinedName = false, serviceIssue = 'offline', nameProblem = nameError(draftName), nameSync = null;
   let welcomeGeneration = 0;
@@ -176,7 +177,7 @@
     if (!await ready(force)) {
       if (generation === boardGeneration) {
         dialog.dataset.state = 'offline';
-        status(serviceIssue === 'setup' ? 'Shared podiums are not online yet. Your best times still save on this device.' : serviceIssue === 'version' ? 'A podium update is available. Reload the game to reconnect.' : 'Shared podiums cannot be reached right now. Your best times still save here. Tap Refresh to reconnect.');
+        status(serviceIssue === 'setup' ? 'Shared podiums are not online yet. Your best times still save on this device.' : serviceIssue === 'version' ? 'Shared podiums are updating for the new courses. Your best times still save here.' : 'Shared podiums cannot be reached right now. Your best times still save here. Tap Refresh to reconnect.');
       }
       return;
     }
