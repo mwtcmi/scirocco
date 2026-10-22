@@ -7,29 +7,70 @@
   <meta name="description" content="Find your way back to Scirocco 799, the race schedule, or Mountain Run.">
   <title>Page Not Found | Scirocco 799</title>
   <style>
-    :root{color-scheme:dark;--green:#20c933;--black:#050505}
+    :root{color-scheme:dark;--green:#20c933;--black:#050505;--muted:#b7bdb8}
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:var(--black);color:#fff;font-family:Arial,Helvetica,sans-serif}
     a{color:inherit}
-    .wrap{width:min(1180px,calc(100% - 44px));margin:auto}
-    header{padding:28px 0;border-bottom:1px solid #292929}
+    button{font:inherit}
+    [hidden]{display:none!important}
+    .wrap{width:min(1240px,calc(100% - 64px));margin-inline:auto}
+    header{border-bottom:1px solid #292929}
+    .header-inner{min-height:90px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:inline-flex;align-items:center;min-height:44px;font-size:18px;font-weight:900;letter-spacing:.08em;text-decoration:none}
     .brand span{color:var(--green);margin-left:.35em}
-    main{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;flex:1;padding:64px 0}
-    main:before{content:'404';position:absolute;z-index:-1;right:2%;top:50%;transform:translateY(-50%);font-size:clamp(200px,38vw,560px);font-weight:900;letter-spacing:-.08em;color:#101910}
-    .kicker{margin:0 0 20px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.2em}
-    h1{margin:0 0 26px;font-size:clamp(64px,9vw,124px);line-height:.84;letter-spacing:-.055em}
+    .header-note{font-size:10px;font-weight:700;letter-spacing:.16em;color:#9ba49c}
+    .header-note:before{content:'';display:inline-block;width:7px;height:7px;margin-right:8px;background:var(--green);border-radius:50%}
+    main{display:flex;align-items:center;flex:1;padding:48px 0}
+    .layout{display:grid;grid-template-columns:.95fr 1.05fr;gap:48px;align-items:center}
+    .kicker{margin:0 0 24px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.18em}
+    h1{margin:0;font-size:clamp(72px,7.8vw,112px);line-height:.86;letter-spacing:-.065em}
     h1 span{color:var(--green)}
-    .copy{max-width:530px;margin:0;color:#ccc;font-size:19px;line-height:1.6}
-    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
-    .button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:16px 22px;border:2px solid #fff;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    .excuse{display:inline-block;margin:26px 0 16px;padding:9px 12px;border-left:3px solid var(--green);background:#141b14;color:#d6e5d6;font-size:10px;font-weight:900;letter-spacing:.12em}
+    .copy{max-width:430px;margin:0;color:var(--muted);font-size:18px;line-height:1.6}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+    .button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:50px;padding:16px 20px;border:1px solid #666;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
     .primary{background:var(--green);border-color:var(--green);color:var(--black)}
+    .button svg{width:14px;height:14px;flex:none}
     .button:hover{background:#fff;border-color:#fff;color:var(--black)}
-    a:focus-visible{outline:2px solid var(--green);outline-offset:5px}
-    .schedule{display:inline-flex;align-items:center;min-height:44px;margin-top:16px;color:#ccc;font-size:13px;text-underline-offset:4px}
-    footer{padding:22px 0;border-top:1px solid #292929;color:#999;font-size:10px;letter-spacing:.1em;line-height:1.6;text-transform:uppercase}
-    @media(max-width:600px){.wrap{width:calc(100% - 32px)}header{padding:12px 0}.brand{font-size:16px}main{padding:36px 0}.kicker{font-size:9px;letter-spacing:.12em}.copy{font-size:17px}.button{padding:14px 16px;font-size:10px}main:before{right:-30px;font-size:270px;opacity:.6}}
-    @media(prefers-reduced-motion:no-preference){.button{transition:background .15s,border-color .15s,color .15s}}
+    :is(a,button):focus-visible{outline:2px solid var(--green);outline-offset:5px}
+    .schedule{display:inline-flex;align-items:center;min-height:44px;margin-top:10px;color:var(--muted);font-size:12px;text-underline-offset:4px}
+    .roadside{min-width:0;border:1px solid #344038;background:#111b15}
+    .scene{position:relative;overflow:hidden;aspect-ratio:660/550;background:#111b15}
+    .scene svg{display:block;width:100%;height:100%}
+    .scene-label{position:absolute;left:20px;top:18px;margin:0;color:#b4c6b6;font-size:9px;font-weight:900;letter-spacing:.15em}
+    .scene-label:before{content:'//';margin-right:8px;color:var(--green)}
+    .smoke-puff{opacity:0;transform-box:fill-box;transform-origin:center}
+    .car-body{transform-box:fill-box;transform-origin:50% 90%}
+    .scene-footer{padding:20px;border-top:1px solid #344038;background:#0c120e}
+    .radio-label{display:flex;align-items:center;gap:7px;color:var(--green);font-size:9px;letter-spacing:.14em;font-weight:900}
+    .radio-label svg{width:14px;height:14px}
+    .radio-message{min-height:2.8em;margin:9px 0 0;color:#e0e5e0;font-size:14px;line-height:1.4}
+    .scene-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:15px}
+    .rev-button{min-width:185px;background:var(--green);border-color:var(--green);color:#050505}
+    .rev-button[aria-disabled=true]{cursor:wait;background:#a3edac;border-color:#a3edac;color:#050505}
+    .sound-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px;border:0;background:transparent;color:#b7c3b9;font-size:11px;cursor:pointer}
+    .sound-toggle:hover{color:white}
+    .sound-toggle svg{width:16px;height:16px}
+    .sound-toggle[aria-pressed=false] .sound-waves{display:none}
+    .sound-toggle[aria-pressed=true] .sound-slash{display:none}
+    footer{padding:20px 0;border-top:1px solid #292929;color:#8c978e;font-size:9px;letter-spacing:.1em;line-height:1.7;text-transform:uppercase}
+    .footer-inner{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+    .footer-inner span:last-child{color:#b9c6bc}
+    @media(min-width:1600px){main{padding:64px 0}}
+    @media(max-width:950px){.wrap{width:calc(100% - 40px)}.layout{gap:28px}h1{font-size:clamp(66px,8.3vw,80px)}.copy{font-size:16px}.button{padding:15px 14px;font-size:10px}.header-note{font-size:9px}.scene-footer{padding:16px}.scene-controls{gap:6px}.rev-button{min-width:160px}}
+    @media(max-width:700px){.header-inner{min-height:68px}.brand{font-size:16px}.header-note{font-size:8px;letter-spacing:.08em}.layout{grid-template-columns:1fr;gap:28px}main{padding:30px 0}.kicker{margin-bottom:20px;font-size:10px}.content{max-width:510px}h1{font-size:clamp(70px,15vw,98px)}.excuse{margin-top:20px}.copy{max-width:470px}.actions{margin-top:22px}.actions .button{flex:1;max-width:210px;white-space:nowrap}.schedule{margin-top:6px}.roadside{width:100%;max-width:510px;justify-self:center}.scene-footer{padding:18px}.radio-message{min-height:1.4em}.scene-controls{gap:14px}.rev-button{min-width:180px}}
+    @media(max-width:359px){.wrap{width:calc(100% - 28px)}.header-note{max-width:65px;line-height:1.6}.header-note:before{display:none}.scene-controls{gap:8px}.rev-button{min-width:155px}.scene-footer{padding:14px}.sound-toggle{padding-inline:4px}.actions .button{padding-inline:10px;font-size:9px;gap:7px}}
+    @media(prefers-reduced-motion:no-preference){
+      .button{transition:background .15s,border-color .15s,color .15s}
+      .revving .car-body{animation:engine-shake .09s linear 22}
+      .revving .smoke-puff{animation:exhaust 1.6s ease-out both}
+      .revving .smoke-two{animation-delay:.25s}
+      .revving .smoke-three{animation-delay:.5s}
+      .revving .uno{animation:uno-escape 2.2s ease-in-out both}
+      @keyframes engine-shake{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-1px) rotate(-.3deg)}75%{transform:translateY(1px) rotate(.3deg)}}
+      @keyframes exhaust{0%{opacity:0;transform:translate(0,0) scale(.2)}15%{opacity:.65}100%{opacity:0;transform:translate(-130px,-65px) scale(3.2)}}
+      @keyframes uno-escape{0%{transform:translate(0,0);opacity:1}12%{transform:translate(25px,-36px) rotate(-12deg)}24%{transform:translate(90px,-10px)}40%{transform:translate(170px,-66px) rotate(-8deg)}55%{transform:translate(250px,-45px)}72%{transform:translate(445px,-115px);opacity:1}80%{transform:translate(530px,-130px);opacity:0}85%{transform:translate(0,0);opacity:0}100%{transform:translate(0,0);opacity:1}}
+    }
   </style>
 <!-- Site icons and link previews -->
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -54,19 +95,226 @@
 <!-- /Site icons and link previews -->
 </head>
 <body>
-  <header><div class="wrap"><a class="brand" href="/" aria-label="Scirocco 799 home">799 <span>MOTORSPORT</span></a></div></header>
+  <header>
+    <div class="wrap header-inner">
+      <a class="brand" href="/" aria-label="Scirocco 799 home">799 <span>MOTORSPORT</span></a>
+      <span class="header-note">UNSCHEDULED PIT STOP</span>
+    </div>
+  </header>
   <main>
-    <div class="wrap">
-      <p class="kicker">404 // OFF THE RACING LINE</p>
-      <h1>WRONG<br><span>TURN.</span></h1>
-      <p class="copy">That page couldn’t be found. Head back to the paddock or take the Scirocco for a run.</p>
-      <div class="actions">
-        <a class="button primary" href="/">Back to Home</a>
-        <a class="button" href="/mountain-run/">Play the Game</a>
+    <div class="wrap layout">
+      <div class="content">
+        <p class="kicker">ERROR 404 // OFF THE RACING LINE</p>
+        <h1>WRONG<br><span>TURN.</span></h1>
+        <p class="excuse">UNO WAS NAVIGATING.</p>
+        <p class="copy">The page is missing. The car’s fine.<br>Uno says this was definitely the shortcut.</p>
+        <div class="actions">
+          <a class="button primary" href="/">Back to Home <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 13 13 3M4 3h9v9" stroke="currentColor" stroke-width="2"/></svg></a>
+          <a class="button" href="/mountain-run/">Play the Game <span aria-hidden="true">→</span></a>
+        </div>
+        <a class="schedule" href="/schedule-2027">See where we’re racing →</a>
       </div>
-      <a class="schedule" href="/schedule-2027">See where we’re racing →</a>
+      <section class="roadside" aria-label="An unscheduled stop with Uno and the 799">
+        <div class="scene" id="roadside-scene">
+          <p class="scene-label">THE SCENIC ROUTE. APPARENTLY.</p>
+          <svg viewBox="0 0 660 550" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="scene-title scene-description">
+            <title id="scene-title">799 at the world’s least helpful road sign</title>
+            <desc id="scene-description">The green Scirocco sits on a winding forest road beside a giant 404 road-not-found sign. Uno, a black-and-white dappled rabbit with one ear, is taking a shortcut.</desc>
+            <defs>
+              <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#13231a"/><stop offset="1" stop-color="#354b2e"/></linearGradient>
+              <linearGradient id="asphalt" x2="0" y2="1"><stop stop-color="#454b42"/><stop offset="1" stop-color="#232a26"/></linearGradient>
+              <radialGradient id="glow"><stop stop-color="#7db65a" stop-opacity=".3"/><stop offset="1" stop-color="#7db65a" stop-opacity="0"/></radialGradient>
+              <pattern id="sign-checks" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#e5e8db"/><path d="M0 0h10v10H0zM10 10h10v10H10z" fill="#111b15"/></pattern>
+              <pattern id="hay-lines" width="8" height="6" patternUnits="userSpaceOnUse"><rect width="8" height="6" fill="#9e8a4c"/><path d="M0 1h6m-2 3h5" stroke="#c7b478" stroke-width="1"/></pattern>
+              <g id="pine"><path d="M0 0-25 48h13l-24 35h17l-29 42h96L19 83h17L12 48h13Z"/><path d="M-4 110h8v40h-8Z"/></g>
+            </defs>
+            <rect width="660" height="550" fill="url(#sky)"/>
+            <circle cx="440" cy="145" r="225" fill="url(#glow)"/>
+            <circle cx="535" cy="88" r="29" fill="#cbd5ac" opacity=".55"/>
+            <path d="M0 212 75 140 120 166 229 90 336 172 411 118 542 194 607 149 660 177V550H0Z" fill="#263d2b"/>
+            <path d="m0 257 106-76 102 33 82-56 100 65 105-50 165 93v284H0Z" fill="#1a3022"/>
+            <g fill="#10251a"><use href="#pine" x="44" y="157"/><use href="#pine" x="118" y="125"/><use href="#pine" x="204" y="180"/><use href="#pine" x="581" y="134"/><use href="#pine" x="640" y="174"/></g>
+            <path d="M0 340q139-72 283-69t377 42v237H0Z" fill="#2c442b"/>
+            <path d="M323 202h26c-69 59 102 43 54 101-37 46-182 21-196 80-10 45 200 87 327 167H61c-12-75-12-147 63-196 63-41 199-25 216-63 13-31-70-48-17-89Z" fill="url(#asphalt)" stroke="#a3ac8d" stroke-width="3"/>
+            <path d="M336 204c-63 57 101 52 38 98-56 40-181 15-212 78-30 61 147 124 167 170" fill="none" stroke="#ddd7a2" stroke-width="3" stroke-dasharray="15 21"/>
+            <path d="M0 444q53-52 115-41L67 550H0Zm550-84q66-25 110-8v198H552q-85-70-151-92Z" fill="#1c3421"/>
+            <g stroke="#506c38" stroke-width="2" opacity=".8"><path d="m33 397 3-21 8 17m18-20 4-17 5 17m508 77 6-24 9 24m-59 40 4-20 8 20M33 518l5-24 8 24m566-19 6-30 9 30"/></g>
+            <g fill="#0c2017"><use href="#pine" x="6" y="215" transform="translate(-4 -35) scale(1.25)"/><use href="#pine" x="505" y="164" transform="translate(16 -28) scale(1.25)"/></g>
+            <g transform="translate(454 196) rotate(6)">
+              <path d="M25 147v103m119-103v103" stroke="#101b15" stroke-width="12"/>
+              <path d="M22 147v97m119-97v97" stroke="#687266" stroke-width="4"/>
+              <rect x="-5" y="-5" width="180" height="170" rx="6" fill="#0c170f"/>
+              <rect width="170" height="160" rx="3" fill="#20c933" stroke="#b8f2bf" stroke-width="2"/>
+              <rect x="7" y="7" width="156" height="146" rx="1" fill="none" stroke="#102916" stroke-width="2"/>
+              <text x="85" y="32" fill="#0b1a10" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="900" letter-spacing="3">ROUTE</text>
+              <text x="80" y="105" fill="#08140b" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="87" font-weight="900" letter-spacing="-7">404</text>
+              <text x="85" y="131" fill="#08140b" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="900">ROAD NOT FOUND</text>
+              <path d="M8 145h154v8H8Z" fill="url(#sign-checks)"/>
+            </g>
+            <g transform="translate(35 418) rotate(-9)">
+              <rect width="98" height="53" rx="6" fill="url(#hay-lines)" stroke="#62552e" stroke-width="3"/>
+              <path d="M20 0v53m58-53v53" stroke="#524929" stroke-width="4"/>
+            </g>
+            <g transform="translate(110 341)">
+              <g class="uno">
+                <ellipse cx="48" cy="87" rx="42" ry="6" fill="#07140c" opacity=".45"/>
+                <circle cx="12" cy="57" r="10" fill="#e7e7dc"/>
+                <ellipse cx="46" cy="60" rx="32" ry="22" fill="#e9e9df"/>
+                <path d="M24 44q12-12 23-3l-2 18-18 8-9-8Z" fill="#202a24"/>
+                <path d="M57 65q8-9 16 0l-5 11-14-2Z" fill="#303831"/>
+                <path d="M62 28C52 10 55-9 65-6c9 2 10 21 8 34" fill="#e9e9df" stroke="#13221a" stroke-width="2"/>
+                <path d="M63 21q-7-23 0-23 6 6 5 23" fill="#384339"/>
+                <ellipse cx="72" cy="39" rx="19" ry="20" fill="#eeeee4"/>
+                <path d="M57 28q14-14 23-4l-8 13-14 4Z" fill="#202a24"/>
+                <circle cx="81" cy="36" r="3" fill="#111d15"/>
+                <circle cx="82" cy="35" r="1" fill="white"/>
+                <path d="m89 43 5 3-5 3" fill="#8b7d76"/>
+                <path d="m82 51 6 1" stroke="#576052" stroke-width="1.5" stroke-linecap="round"/>
+                <ellipse cx="32" cy="78" rx="17" ry="7" fill="#dadfd2"/>
+                <ellipse cx="73" cy="77" rx="15" ry="6" fill="#eeeee4"/>
+              </g>
+            </g>
+            <ellipse cx="345" cy="523" rx="151" ry="15" fill="#061109" opacity=".65"/>
+            <g class="car-body"><image href="/images/799-scirocco-rear.svg?v=4233c019" x="155" y="307" width="382" height="255"/></g>
+            <g fill="#c4cebe">
+              <g class="smoke-puff"><circle cx="268" cy="509" r="13"/><circle cx="255" cy="501" r="17"/><circle cx="246" cy="514" r="13"/></g>
+              <g class="smoke-puff smoke-two"><circle cx="262" cy="510" r="17"/><circle cx="246" cy="502" r="15"/></g>
+              <g class="smoke-puff smoke-three"><circle cx="265" cy="513" r="15"/><circle cx="251" cy="500" r="18"/></g>
+            </g>
+          </svg>
+        </div>
+        <div class="scene-footer">
+          <div class="radio-label"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 6v4m4-7v10m4-12v14m4-10v6" stroke="currentColor" stroke-width="2"/></svg>RACE CONTROL</div>
+          <p class="radio-message" id="radio-message" role="status">“That wasn’t in the pace notes.”</p>
+          <div class="scene-controls" id="scene-controls" hidden>
+            <button type="button" class="button rev-button" id="rev-button">Rev it anyway <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 13 13 3M4 3h9v9" stroke="currentColor" stroke-width="2"/></svg></button>
+            <button type="button" class="sound-toggle" id="sound-toggle" aria-pressed="true" aria-label="Rev sound">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 7h4l5-4v14l-5-4H3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path class="sound-waves" d="M15 6q5 4 0 8m-1-6q2 2 0 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path class="sound-slash" d="m15 8 4 4m0-4-4 4" stroke="currentColor" stroke-width="1.5"/></svg>
+              <span id="sound-label">Sound on</span>
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
-  <footer><div class="wrap">799 Motorsport · Vintage Volkswagen. Modern competition.</div></footer>
+  <footer><div class="wrap footer-inner"><span>799 Motorsport · Vintage Volkswagen. Modern competition.</span><span>Pages found: 0. Excuses: 799.</span></div></footer>
+  <script>
+    (() => {
+      const controls = document.getElementById('scene-controls');
+      const scene = document.getElementById('roadside-scene');
+      const revButton = document.getElementById('rev-button');
+      const soundButton = document.getElementById('sound-toggle');
+      const soundLabel = document.getElementById('sound-label');
+      const message = document.getElementById('radio-message');
+      const replies = [
+        '“Still a 404. Sounded good, though.”',
+        '“Uno has one ear. Somehow this is our fault.”',
+        '“More throttle. Same missing page.”',
+        '“Uno: 1. Navigation: 0.”',
+        '“Race control would like its shortcut back.”'
+      ];
+      let soundOn = true;
+      let audioContext;
+      let revTimer;
+      let attempts = 0;
+      let isRevving = false;
+      let activeSound;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+      function stopSound() {
+        if (activeSound) {
+          activeSound.gain.cancelScheduledValues(audioContext.currentTime);
+          activeSound.gain.setValueAtTime(0, audioContext.currentTime);
+          activeSound = null;
+        }
+      }
+
+      function revEngine() {
+        if (!soundOn || !AudioContext) return;
+        try {
+          audioContext ||= new AudioContext();
+          const ready = audioContext.state === 'running' ? Promise.resolve() : audioContext.resume();
+          ready.then(() => {
+            if (!soundOn || !isRevving || document.hidden) return;
+            stopSound();
+            const now = audioContext.currentTime;
+            const master = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            master.gain.setValueAtTime(0, now);
+            master.gain.linearRampToValueAtTime(.12, now + .08);
+            master.gain.setValueAtTime(.12, now + .8);
+            master.gain.linearRampToValueAtTime(0, now + 1.8);
+            filter.type = 'lowpass';
+            filter.Q.value = .6;
+            filter.frequency.setValueAtTime(420, now);
+            filter.frequency.linearRampToValueAtTime(1600, now + .7);
+            filter.frequency.exponentialRampToValueAtTime(240, now + 1.8);
+            filter.connect(master);
+            master.connect(audioContext.destination);
+            activeSound = master;
+            const notes = [58, 87, 116];
+            let remaining = notes.length;
+            notes.forEach((frequency, index) => {
+              const oscillator = audioContext.createOscillator();
+              const level = audioContext.createGain();
+              oscillator.type = index === 0 ? 'sawtooth' : 'triangle';
+              oscillator.frequency.setValueAtTime(frequency, now);
+              oscillator.frequency.exponentialRampToValueAtTime(frequency * 3.9, now + .7);
+              oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.1, now + 1.8);
+              level.gain.value = index === 0 ? .5 : .2;
+              oscillator.connect(level);
+              level.connect(filter);
+              oscillator.onended = () => {
+                oscillator.disconnect();
+                level.disconnect();
+                if (--remaining === 0) {
+                  filter.disconnect();
+                  master.disconnect();
+                  if (activeSound === master) activeSound = null;
+                }
+              };
+              oscillator.start(now);
+              oscillator.stop(now + 1.9);
+            });
+          }).catch(() => {});
+        } catch (_) { /* The roadside scene also works without browser audio. */ }
+      }
+
+      revButton.addEventListener('click', () => {
+        if (isRevving) return;
+        isRevving = true;
+        revButton.setAttribute('aria-disabled', 'true');
+        scene.classList.add('revving');
+        message.textContent = replies[attempts++ % replies.length];
+        revEngine();
+        revTimer = window.setTimeout(() => {
+          scene.classList.remove('revving');
+          isRevving = false;
+          revButton.removeAttribute('aria-disabled');
+        }, 2200);
+      });
+
+      soundButton.addEventListener('click', () => {
+        soundOn = !soundOn;
+        soundButton.setAttribute('aria-pressed', String(soundOn));
+        soundLabel.textContent = soundOn ? 'Sound on' : 'Sound off';
+        if (!soundOn) stopSound();
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopSound();
+      });
+      window.addEventListener('pagehide', () => {
+        window.clearTimeout(revTimer);
+        scene.classList.remove('revving');
+        isRevving = false;
+        revButton.removeAttribute('aria-disabled');
+        stopSound();
+        if (audioContext && audioContext.state === 'running') audioContext.suspend().catch(() => {});
+      });
+      if (!AudioContext) soundButton.hidden = true;
+      controls.hidden = false;
+    })();
+  </script>
 </body>
 </html>
