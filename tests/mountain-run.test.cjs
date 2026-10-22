@@ -35,7 +35,7 @@ function game(saved = [], chooseDefault = true) {
   const html = fs.readFileSync(path.join(__dirname, '..', 'mountain-run', 'index.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const exposed = `window.gameTest = {
-    reset, update, render, togglePause, openSeason, selectEvent, nextEvent, seasonCount, scoreKey, EVENTS, event, gates, wildlife, corners, potholes, keys, animalLane, playerPosition, project, path, roadDeparture, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,
+    reset, update, render, togglePause, openSeason, selectEvent, nextEvent, seasonCount, scoreKey, EVENTS, event, gates, wildlife, corners, potholes, keys, animalLane, playerPosition, project, path, roadDeparture, waumandeeTerrain, sceneryKind, GOAL, ROAD, CAR_AHEAD, CAR_HALF_WIDTH, ROAD_LINE_INSET, ANIMAL_WAIT,
     get: () => ({ state, t, dist, speed, lane, apexes, animalHits, boostUntil, skidUntil, skidDirection, foxSlowUntil, eventIndex, won, best }),
     set: values => {
       if ('dist' in values) dist=values.dist;
@@ -54,6 +54,33 @@ function approach(g, event, lane, speed = 500) {
   g.set({ dist: event.d - 140 - 5, lane, speed });
   g.update(.05);
 }
+
+test('Waumandee scenery progresses from open hillside pasture through woods to cornfields', () => {
+  const g = game(); g.selectEvent(6);
+  for (const fraction of [0, .1]) {
+    const zone = g.waumandeeTerrain(fraction * g.GOAL);
+    assert.equal(zone.hill, 1); assert.equal(zone.woods, 0); assert.equal(zone.corn, 0);
+  }
+  const middle = g.waumandeeTerrain(g.GOAL * .5);
+  assert.equal(middle.hill, 0); assert.equal(middle.woods, 1); assert.equal(middle.corn, 0);
+  const finish = g.waumandeeTerrain(g.GOAL * .96);
+  assert.equal(finish.hill, 0); assert.equal(finish.woods, 0); assert.equal(finish.corn, 1);
+  for (let d = 0; d <= g.GOAL; d += 50) {
+    const zone = g.waumandeeTerrain(d), next = g.waumandeeTerrain(d + 50);
+    for (const key of ['hill', 'woods', 'corn']) {
+      assert.ok(zone[key] >= 0 && zone[key] <= 1);
+      assert.ok(Math.abs(next[key] - zone[key]) < .03, 'landscape transitions must blend smoothly');
+    }
+  }
+  for (const [from, to, allowed] of [[0, .15, ['meadow', 'oak']], [.32, .68, ['ravine-tree', 'fern']], [.9, 1, ['corn']]]) {
+    for (let n = Math.ceil(from * g.GOAL / 135); n < to * g.GOAL / 135; n++) {
+      for (const side of [-1, 1]) assert.ok(allowed.includes(g.sceneryKind(n, side)), 'roadside scenery must belong to its section');
+    }
+  }
+  const ahead = g.sceneryKind(120, 1);
+  g.set({ dist: g.GOAL * .1 }); assert.equal(g.sceneryKind(120, 1), ahead, 'trees ahead stay fixed in world space');
+  for (const fraction of [0, .24, .5, .78, .96]) { g.set({ dist: g.GOAL * fraction }); g.render(); }
+});
 
 test('chicanes slow contact once, leave a usable alternating gap, and never end a run', () => {
   const g = game(); g.reset();

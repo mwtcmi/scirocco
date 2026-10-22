@@ -34,8 +34,8 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
   ]) {
     await page.setViewportSize(size);
     await page.goto(baseURL);
-    assert.equal(await page.locator('#eventSelect option').count(), 9);
-    await page.locator('#eventSelect').selectOption('1');
+    assert.equal(await page.locator('#eventSelect option:not([disabled])').count(), 9);
+    await page.locator('#eventSelect').selectOption('6');
     const fit = await page.evaluate(() => {
       const panel = document.getElementById('gamePanel'), button = document.getElementById('start');
       const rect = button.getBoundingClientRect(), card = panel.getBoundingClientRect();
