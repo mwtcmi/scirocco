@@ -13,7 +13,7 @@ Every website page and game entry point includes the vector 799 favicon, an ICO 
 
 Rebuild the assets and metadata with `node scripts/build-site-branding.cjs`, with Playwright, Chromium, and ImageMagick 7 available. Set `CHROMIUM_PATH` if Chromium is installed somewhere other than `/usr/bin/chromium`. The script uses the existing optimized photos and captures the game's actual rendering; no external image service is required. The original photos, page bodies, styles, and gameplay code are retained.
 
-The top-level `404.html` is a standalone recovery page with Home, game, and schedule links that work from nested missing URLs. Static hosting should serve it with HTTP 404 for unknown paths while continuing to resolve the existing HTML pages and `/mountain-run/`. The recovery page is marked `noindex`.
+The top-level `404.html` is a standalone recovery page with Home, game, and schedule links that work from nested missing URLs. Static hosting should serve it with HTTP 404 for unknown paths while continuing to resolve the existing HTML pages and `/mountain-run/`. The recovery page is marked `noindex`. Its roadside scene uses the original Scirocco rear-view asset and a one-eared Uno. The optional rev button plays a short engine sound only after a click or tap, with a sound toggle, keyboard support, and reduced-motion handling; recovery links also work without JavaScript.
 
 ## Mountain Run
 
