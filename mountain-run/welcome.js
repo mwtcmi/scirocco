@@ -45,8 +45,13 @@
       }
     }
     if (farm) {
-      s += '<g transform="translate(120 ' + horizon + ')"><path d="M0 0v-62h100V0z" fill="#953f31"/><path d="M-12-62 50-105 112-62z" fill="#c4c6ae"/><path d="M40 0v-37h26V0z" fill="#3c3f30"/><path d="M108 0v-85q17-20 34 0V0z" fill="#9eaaa2"/><path d="M0-11h100" stroke="#d1bc90" stroke-width="3"/></g>';
-      for (let i = 0; i < 10; i++) s += '<path d="M0 ' + (horizon + 15 + i * 8) + 'Q260 ' + (horizon + i * 24) + ' 440 ' + (horizon + 90 + i * 36) + '" fill="none" stroke="#d0ba6b" stroke-opacity=".38" stroke-width="5"/>';
+      // Waumandee starts in open pasture; the wooded climb is still ahead.
+      s += '<path d="M'+(cx+25)+' '+(horizon+95)+'Q'+(cx+180)+' '+(horizon-h*.27)+' 1000 '+(horizon-h*.1)+'V'+h+'H'+(cx+25)+'Z" fill="#769451"/>';
+      for (let i=0;i<17;i++) {
+        const x=cx-180+i*22;
+        if(Math.abs(x-cx)>34)s+=tree(x,horizon+6,.2+noise(i)*.08,false);
+      }
+      for (let i=0;i<5;i++)s+='<path d="M0 '+(horizon+25+i*15)+'Q160 '+(horizon+18+i*22)+' '+(cx-70)+' '+(horizon+55+i*39)+'" fill="none" stroke="#a9b56a" stroke-opacity=".22" stroke-width="3"/>';
     }
     const edge = (depth, side, extra = 0) => [+(cx + Math.sin(depth * Math.PI) * 24 + side * (22 + Math.pow(depth, 1.4) * (h * .56 + 110) + extra)).toFixed(1), +(horizon + (h - horizon) * depth).toFixed(1)];
     const edges = extra => [...Array.from({ length: 21 }, (_, i) => edge(i / 20, -1, extra)), ...Array.from({ length: 21 }, (_, i) => edge(1 - i / 20, 1, extra))];
@@ -83,7 +88,9 @@
           s+='<path d="M'+x+' '+y+'Q'+(x-side*12)+' '+(y-size*(compact?200:330))+' '+tipX+' '+tipY+'" fill="none" stroke="#454b35" stroke-width="'+(4+size*10)+'"/>';
           s+='<path d="M'+(x-side*15)+' '+(y-size*(compact?190:300))+'Q'+(tipX-side*60)+' '+(tipY+10)+' '+(tipX-side*110)+' '+(tipY+28)+'" fill="none" stroke="#4d563b" stroke-width="'+(3+size*4)+'"/>';
           for(let j=0;j<4;j++)s+='<ellipse cx="'+(tipX-side*j*38)+'" cy="'+(tipY+Math.sin(j)*16)+'" rx="'+(32+size*35)+'" ry="'+(20+size*20)+'" fill="'+['#284b30','#365e36','#49723f','#355831'][j]+'"/>';
-        } else if (!farm || i % 3 === 0) s += tree(x, y, size, ['pine', 'flag', 'shamrock'].includes(c.habitat));
+        } else if (farm) {
+          s+='<path d="M'+x+' '+y+'l'+(-7*size)+' '+(-14*size)+'m'+(7*size)+' '+(14*size)+'l'+(5*size)+' '+(-20*size)+'" fill="none" stroke="#8fa761" stroke-width="2"/>';
+        } else s += tree(x, y, size, ['pine', 'flag', 'shamrock'].includes(c.habitat));
       }
     }
     if(ravine){

@@ -129,3 +129,7 @@
  .welcome .season-picker label{font-size:8px;margin-bottom:4px}
  .welcome .season-picker label span{display:none}
 }
+@media(max-height:340px) and (orientation:landscape){
+ .panel.welcome{grid-template-areas:'art event' 'art driver' 'art start';grid-template-rows:60px 44px minmax(44px,1fr)}
+ .welcome .welcome-crown{display:none}
+}

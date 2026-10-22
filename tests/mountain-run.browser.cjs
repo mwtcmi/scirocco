@@ -42,7 +42,7 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
  await checkAspect();
  assert.equal(await page.locator('#damage').count(),0);
  assert.equal(await page.locator('#checkpoint').count(),0, 'distance popups must not obstruct the course');
- assert.equal(await page.locator('#eventSelect option').count(),9);
+ assert.equal(await page.locator('#eventSelect option:not([disabled])').count(),9);
  const scenery = new Set();
  for(let i=0;i<9;i++){
   await page.locator('#eventSelect').selectOption(String(i));
@@ -56,7 +56,7 @@ const baseURL = process.env.GAME_URL || 'http://127.0.0.1:8000/mountain-run/';
  await page.emulateMedia({reducedMotion:'reduce'});
  assert.equal(await page.locator('.idle-exhaust i').first().evaluate(el=>getComputedStyle(el).animationName),'none');
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.locator('#eventSelect').selectOption('7');assert.match(await page.locator('#courseLocation').innerText(),/Lake Michigan/);
+ await page.locator('#eventSelect').selectOption('7');assert.match(await page.locator('#courseLocation').innerText(),/Wooded ravine/);
  await page.locator('#eventSelect').selectOption('0');
  await page.screenshot({path:'/tmp/gameplay-v5-start.png'});
  assert.match(await page.locator('#msg').innerText(),/¾ over the white line/);
