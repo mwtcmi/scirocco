@@ -1,6 +1,10 @@
 # scirocco
 1976 Volkswagen Scirocco #799 Hill Climb Car
 
+## Website navigation
+
+The seven website pages share `mobile-nav.css` and `mobile-nav.js`. At widths up to 960 px, a native disclosure menu exposes the existing navigation links with touch-sized targets; it also works without JavaScript. The optional script closes it on link selection, outside clicks, Escape, focus leaving the menu, and desktop resizing. Desktop navigation and page content keep their original markup and styling.
+
 ## Mountain Run
 
 Play at [scirocco799.com/mountain-run](https://scirocco799.com/mountain-run). The homepage links there, and the game has a permanent Home link back to the website. The game lives in `mountain-run/index.html`; static hosts serve that directory at `/mountain-run` (some add a trailing slash). The older `mountain-run.html` address immediately replaces itself with the game in browser history. Its two fallback links are only shown when JavaScript is disabled, so they cannot appear between the homepage and game during normal navigation. The complete welcome screen appears after its styles, controls and car image are ready.
