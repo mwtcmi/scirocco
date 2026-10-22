@@ -186,7 +186,7 @@ button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
  .season-picker label{display:block;line-height:1.6}.season-picker label span{display:block}
  .course-map{top:42px}
 }
- </style><link rel="stylesheet" href="leaderboard.css?v=2"><link rel="stylesheet" href="welcome.css?v=4"><link rel="preload" as="image" href="../images/sponsor-logos.webp?v=1" type="image/webp"><script src="courses.js?v=6.1"></script><script src="audio.js?v=1.1"></script><!-- Site icons and link previews -->
+ </style><link rel="stylesheet" href="leaderboard.css?v=2"><link rel="stylesheet" href="welcome.css?v=4"><link rel="preload" as="image" href="../images/sponsor-logos.webp?v=1" type="image/webp"><script src="courses.js?v=6.1"></script><script src="audio.js?v=1.2"></script><!-- Site icons and link previews -->
 <link rel="icon" href="../favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png" sizes="180x180">
@@ -273,16 +273,18 @@ button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
 <script>
 (()=>{'use strict';const canvas=document.getElementById('scene'),g=canvas.getContext('2d',{alpha:false});let W=960;const H=600,GOAL=MountainCourses.length,VIEW=1650,ROAD=420,CAR_AHEAD=140,CAR_HALF_WIDTH=83,ROAD_LINE_INSET=9,APEX_RADIUS=32,ANIMAL_WAIT=.25,SKID_DURATION=.55,BURNOUT_DURATION=.9,BEST_KEY='799mountainrunbest-v6';const $=id=>document.getElementById(id);let state='menu',t=0,dist=0,speed=0,lane=0,apexes=0,animalHits=0,boostUntil=0,skidUntil=0,skidDirection=0,burnoutUntil=0,smokeTimer=0,tireSmoke=[],feedbackUntil=0,feedbackPriority=0,wasNearEdge=false,shake=0,flash=0,last=0,particles=[],best=null,soundOn=true,audio=null,engine=null;const keys={left:false,right:false,up:false,down:false};const rand=n=>{let x=Math.sin(n*127.17+71.71)*43758.545;return x-Math.floor(x)};const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));function fmt(v){return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.floor(v%60)).padStart(2,'0')+'.'+Math.floor(v%1*10)}
 function audioStart(){
- if(engine)return;
- try{
-  audio=new (window.AudioContext||window.webkitAudioContext)();
-  engine=MountainAudio.create(audio);
- }catch(e){audio?.close();audio=null;engine=null}
+ if(!engine){
+  try{
+   audio=new (window.AudioContext||window.webkitAudioContext)();
+   engine=MountainAudio.create(audio);
+  }catch(e){audio?.close();audio=null;engine=null}
+ }
+ if(engine)MountainAudio.unlock(audio);
 }
 function audioUpdate(){
  if(!engine)return;
- const active=soundOn&&state==='play',launch=t<burnoutUntil;
- if(audio.state==='suspended'&&active)audio.resume().catch(()=>{});
+ const active=soundOn&&state==='play'&&!document.hidden,launch=t<burnoutUntil;
+ if(!active)MountainAudio.stopPlayback();
  engine.update({time:t,speed,running:state==='play',audible:active,gas:keys.up,brake:keys.down,launch,
   tireLevel:launch?clamp((burnoutUntil-t)/.2,0,1):skidStrength()});
 }
@@ -961,7 +963,9 @@ try{rememberedIndex=EVENTS.findIndex(c=>c.id===localStorage.getItem(LAST_COURSE_
 selectEvent(rememberedIndex>=0?rememberedIndex:0,rememberedIndex>=0);
 
 addEventListener('keydown',e=>{if(window.MountainLeaderboard?.isOpen())return;let k=e.key.toLowerCase();if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;if(['arrowleft','arrowright','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k==='arrowup'||k==='w')keys.up=true;if(k==='arrowdown'||k==='s')keys.down=true;if(k==='r')reset();if(k==='m')$('sound').click();if(k===' ')togglePause()});addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k==='arrowup'||k==='w')keys.up=false;if(k==='arrowdown'||k==='s')keys.down=false});addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});addEventListener('orientationchange',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')togglePause()});
-for(let k of Object.keys(keys)){let b=$(k);b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;b.setPointerCapture(e.pointerId)});for(let event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>keys[k]=false)}
+for(let k of Object.keys(keys)){let b=$(k);b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(soundOn&&state==='play')audioStart();b.setPointerCapture(e.pointerId)});for(let event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>{keys[k]=false;if(event==='pointerup'&&soundOn&&state==='play')audioStart()})}
+addEventListener('visibilitychange',()=>{if(document.hidden){for(const k of Object.keys(keys))keys[k]=false;if(state==='play')togglePause();audioUpdate()}});
+addEventListener('pagehide',()=>{if(state==='play')togglePause();MountainAudio.stopPlayback();if(audio?.state==='running')audio.suspend().catch(()=>{})});
 function frame(now){let dt=Math.min(.05,(now-last)/1000||0);last=now;if(state==='play')update(dt);audioUpdate();render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
 })();</script><script src="welcome.js?v=5" defer></script><script src="name-policy.js?v=1" defer></script><script src="leaderboard.js?v=6.1" defer></script><script>
 // Reveal the complete welcome screen after styles, controls and its car image are ready.
