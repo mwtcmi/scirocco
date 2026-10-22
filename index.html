@@ -143,6 +143,7 @@ p{
    ============================================================ */
 
 .hero{
+  --hero-photo:url("images/optimized/799-hillclimb-2400.webp");
   position:relative;
   min-height:820px;
   display:flex;
@@ -157,7 +158,7 @@ p{
       rgba(0,0,0,.25) 68%,
       rgba(0,0,0,.05) 100%
     ),
-    url("images/Photo%20Sep%2029%202026%2C%203%2041%2052%20PM.jpg")
+    var(--hero-photo)
     center 52% / cover no-repeat;
 }
 
@@ -1096,7 +1097,7 @@ footer{
         rgba(0,0,0,.9),
         rgba(0,0,0,.48)
       ),
-      url("images/Photo%20Sep%2029%202026%2C%203%2041%2052%20PM.jpg")
+      var(--hero-photo)
       55% center / cover no-repeat;
   }
 
@@ -1203,6 +1204,7 @@ footer{
   .footer,.footer-inner{flex-direction:column!important;gap:10px!important;align-items:flex-start!important}
 }
 
+@media(max-width:800px){.hero{--hero-photo:url("images/optimized/799-hillclimb-1280.webp")}}
 </style>
 
 <meta property="og:title" content="Scirocco 799 | 1976 Volkswagen Scirocco Competition"><meta property="og:description" content="1976 Volkswagen Scirocco 799 competing in hill climbs, time trial events and track sprints. Follow the car, racing program, paddock and partners."><meta property="og:type" content="website"><meta property="og:url" content="https://scirocco799.com/"><meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="mobile-nav.css?v=1"><script src="mobile-nav.js?v=1" defer></script></head>
@@ -1366,7 +1368,7 @@ footer{
       <figure class="photo-main">
 
         <img
-          src="images/Photo%20Sep%2029%202026%2C%203%2041%2039%20PM.jpg"
+          src="images/optimized/799-photo-main-960.webp" srcset="images/optimized/799-photo-main-480.webp 480w, images/optimized/799-photo-main-960.webp 960w" sizes="(max-width: 600px) calc(100vw - 32px), (max-width: 1000px) calc(100vw - 44px), 800px"
           alt="Scirocco 799 competition car"
           loading="lazy">
 
@@ -1385,7 +1387,7 @@ footer{
         <figure>
 
           <img
-            src="images/Photo%20Oct%2027%202025%2C%2011%2010%2032%20PM.png"
+            src="images/optimized/799-photo-stack-960.webp" srcset="images/optimized/799-photo-stack-480.webp 480w, images/optimized/799-photo-stack-960.webp 960w" sizes="(max-width: 600px) calc(100vw - 32px), 620px"
             alt="Scirocco 799 competition car"
             loading="lazy">
 
@@ -1401,7 +1403,7 @@ footer{
         <figure>
 
           <img
-            src="images/Photo%20Sep%2019%202026%2C%202%2046%2003%20AM.jpg"
+            src="images/optimized/799-on-course-1600.webp" srcset="images/optimized/799-on-course-480.webp 480w, images/optimized/799-on-course-960.webp 960w, images/optimized/799-on-course-1600.webp 1600w" sizes="(max-width: 600px) calc(100vw - 32px), 620px"
             alt="Scirocco 799 on course"
             loading="lazy">
 
