@@ -1,9 +1,55 @@
-// Synthesized carb-fed 2.0-litre, eight-valve inline four. No audio downloads.
+// Synthesized carb-fed 2.0-litre, eight-valve inline four; a tiny native-media primer supports iOS.
 // The five-speed model drives the sound only; vehicle physics are unchanged.
 (() => {
   'use strict';
   const idle = 1120, redline = 6900, shiftSpeeds = [390, 530, 690, 845, 1080];
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const unlocked = new WeakSet();
+  let mediaUnlock;
+  let playbackActive = false;
+
+  function unlock(context) {
+    if (!context || context.state === 'closed') return;
+    playbackActive = true;
+    const device = globalThis.navigator;
+    // Safari can otherwise route Web Audio through the ringer/silent channel.
+    try { if (device?.audioSession && device.audioSession.type !== 'playback') device.audioSession.type = 'playback'; } catch (_) {}
+    const appleTouch = /iPad|iPhone|iPod/.test(device?.userAgent || '')
+      || (device?.platform === 'MacIntel' && device.maxTouchPoints > 1);
+    if (appleTouch) {
+      try {
+        if (!mediaUnlock) {
+          // A nearly silent native-media loop keeps older iOS versions on the
+          // media channel too. Pause it whenever racing audio is inactive.
+          mediaUnlock = new Audio('/audio/mobile-unlock-v1.wav');
+          mediaUnlock.loop = true;
+          mediaUnlock.preload = 'auto';
+        }
+        if (mediaUnlock.paused) mediaUnlock.play()?.then(() => {
+          // Changing the iOS media channel can itself interrupt Web Audio.
+          if (playbackActive && !mediaUnlock.paused && context.state !== 'running' && context.state !== 'closed') context.resume()?.catch(() => {});
+        }).catch(() => {});
+      } catch (_) {}
+    }
+    // Run these operations directly in Start/Resume/Sound/control gestures.
+    // iOS may report "interrupted" after a call or a backgrounded tab.
+    if (!unlocked.has(context) || context.state !== 'running') {
+      try {
+        context.resume()?.catch(() => {});
+        const source = context.createBufferSource();
+        source.buffer = context.createBuffer(1, 1, context.sampleRate);
+        source.connect(context.destination);
+        source.onended = () => source.disconnect();
+        source.start();
+        unlocked.add(context);
+      } catch (_) {}
+    }
+  }
+
+  function stopPlayback() {
+    playbackActive = false;
+    if (mediaUnlock && !mediaUnlock.paused) mediaUnlock.pause();
+  }
 
   function powertrain() {
     let gear, rpm, previous, shiftUntil, shiftRpm, lastShift, shift;
@@ -114,5 +160,5 @@
     }
     return { update, reset, context, engineGain, tireGain };
   }
-  globalThis.MountainAudio = Object.freeze({ create, powertrain });
+  globalThis.MountainAudio = Object.freeze({ create, powertrain, unlock, stopPlayback });
 })();

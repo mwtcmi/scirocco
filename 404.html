@@ -198,6 +198,7 @@
     </div>
   </main>
   <footer><div class="wrap footer-inner"><span>799 Motorsport · Vintage Volkswagen. Modern competition.</span><span>Pages found: 0. Excuses: 799.</span></div></footer>
+  <audio id="rev-audio" src="/audio/799-detour-rev-v1.mp3" preload="auto"></audio>
   <script>
     (() => {
       const controls = document.getElementById('scene-controls');
@@ -205,6 +206,7 @@
       const revButton = document.getElementById('rev-button');
       const soundButton = document.getElementById('sound-toggle');
       const soundLabel = document.getElementById('sound-label');
+      const revAudio = document.getElementById('rev-audio');
       const message = document.getElementById('radio-message');
       const replies = [
         '“Still a 404. Sounded good, though.”',
@@ -214,73 +216,46 @@
         '“Race control would like its shortcut back.”'
       ];
       let soundOn = true;
-      let audioContext;
+      let soundNeedsRetry = false;
       let revTimer;
       let attempts = 0;
       let isRevving = false;
-      let activeSound;
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      let playbackAttempt = 0;
+
+      function updateSoundButton() {
+        soundButton.setAttribute('aria-pressed', String(soundOn && !soundNeedsRetry));
+        soundLabel.textContent = soundNeedsRetry ? 'Try sound' : soundOn ? 'Sound on' : 'Sound off';
+      }
 
       function stopSound() {
-        if (activeSound) {
-          activeSound.gain.cancelScheduledValues(audioContext.currentTime);
-          activeSound.gain.setValueAtTime(0, audioContext.currentTime);
-          activeSound = null;
-        }
+        playbackAttempt++;
+        revAudio.pause();
+        try { revAudio.currentTime = 0; } catch (_) { /* Metadata may still be loading. */ }
       }
 
       function revEngine() {
-        if (!soundOn || !AudioContext) return;
+        if (!soundOn) return;
+        stopSound();
+        const attempt = playbackAttempt;
+        function retrySound(error) {
+          if (attempt !== playbackAttempt || error.name === 'AbortError' || !soundOn || document.hidden) return;
+          soundNeedsRetry = true;
+          updateSoundButton();
+          message.textContent = 'Sound couldn’t start. Tap “Try sound” to give it another go.';
+        }
         try {
-          audioContext ||= new AudioContext();
-          const ready = audioContext.state === 'running' ? Promise.resolve() : audioContext.resume();
-          ready.then(() => {
-            if (!soundOn || !isRevving || document.hidden) return;
-            stopSound();
-            const now = audioContext.currentTime;
-            const master = audioContext.createGain();
-            const filter = audioContext.createBiquadFilter();
-            master.gain.setValueAtTime(0, now);
-            master.gain.linearRampToValueAtTime(.12, now + .08);
-            master.gain.setValueAtTime(.12, now + .8);
-            master.gain.linearRampToValueAtTime(0, now + 1.8);
-            filter.type = 'lowpass';
-            filter.Q.value = .6;
-            filter.frequency.setValueAtTime(420, now);
-            filter.frequency.linearRampToValueAtTime(1600, now + .7);
-            filter.frequency.exponentialRampToValueAtTime(240, now + 1.8);
-            filter.connect(master);
-            master.connect(audioContext.destination);
-            activeSound = master;
-            const notes = [58, 87, 116];
-            let remaining = notes.length;
-            notes.forEach((frequency, index) => {
-              const oscillator = audioContext.createOscillator();
-              const level = audioContext.createGain();
-              oscillator.type = index === 0 ? 'sawtooth' : 'triangle';
-              oscillator.frequency.setValueAtTime(frequency, now);
-              oscillator.frequency.exponentialRampToValueAtTime(frequency * 3.9, now + .7);
-              oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.1, now + 1.8);
-              level.gain.value = index === 0 ? .5 : .2;
-              oscillator.connect(level);
-              level.connect(filter);
-              oscillator.onended = () => {
-                oscillator.disconnect();
-                level.disconnect();
-                if (--remaining === 0) {
-                  filter.disconnect();
-                  master.disconnect();
-                  if (activeSound === master) activeSound = null;
-                }
-              };
-              oscillator.start(now);
-              oscillator.stop(now + 1.9);
-            });
-          }).catch(() => {});
-        } catch (_) { /* The roadside scene also works without browser audio. */ }
+          // Call play() inside the tap/click itself, before any promise or timer.
+          // Native media playback also uses the iPhone's media audio channel.
+          const playing = revAudio.play();
+          if (playing) playing.then(() => {
+            if (attempt !== playbackAttempt) return;
+            soundNeedsRetry = false;
+            updateSoundButton();
+          }).catch(retrySound);
+        } catch (error) { retrySound(error); }
       }
 
-      revButton.addEventListener('click', () => {
+      function startRev() {
         if (isRevving) return;
         isRevving = true;
         revButton.setAttribute('aria-disabled', 'true');
@@ -292,13 +267,18 @@
           isRevving = false;
           revButton.removeAttribute('aria-disabled');
         }, 2200);
-      });
+      }
+      revButton.addEventListener('click', startRev);
 
       soundButton.addEventListener('click', () => {
-        soundOn = !soundOn;
-        soundButton.setAttribute('aria-pressed', String(soundOn));
-        soundLabel.textContent = soundOn ? 'Sound on' : 'Sound off';
+        const retry = soundNeedsRetry;
+        soundOn = retry || !soundOn;
+        soundNeedsRetry = false;
+        updateSoundButton();
+        if (retry) message.textContent = '“Now we’re going nowhere, loudly.”';
         if (!soundOn) stopSound();
+        else if (isRevving) revEngine();
+        else if (retry) startRev();
       });
 
       document.addEventListener('visibilitychange', () => {
@@ -310,9 +290,7 @@
         isRevving = false;
         revButton.removeAttribute('aria-disabled');
         stopSound();
-        if (audioContext && audioContext.state === 'running') audioContext.suspend().catch(() => {});
       });
-      if (!AudioContext) soundButton.hidden = true;
       controls.hidden = false;
     })();
   </script>
