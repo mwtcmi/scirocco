@@ -7,6 +7,14 @@ The seven website pages share `mobile-nav.css` and `mobile-nav.js`. At widths up
 
 Website photos use resized WebP copies in `images/optimized`, with responsive image sources and smaller backgrounds on phones and tablets. Originals remain in `images`. Rebuild the copies with `python scripts/optimize-website-photos.py` using ImageMagick 7 with WebP support; supply `--srgb-profile /path/to/sRGB.icc` if the system sRGB profile is elsewhere. The script preserves orientation, converts color profiles to sRGB, and uses WebP quality 84 without enlarging originals.
 
+## Icons, link previews, and missing pages
+
+Every website page and game entry point includes the vector 799 favicon, an ICO fallback with 16/32/48 px versions, and a 180 px Apple touch icon. Eight 1200×630 JPEG sharing cards in `images/social` cover the homepage, racing, schedule, car, driver, paddock, partnerships, and Mountain Run. Open Graph and Twitter metadata use absolute image URLs, page-specific descriptions, and the production canonical addresses. These images are fetched by sharing services, not added to page layouts.
+
+Rebuild the assets and metadata with `node scripts/build-site-branding.cjs`, with Playwright, Chromium, and ImageMagick 7 available. Set `CHROMIUM_PATH` if Chromium is installed somewhere other than `/usr/bin/chromium`. The script uses the existing optimized photos and captures the game's actual rendering; no external image service is required. The original photos, page bodies, styles, and gameplay code are retained.
+
+The top-level `404.html` is a standalone recovery page with Home, game, and schedule links that work from nested missing URLs. Static hosting should serve it with HTTP 404 for unknown paths while continuing to resolve the existing HTML pages and `/mountain-run/`. The recovery page is marked `noindex`.
+
 ## Mountain Run
 
 Play at [scirocco799.com/mountain-run](https://scirocco799.com/mountain-run). The homepage links there, and the game has a permanent Home link back to the website. The game lives in `mountain-run/index.html`; static hosts serve that directory at `/mountain-run` (some add a trailing slash). The older `mountain-run.html` address immediately replaces itself with the game in browser history. Its two fallback links are only shown when JavaScript is disabled, so they cannot appear between the homepage and game during normal navigation. The complete welcome screen appears after its styles, controls and car image are ready.
