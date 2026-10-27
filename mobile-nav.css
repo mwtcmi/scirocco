@@ -1,6 +1,12 @@
 /* Mobile disclosure only; the existing desktop navigation stays in place. */
 .mobile-nav{display:none}
 
+/* Fit the additional Photos entry without wrapping the existing brand. */
+@media(min-width:961px) and (max-width:1100px){
+  body>nav .links,body>nav .nav-links{gap:16px}
+  body>nav .brand{white-space:nowrap}
+}
+
 @media(max-width:960px){
   body>nav{padding:14px 0}
   body>nav .links,body>nav .nav-links{display:none!important}
