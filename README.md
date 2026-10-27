@@ -3,9 +3,17 @@
 
 ## Website navigation
 
-The seven website pages share `mobile-nav.css` and `mobile-nav.js`. At widths up to 960 px, a native disclosure menu exposes the existing navigation links with touch-sized targets; it also works without JavaScript. The optional script closes it on link selection, outside clicks, Escape, focus leaving the menu, and desktop resizing. Desktop navigation and page content keep their original markup and styling.
+The website pages share `mobile-nav.css` and `mobile-nav.js`. At widths up to 960 px, a native disclosure menu exposes the existing navigation links with touch-sized targets; it also works without JavaScript. The optional script closes it on link selection, outside clicks, Escape, focus leaving the menu, and desktop resizing. Desktop navigation and page content keep their original markup and styling.
 
 Website photos use resized WebP copies in `images/optimized`, with responsive image sources and smaller backgrounds on phones and tablets. Originals remain in `images`. Rebuild the copies with `python scripts/optimize-website-photos.py` using ImageMagick 7 with WebP support; supply `--srgb-profile /path/to/sRGB.icc` if the system sRGB profile is elsewhere. The script preserves orientation, converts color profiles to sRGB, and uses WebP quality 84 without enlarging originals.
+
+## Event photos
+
+The isolated gallery at [scirocco799.com/photos/](https://scirocco799.com/photos/) contains all 24 full-size WebP photos and 24 thumbnails from the supplied Grattan Track Sprints gallery. Images retain their original filenames and bytes. Visitors can preview and download every photo for free under the supplied personal, noncommercial sharing terms. The native photo dialog supports keyboard arrows, Escape, focus management and touch-sized controls; plain photo links still download without JavaScript.
+
+Only `photos/index.html` loads `photos/gallery.css` and `photos/gallery.js`. Existing pages receive one Photos entry in each desktop/mobile menu. The shared navigation uses slightly smaller gaps only from 961–1100 px to keep the original brand on one line with the extra entry. GitHub Pages continues to publish the repository root from `main`; no deployment configuration changes are needed.
+
+With the local server running, verify all previews, downloaded files, menus and phone layouts using `node tests/photos.browser.cjs`. Set `SITE_URL` to use another server and `CHROMIUM_PATH` if Chromium is installed elsewhere.
 
 ## Icons, link previews, and missing pages
 
