@@ -16,10 +16,10 @@ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
     page.on('pageerror', error => errors.push(error.message));
     page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
     await page.goto(base + '/photos/');
-    assert.equal(await page.locator('.gallery .tile').count(), 24);
+    assert.equal(await page.locator('.gallery .tile').count(), 25);
     const photos = await page.locator('#photos-data').evaluate(data => JSON.parse(data.textContent));
-    assert.equal(photos.length, 24);
-    assert.equal(new Set(photos.map(photo => photo.href)).size, 24);
+    assert.equal(photos.length, 25);
+    assert.equal(new Set(photos.map(photo => photo.href)).size, 25);
     assert.equal(await page.locator('.site-nav .links a[aria-current=page]').innerText(), 'PHOTOS');
     assert.equal(await page.locator('.site-nav .links a').filter({ hasText: /^Photos$/i }).count(), 1);
     for (let index = 0; index < photos.length; index++) {
@@ -32,7 +32,7 @@ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
       });
       assert(bounds.natural > 0 && Math.abs(bounds.width / bounds.height - 1.6) < .01, 'thumbnail uses responsive proportions');
     }
-    console.log('PASS: all 24 thumbnails load with correct proportions');
+    console.log('PASS: all 25 thumbnails load with correct proportions');
     await page.locator('.tile').first().click();
     assert.equal(await page.locator('#viewer').evaluate(dialog => dialog.open), true);
     assert.equal(await page.locator('#close').evaluate(button => button === document.activeElement), true);
@@ -41,7 +41,7 @@ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
     for (let index = 0; index < photos.length; index++) {
       const photo = photos[index];
       await page.locator('#preview').evaluate(image => image.decode());
-      assert.equal(await page.locator('#counter').innerText(), `${index + 1} / 24`);
+      assert.equal(await page.locator('#counter').innerText(), `${index + 1} / 25`);
       assert.deepEqual(await page.locator('#preview').evaluate(image => [image.naturalWidth, image.naturalHeight]), [photo.width, photo.height]);
       // Stay below Chromium's ten-downloads-per-second safety limit.
       await page.waitForTimeout(150);
@@ -51,13 +51,13 @@ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
       assert.equal(hash(await fs.readFile(await download.path())), hash(await fs.readFile(path.join(__dirname, '../photos', photo.href))));
       await page.keyboard.press('ArrowRight');
     }
-    assert.equal(await page.locator('#counter').innerText(), '1 / 24');
+    assert.equal(await page.locator('#counter').innerText(), '1 / 25');
     await page.keyboard.press('ArrowLeft');
-    assert.equal(await page.locator('#counter').innerText(), '24 / 24');
+    assert.equal(await page.locator('#counter').innerText(), '25 / 25');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#viewer').evaluate(dialog => dialog.open), false);
     assert.equal(await page.locator('.tile').first().evaluate(tile => tile === document.activeElement), true);
-    console.log('PASS: 24 full-size previews and actual downloads match supplied files; arrow keys, wrapping, Escape and focus restoration');
+    console.log('PASS: 25 full-size previews and actual downloads match supplied files; arrow keys, wrapping, Escape and focus restoration');
     await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
     await page.screenshot({ path: '/tmp/799-photos-desktop.png', fullPage: true });
 
@@ -87,7 +87,7 @@ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
         assert(usable, `${width}x${height}: ${id} is visible, touch-sized and unobstructed`);
       }
       await phone.locator('#next').tap();
-      assert.equal(await phone.locator('#counter').innerText(), '1 / 24');
+      assert.equal(await phone.locator('#counter').innerText(), '1 / 25');
       const [download] = await Promise.all([phone.waitForEvent('download'), phone.locator('#download').tap()]);
       assert.equal(await download.failure(), null);
       if (width === 390) await phone.screenshot({ path: '/tmp/799-photos-mobile-viewer.png' });
