@@ -1,0 +1,19 @@
+/* Event-gallery hero; isolated from the gallery index and photo viewer. */
+.event-hero{position:relative;isolation:isolate;min-height:520px;border-bottom:1px solid #292929;display:flex;align-items:flex-start;background:#050505;overflow:hidden}
+.event-hero::before{content:"";position:absolute;inset:0;z-index:-2;background-image:var(--event-photo);background-size:cover;background-position:var(--event-position)}
+.event-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.4) 58%,rgba(0,0,0,.12)),linear-gradient(0deg,#050505 0%,transparent 25%)}
+.event-hero-inner{width:min(1180px,100%);margin:0 auto;padding:70px 26px 60px}
+.event-hero h1{font-size:clamp(52px,7.4vw,96px);max-width:1000px;margin:15px 0 24px;text-shadow:0 2px 20px #0008}
+.event-hero .lead{max-width:650px;color:#fff;text-shadow:0 1px 8px #000;margin:0;font-size:17px}
+.hero-grattan{--event-photo:url("/photos/images/GFTS-013.webp");--event-position:center 100%}
+.hero-empire{--event-photo:url("/photos/empire-2026/images/5X2A2201.jpg");--event-position:center 70%}
+.event-content{padding-top:24px}
+@media(max-width:600px){
+.event-hero{min-height:510px}
+.event-hero-inner{padding:36px 20px 220px}
+.event-hero h1{font-size:clamp(39px,10vw,58px);line-height:.98;margin:13px 0 18px;overflow-wrap:normal}
+.event-hero .lead{font-size:14px;line-height:1.55;max-width:440px}
+.event-hero::after{background:linear-gradient(180deg,rgba(0,0,0,.86),rgba(0,0,0,.58) 42%,rgba(0,0,0,.08) 70%,#050505)}
+.hero-grattan{--event-position:30% 100%}
+.hero-empire{--event-position:65% 75%}
+}
