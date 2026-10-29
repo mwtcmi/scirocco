@@ -6,7 +6,7 @@
 .event-hero h1{font-size:clamp(52px,7.4vw,96px);max-width:1000px;margin:15px 0 24px;text-shadow:0 2px 20px #0008}
 .event-hero .lead{max-width:650px;color:#fff;text-shadow:0 1px 8px #000;margin:0;font-size:17px}
 .hero-grattan{--event-photo:url("/photos/images/GFTS-013.webp");--event-position:center 100%}
-.hero-empire{--event-photo:url("/photos/empire-2026/images/5X2A2201.jpg");--event-position:center 70%}
+.hero-empire{--event-photo:url("/images/optimized/empire-hero-2048.webp");--event-position:center 70%}
 .event-content{padding-top:24px}
 @media(max-width:600px){
 .event-hero{min-height:510px}

@@ -16,7 +16,11 @@ const pages = [
   { file: 'michael-white.html', slug: 'driver', route: '/michael-white', title: 'Michael White | Open Source & Grassroots Motorsports', description: 'Open source executive. Community builder. Grassroots racer. Meet Michael White, the driver behind Scirocco 799.', heading: ['MICHAEL', 'WHITE.'], kicker: 'THE DRIVER BEHIND SCIROCCO 799', caption: 'Open source. Open paddock.', tag: 'COMMUNITY · TECHNOLOGY · MOTORSPORT', photo: 'michael-white-1920.webp', position: '50% 30%' },
   { file: 'paddock.html', slug: 'paddock', route: '/paddock', title: 'The Paddock | Scirocco 799', description: 'Tools, equipment and trackside gear actually used by the Scirocco 799 race program.', heading: ['PADDOCK', 'TESTED.'], kicker: 'THE STUFF WE ACTUALLY USE', caption: 'Tools, equipment, and lessons from race weekends.', tag: 'REAL EQUIPMENT · REAL COMPETITION', photo: '799-photo-stack-960.webp', position: '50% 64%' },
   { file: 'partners.html', slug: 'partners', route: '/partners', title: 'Work With 799 | Scirocco 799', description: 'Partner with Scirocco 799 through racing, technical development, paddock products, commerce, content and hospitality.', heading: ['RACE', 'WITH 799.'], kicker: '2027 PARTNERSHIP OPPORTUNITIES', caption: 'Put your brand on the car and in the paddock.', tag: 'WORK WITH 799', photo: '799-on-course-1600.webp', position: '50% 65%' },
-  { file: 'mountain-run/index.html', slug: 'mountain-run', route: '/mountain-run', title: 'Mountain Run | Scirocco 799', description: 'Drive the green Scirocco 799 through nine venue-inspired courses. Chase apex boosts and compete for the shared podiums.', heading: ['MOUNTAIN', 'RUN.'], kicker: 'THE SCIROCCO 799 DRIVING GAME', caption: 'Nine events. One 2027 season. Your run.', tag: 'PLAY AT SCIROCCO799.COM/MOUNTAIN-RUN' },
+  { file: 'mountain-run/index.html', slug: 'mountain-run', route: '/mountain-run/', title: 'Mountain Run | Scirocco 799', description: 'Drive the green Scirocco 799 through nine venue-inspired courses. Chase apex boosts and compete for the shared podiums.', heading: ['MOUNTAIN', 'RUN.'], kicker: 'THE SCIROCCO 799 DRIVING GAME', caption: 'Nine events. One 2027 season. Your run.', tag: 'PLAY AT SCIROCCO799.COM/MOUNTAIN-RUN' },
+  { file: 'ground-control.html', slug: 'ground-control', route: '/ground-control', title: 'Built for the Climb | Ground Control × 799 Motorsport', description: 'Inside the custom Ground Control suspension build on the 799 Motorsport Volkswagen Scirocco, from strut tower preparation to Empire Hill Climb and Grattan testing.', heading: ['BUILT FOR', 'THE CLIMB.'], kicker: 'GROUND CONTROL × 799 MOTORSPORT', caption: 'Serious suspension hardware on a lightweight MK1.', tag: 'PARTNER BUILD STORY', photoPath: 'images/ground-control/empire-hero.webp', position: '50% 55%' },
+  { file: 'photos/index.html', slug: 'photos', route: '/photos/', prefix: '../', title: 'Event Photo Galleries | 799 Motorsport', description: 'Explore 799 Motorsport event photo galleries from Empire Hill Climb and Grattan Raceway.', heading: ['EVENT', 'GALLERIES.'], kicker: '799 MOTORSPORT EVENT PHOTOGRAPHY', caption: 'From the paddock to the finish line.', tag: 'VIEW · DOWNLOAD · SHARE', photoPath: 'photos/empire-2026/images/5X2A2426.jpg', position: '50% 50%' },
+  { file: 'photos/grattan-2026/index.html', slug: 'photos-grattan-2026', route: '/photos/grattan-2026/', prefix: '/', title: '2026 WMR SCCA Fall Track Sprints Photos | 799 Motorsport', description: '2026 WMR SCCA Fall Track Sprints photos from Grattan Raceway, shared by 799 Motorsport.', heading: ['FALL TRACK', 'SPRINTS.'], kicker: '2026 WMR SCCA · GRATTAN RACEWAY', caption: 'A day at Grattan, from the paddock to the track.', tag: 'OCTOBER 25, 2026 · EVENT PHOTOS', photoPath: 'photos/images/GFTS-011.webp', position: '50% 50%' },
+  { file: 'photos/empire-2026/index.html', slug: 'photos-empire-2026', route: '/photos/empire-2026/', prefix: '../../', title: '2026 Empire Hill Climb Photos | 799 Motorsport', description: '2026 Empire Hill Climb photos from Empire, Michigan. Photography by Nate Bronkema.', heading: ['EMPIRE', 'HILL CLIMB.'], kicker: '2026 · EMPIRE, MICHIGAN', caption: 'Race day in Empire.', tag: 'PHOTOGRAPHY BY NATE BRONKEMA', photoPath: 'photos/empire-2026/images/5X2A2201.jpg', position: '50% 50%' },
 ];
 const escape = value => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 const imagePath = page => `images/social/799-${page.slug}-v1.jpg`;
@@ -86,6 +90,10 @@ async function build() {
   let browser;
   try {
     browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-gpu'] });
+    const only = (process.argv.find(arg => arg.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
+    const selected = only.length ? pages.filter(page => only.includes(page.slug)) : pages;
+    if (!selected.length) throw new Error('No pages match --only');
+    if (!only.length) {
     const icon = await browser.newPage({ viewport: { width: 180, height: 180 }, deviceScaleFactor: 1 });
     const svg = await fs.readFile(path.join(root, 'favicon.svg'));
     await icon.setContent(`<style>html,body{margin:0;background:transparent}img{display:block;width:180px;height:180px}</style><img src="data:image/svg+xml;base64,${svg.toString('base64')}">`);
@@ -105,28 +113,33 @@ async function build() {
     await game.goto(base + '/mountain-run/', { waitUntil: 'networkidle' });
     await game.waitForFunction(() => !document.documentElement.hasAttribute('data-loading'));
     await game.evaluate(() => shareScene());
-    const gamePhoto = await game.locator('#scene').screenshot({ type: 'png' });
+    var gamePhoto = await game.locator('#scene').screenshot({ type: 'png' });
     await game.close();
-    for (const item of pages) {
+    }
+    for (const item of selected) {
       const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
-      const photo = item.photo ? await fs.readFile(path.join(root, 'images/optimized', item.photo)) : gamePhoto;
-      const source = `data:image/${item.photo ? 'webp' : 'png'};base64,${photo.toString('base64')}`;
+      const photoFile = item.photoPath || (item.photo && path.join('images/optimized', item.photo));
+      const photo = photoFile ? await fs.readFile(path.join(root, photoFile)) : gamePhoto;
+      const type = photoFile ? ({ '.jpg': 'jpeg', '.jpeg': 'jpeg', '.png': 'png' })[path.extname(photoFile).toLowerCase()] || 'webp' : 'png';
+      const source = `data:image/${type};base64,${photo.toString('base64')}`;
       await page.setContent(card(item, source));
       await page.locator('.photo').evaluate(image => image.decode());
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await page.screenshot({ path: path.join(root, imagePath(item)), type: 'jpeg', quality: 88 });
       await page.close();
-      await updateMetadata(item.file, item, item.file.includes('/') ? '../' : '');
+      await updateMetadata(item.file, item, item.prefix ?? (item.file.includes('/') ? '../' : ''));
       console.log(imagePath(item));
     }
-    const mountain = pages.find(page => page.slug === 'mountain-run');
-    for (const alias of ['mountain-run.html', 'the-run.html']) await updateMetadata(alias, mountain);
-    await updateMetadata('404.html', pages[0], '/', false);
+    if (!only.length) {
+      const mountain = pages.find(page => page.slug === 'mountain-run');
+      for (const alias of ['mountain-run.html', 'the-run.html']) await updateMetadata(alias, mountain);
+      await updateMetadata('404.html', pages[0], '/', false);
+    }
   } finally {
     await browser?.close();server.closeAllConnections();await new Promise(resolve => server.close(resolve));
   }
 }
 
 if (require.main === module) build().catch(error => { console.error(error);process.exitCode = 1; });
-module.exports = { pages, metadata };
+module.exports = { pages, metadata, card };
