@@ -9,7 +9,7 @@ Website photos use resized WebP copies in `images/optimized`, with responsive im
 
 ## Event photos
 
-The isolated gallery at [scirocco799.com/photos/](https://scirocco799.com/photos/) contains all 24 full-size WebP photos and 24 thumbnails from the supplied Grattan Track Sprints gallery. Images retain their original filenames and bytes. Visitors can preview and download every photo for free under the supplied personal, noncommercial sharing terms. The native photo dialog supports keyboard arrows, Escape, focus management and touch-sized controls; plain photo links still download without JavaScript.
+The isolated gallery at [scirocco799.com/photos/](https://scirocco799.com/photos/) contains all 25 full-size WebP photos and 25 thumbnails from the supplied Grattan Track Sprints gallery. Images retain their original filenames and bytes. Visitors can preview and download every photo for free under the supplied personal, noncommercial sharing terms. The native photo dialog supports keyboard arrows, Escape, focus management and touch-sized controls; plain photo links still download without JavaScript.
 
 Only `photos/index.html` loads `photos/gallery.css` and `photos/gallery.js`. Existing pages receive one Photos entry in each desktop/mobile menu. The shared navigation uses slightly smaller gaps only from 961–1100 px to keep the original brand on one line with the extra entry. GitHub Pages continues to publish the repository root from `main`; no deployment configuration changes are needed.
 
