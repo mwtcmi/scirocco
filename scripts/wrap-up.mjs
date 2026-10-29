@@ -39,7 +39,9 @@ const meta = (html, key, val) => attr(html, new RegExp(`<meta[^>]+${key}=["']${v
   || attr(html, new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*${key}=["']${val}["']`, 'i'));
 
 function gitDate(file) {
-  try { return execFileSync('git', ['log', '-1', '--format=%cs', '--', file], { cwd: ROOT, encoding: 'utf8' }).trim(); }
+  try {
+    if (execFileSync('git', ['status', '--porcelain', '--', file], { cwd: ROOT, encoding: 'utf8' }).trim()) return new Date().toLocaleDateString('en-CA');
+    return execFileSync('git', ['log', '-1', '--format=%cs', '--', file], { cwd: ROOT, encoding: 'utf8' }).trim(); }
   catch { return ''; }
 }
 
@@ -70,8 +72,9 @@ function collectRefs(text, fromFile, isCss) {
   const noScripts = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => (m.match(/<script[^>]*>/i) || [''])[0]);
   for (const m of noScripts.matchAll(/<(a|link|img|source|video|audio|script|iframe)\b[^>]*>/gi)) {
     const tag = m[0], name = m[1].toLowerCase();
-    for (const a of tag.matchAll(/\s(href|src|poster)=["']([^"']*)["']/gi)) refs.push({ ref: a[2], kind: name === 'a' ? 'link' : 'asset' });
     const ss = tag.match(/\ssrcset=["']([^"']*)["']/i);
+    // With srcset, browsers pick a sized copy; src is only a fallback, so it isn't size-checked.
+    for (const a of tag.matchAll(/\s(href|src|poster)=["']([^"']*)["']/gi)) refs.push({ ref: a[2], kind: name === 'a' ? 'link' : (ss && a[1].toLowerCase() === 'src' ? 'fallback' : 'asset') });
     if (ss) for (const part of ss[1].split(',')) { const u = part.trim().split(/\s+/)[0]; if (u) refs.push({ ref: u, kind: 'asset' }); }
   }
   for (const m of noScripts.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)) refs.push({ ref: m[1], kind: 'asset' });
@@ -156,11 +159,12 @@ for (const p of pages) {
   if (!inbound.has(p.file)) (p.indexable ? warnings : notes).push(`${p.page}: not linked from any page${p.indexable ? ' (only findable through the sitemap)' : ''}`);
 }
 
-// Big files that nothing uses.
+// Big files that nothing uses. Originals named in a build script (e.g. optimize-website-photos.py) count as used.
+const scriptText = fs.readdirSync(path.join(ROOT, 'scripts')).map(n => fs.readFileSync(path.join(ROOT, 'scripts', n), 'utf8')).join('\n');
 for (const f of files) {
   if (f.endsWith('.html') || /\.(md|cjs|mjs|py|sql|txt|xml|json)$/.test(f)) continue;
   const size = fs.statSync(f).size;
-  if (size > BIG_UNUSED && !referenced.has(f)) warnings.push(`unused large file ${rel(f)} (${(size / 1048576).toFixed(1)} MB) — not referenced by any page`);
+  if (size > BIG_UNUSED && !referenced.has(f) && !scriptText.includes(path.basename(f))) warnings.push(`unused large file ${rel(f)} (${(size / 1048576).toFixed(1)} MB) — not referenced by any page`);
 }
 
 // Duplicate canonical URLs among indexable pages.
