@@ -100,3 +100,7 @@ The browser checks drive all nine season events through real controls, verify ne
 ## Wrap-up check and sitemap
 
 Run `node scripts/wrap-up.mjs` before publishing any change. It rebuilds `sitemap.xml` from every page that search engines may index (pages marked `noindex`, the 404 page and redirect pages are left out), keeps the `Sitemap:` line in `robots.txt`, and checks every page for broken links and missing files, missing titles, descriptions, canonical links and share images, images without alt text, differences between the desktop and mobile menus, pages nothing links to, and large or unused files. It needs only Node, and exits with an error if anything is broken. `node scripts/wrap-up.mjs --check` checks without writing and also fails when the sitemap is out of date. Do not edit `sitemap.xml` by hand.
+
+## Shared footer
+
+Every page uses the same one-row footer: © year 799 Motorsport LLC, the three disciplines and the Instagram link. Its markup lives in `scripts/site-footer.html`, and its styles in `footer.css`, which each page links. The year updates itself in visitors' browsers; the year written in the HTML is a fallback that `node scripts/wrap-up.mjs` rolls forward automatically each January. The wrap-up check fails if any page is missing the footer, has a changed copy of it, or doesn't link `footer.css`. Only the full-screen game pages are exempt. To change the footer, edit `scripts/site-footer.html` and copy the new block to every page.
