@@ -1,0 +1,8 @@
+/* Shared site footer. Markup lives in scripts/site-footer.html; every page uses it (checked by scripts/wrap-up.mjs). */
+footer.site-footer{display:block;max-width:none;margin:0;padding:35px 0;border:0;border-top:1px solid #333;background:#050505;color:#777;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:400;line-height:1.5;letter-spacing:normal;text-align:left;text-transform:uppercase}
+footer.site-footer .site-footer-inner{width:min(1180px,calc(100% - 44px));margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 30px}
+footer.site-footer a{display:inline-flex;align-items:center;gap:7px;margin:0;padding:0;color:#bbb;font:inherit;text-decoration:none;text-underline-offset:4px;text-decoration-thickness:1px}
+footer.site-footer a:hover,footer.site-footer a:focus-visible{color:#20C933;text-decoration:underline}
+footer.site-footer a:focus-visible{outline:2px solid #20C933;outline-offset:4px}
+footer.site-footer svg{display:block;width:14px;height:14px;flex:none}
+@media(max-width:600px){footer.site-footer .site-footer-inner{flex-direction:column;align-items:flex-start}}

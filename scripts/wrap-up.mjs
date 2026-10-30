@@ -16,6 +16,11 @@ const CHECK_ONLY = process.argv.includes('--check');
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'tests', 'scripts', 'leaderboard', '.github', '.claude']);
 const BIG_ASSET = 600 * 1024;        // referenced images/media above this get a warning
 const BIG_UNUSED = 1024 * 1024;      // unreferenced files above this get a warning
+// Every page must carry the shared footer (scripts/site-footer.html + /footer.css).
+// Only full-screen game pages are exempt; redirect pages are skipped automatically.
+const FOOTER_EXEMPT = new Set(['mountain-run/index.html', 'the-run.html']);
+const FOOTER_FILE = path.join(ROOT, 'scripts', 'site-footer.html');
+const YEAR = String(new Date().getFullYear());
 
 const errors = [], warnings = [], notes = [];
 const rel = p => path.relative(ROOT, p).split(path.sep).join('/');
@@ -63,6 +68,23 @@ const referenced = new Set();      // files used by any page or stylesheet
 const inbound = new Map();         // page -> pages linking to it
 const pages = [];
 
+// Keep the footer's fallback year current (visitors' browsers already show the live year).
+let footerBlock = fs.readFileSync(FOOTER_FILE, 'utf8').trim();
+const yearRe = /(<span class="site-footer-year">)(\d{4})(<\/span>)/g;
+const staleYear = (footerBlock.match(/<span class="site-footer-year">(\d{4})</) || [])[1];
+if (staleYear && staleYear !== YEAR) {
+  if (CHECK_ONLY) errors.push(`footer fallback year is ${staleYear} — run: node scripts/wrap-up.mjs`);
+  else {
+    footerBlock = footerBlock.replace(yearRe, `$1${YEAR}$3`);
+    fs.writeFileSync(FOOTER_FILE, footerBlock + '\n');
+    for (const f of htmlFiles) {
+      const h = fs.readFileSync(f, 'utf8');
+      if (h.includes('site-footer-year')) fs.writeFileSync(f, h.replace(yearRe, `$1${YEAR}$3`));
+    }
+    notes.push(`footer fallback year updated ${staleYear} → ${YEAR} on every page`);
+  }
+}
+
 function collectRefs(text, fromFile, isCss) {
   const refs = [];
   if (isCss) {
@@ -97,6 +119,14 @@ for (const file of htmlFiles) {
   const page = rel(file);
   const robots = meta(html, 'name', 'robots').toLowerCase();
   const isRedirect = /http-equiv=["']refresh["']|location\.replace\(/i.test(html);
+  if (!isRedirect && !FOOTER_EXEMPT.has(rel(file))) {
+    const noYear = s => s.replace(/<span class="site-footer-year">\d{4}<\/span>/g, '<span class="site-footer-year"></span>');
+    const count = noYear(html).split(noYear(footerBlock)).length - 1;
+    const copies = (html.match(/<footer\b[^>]*class=["'][^"']*site-footer/g) || []).length;
+    if (count > 1 || copies > 1) errors.push(`${rel(file)}: has the shared footer more than once`);
+    else if (count === 0) errors.push(`${rel(file)}: ${copies ? 'footer differs from scripts/site-footer.html (edit that file, then copy it to every page)' : 'missing the shared footer (copy scripts/site-footer.html into the page)'}`);
+    if (!/href=["']\/footer\.css(\?[^"']*)?["']/.test(html)) errors.push(`${rel(file)}: missing <link rel="stylesheet" href="/footer.css?v=1"> in <head>`);
+  }
   const noindex = robots.includes('noindex');
   const is404 = page === '404.html';
   const indexable = !noindex && !is404 && !isRedirect;
