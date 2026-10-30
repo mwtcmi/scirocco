@@ -58,6 +58,13 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
   .footer,.footer-inner{flex-direction:column!important;gap:10px!important;align-items:flex-start!important}
 }
 
+
+/* Hero photo (same treatment as Partners). Photo: Nate Bronkema, 2026 Empire Hill Climb */
+.hero{isolation:isolate;background-image:linear-gradient(90deg,rgba(5,5,5,.95) 0%,rgba(5,5,5,.78) 38%,rgba(5,5,5,.29) 72%,rgba(5,5,5,.14) 100%),url("/images/optimized/empire-ehc002-2048.webp");background-position:center,center 55%;background-size:cover;background-repeat:no-repeat;background-color:#0b0e0b}
+.hero:after{color:rgba(255,255,255,.14)}
+.hero-credit{position:absolute;right:22px;bottom:14px;z-index:1;color:rgba(255,255,255,.6);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none}
+.hero-credit:hover,.hero-credit:focus-visible{color:#fff;text-decoration:underline}
+@media(max-width:600px){.hero{background-image:linear-gradient(180deg,rgba(5,5,5,.70) 0%,rgba(5,5,5,.72) 45%,rgba(5,5,5,.95) 100%),url("/images/optimized/empire-ehc002-1120.webp");background-position:center,58% center}.hero-credit{right:16px;bottom:10px}}
 </style>
 <link rel="stylesheet" href="mobile-nav.css?v=1"><script src="mobile-nav.js?v=1" defer></script><!-- Site icons and link previews -->
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
@@ -87,7 +94,7 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
 <nav><div class="wrap nav"><a class="brand" href="index.html">799 <span>MOTORSPORT</span></a><div class="links"><a href="racing.html">Racing</a><a href="schedule-2027.html">2027 Schedule</a><a href="car.html">The Car</a><a href="michael-white.html">The Driver</a><a class="active" href="paddock.html">The Paddock</a><a href="photos/">Photos</a><a href="partners.html">Work With 799</a></div>
 <details class="mobile-nav"><summary><span>Menu</span><svg viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path class="menu-lines" d="M2 4h14M2 9h14M2 14h14"/><path class="menu-close" d="m3 3 12 12M15 3 3 15"/></svg></summary><div class="mobile-nav-panel"><a href="racing.html">Racing</a><a href="schedule-2027.html">2027 Schedule</a><a href="car.html">The Car</a><a href="michael-white.html">The Driver</a><a class="active" aria-current="page" href="paddock.html">The Paddock</a><a href="photos/">Photos</a><a href="partners.html">Work With 799</a></div></details>
 </div></nav>
-<header class="hero"><div class="wrap"><div class="kicker">799 Paddock</div><h1>The Stuff<br>We <span>Use.</span></h1><p>No giant catalog. No random products. This is the equipment, tools and trackside gear that earns a place in the 799 trailer and paddock.</p></div></header>
+<header class="hero"><div class="wrap"><div class="kicker">799 Paddock</div><h1>The Stuff<br>We <span>Use.</span></h1><p>No giant catalog. No random products. This is the equipment, tools and trackside gear that earns a place in the 799 trailer and paddock.</p></div><a class="hero-credit" href="https://www.instagram.com/n.b.shots/" target="_blank" rel="noopener noreferrer">Photo: Nate Bronkema</a></header>
 <section class="promise"><div class="wrap promise-grid"><div class="promise-item"><strong>Actually Used</strong><span>Products start with the race program, not a product feed.</span></div><div class="promise-item"><strong>Trackside Focused</strong><span>Gear selected because it solves a real problem at an event.</span></div><div class="promise-item"><strong>Straight Answers</strong><span>What works, why it is here and what we would change.</span></div></div></section>
 <section class="categories"><div class="wrap"><div class="section-head"><div><div class="kicker">Browse The Trailer</div><h2>Paddock<br>Gear.</h2></div><p>The 799 paddock is part workshop, part pit, part garage and part campsite. These are the categories that keep the car running and race weekends moving.</p></div><div class="cat-grid">
 <div class="cat"><span class="cat-num">01</span><h3>Tools</h3><p>Hand tools, cordless tools, storage and the things that get repairs done.</p></div>
