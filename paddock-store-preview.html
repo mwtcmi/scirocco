@@ -105,12 +105,12 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
     <span class="badge">Fluids &amp; Transfer</span>
     <h3>Tuff Jug 5 Gallon Utility Jug</h3>
     <div class="price" id="jug-price">$45.99</div>
-    <p>Why 799 runs it: one line from Mike goes here.</p>
-    <ul class="facts"><li>5 gal / 20 L, clear sight strip</li><li>Internal venting, no external vents</li><li>Made in Idaho, lifetime warranty</li></ul>
+    <p class="desc">Five gallons with internal venting and a clear sight strip for fast, controlled pours. Pick your color and spout.</p>
+    <ul class="facts"><li>5 gal / 20 L, 20 × 10 × 10 in</li><li>Multi-layer HDPE, 1 in NPT spout thread</li><li>Made in Idaho, lifetime warranty</li></ul>
     <fieldset class="opt"><legend>Color <span id="color-name">Kawi Green</span></legend><div class="swatches" id="colors"></div></fieldset>
     <fieldset class="opt"><legend>Spout</legend><div class="chips" id="spouts"></div></fieldset>
+    <p class="fine note-above">Utility container. Not a certified portable fuel container.</p>
     <button class="add" data-add="jug">Add to cart</button>
-    <p class="fine">Utility container. Not a certified portable fuel container.</p>
   </div>
 </article>
 
@@ -120,7 +120,7 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
     <span class="badge">Fluids &amp; Transfer</span>
     <h3>Tuff Jug Electric Transfer Pump</h3>
     <div class="price" id="pump-price">$74.99</div>
-    <p>Hands-free transfer with one button and automatic shutoff. Includes the Tuff Jug adapter. Fits current Tuff Jugs.</p>
+    <p class="desc">Hands-free transfer with one button and automatic shutoff. Includes the Tuff Jug adapter. Fits current Tuff Jugs.</p>
     <ul class="facts"><li>Runs on 4 AA batteries (not included)</li><li>Up to 250 gal per set of batteries</li><li>1-year limited warranty</li></ul>
     <div class="stock" id="pump-stock">2 in stock</div>
     <button class="add" data-add="pump">Add to cart</button>
@@ -162,6 +162,7 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
 .chips{display:flex;flex-wrap:wrap;gap:8px}.chip{min-height:44px;padding:0 14px;border:1px solid #555;background:transparent;color:#fff;font-size:12px;font-weight:700;cursor:pointer}.chip[aria-pressed=true]{border-color:var(--green);color:var(--green)}.chip:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
 .stock{margin:0 0 16px;color:#aaa;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .add,.checkout{margin-top:auto;min-height:52px;width:100%;border:0;background:var(--green);color:#050505;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.add:disabled{background:#333;color:#777;cursor:not-allowed}
+.fine.note-above{margin:0 0 16px!important}
 .fine{margin:12px 0 0!important;color:#888!important;font-size:12px!important;line-height:1.5!important}
 .cart-btn{position:fixed;right:22px;bottom:22px;z-index:50;display:flex;align-items:center;gap:12px;min-height:54px;padding:0 20px;border:2px solid var(--green);background:#050505;color:#fff;font:900 11px Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.6)}
 .cart-btn b{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--green);color:#050505;font-size:12px;letter-spacing:0}.cart-btn em{font-style:normal;color:var(--green);letter-spacing:.04em}
@@ -173,6 +174,7 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
 .upsell{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;padding:14px;border:1px dashed var(--green);font-size:13px}.upsell[hidden]{display:none}.upsell button{min-height:40px;padding:0 12px;border:1px solid var(--green);background:none;color:var(--green);font-weight:900;font-size:11px;cursor:pointer}
 .get label{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);margin-bottom:8px;cursor:pointer}.get input{margin-top:3px;accent-color:var(--green)}.get strong{display:block;font-size:14px}.get small{display:block;color:#999;font-size:12px;margin-top:3px;line-height:1.4}
 .cart-sum{display:flex;justify-content:space-between;padding:14px 0;border-top:1px solid var(--line);margin-top:auto;font-size:14px;text-transform:uppercase;letter-spacing:.1em}.cart-sum strong{color:var(--green);font-size:20px;letter-spacing:0}
+@media(min-width:801px) and (max-width:1180px){.item h3{min-height:2.1em}.item .desc{min-height:4.95em}}
 @media(max-width:800px){.store-grid{grid-template-columns:1fr}.cart-btn{left:16px;right:16px;bottom:16px;justify-content:space-between}.cart{top:auto;max-height:88vh;width:100%;border-left:0;border-top:2px solid var(--green)}.store{padding-bottom:110px!important}}
 </style>
 <script>
