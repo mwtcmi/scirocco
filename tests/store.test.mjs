@@ -68,7 +68,7 @@ test('pickup checkout prices on the server and skips shipping address', async t 
   assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
   assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
   assert.equal(p.get('allow_promotion_codes'), 'true');
-  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock-store-preview?order=success&via=pickup');
+  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock?order=success&via=pickup');
   assert.equal(s.sent[0].init.headers.Authorization, 'Bearer rk_test_abc');
 });
 
