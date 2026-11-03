@@ -11,7 +11,7 @@ export const CATALOG = Object.freeze({
   jug: {
     name: 'Tuff Jug 5 Gallon Utility Jug',
     colors: ['Red', 'White', 'Yellow', 'Kawi Green', 'Orange', 'Black'],
-    spouts: { 'Auto-Stop Spout': { cents: 4599, map: 3909 }, 'Black Ripper Cap': { cents: 4999, map: 4249 }, 'Tuff Spout': { cents: 4599, map: 3909 } }
+    spouts: { 'Auto-Stop Spout': { cents: 4599, map: 3909 }, 'Black Ripper Cap': { cents: 4999, map: 4249 } }
   },
   pump: { name: 'Tuff Jug Electric Transfer Pump', cents: 7499, map: 6374 }
 });
