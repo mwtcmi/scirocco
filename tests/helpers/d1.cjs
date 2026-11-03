@@ -3,10 +3,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Exercise the Worker's real parameterized SQL against SQLite, including atomic batches.
-function database() {
+function database(schemaFile = '../../leaderboard/schema.sql') {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys = ON');
-  const schema = fs.readFileSync(path.join(__dirname, '../../leaderboard/schema.sql'), 'utf8');
+  const schema = fs.readFileSync(path.join(__dirname, schemaFile), 'utf8');
   sqlite.exec(schema);
   const db = {
     prepare(sql) {
