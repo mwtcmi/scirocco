@@ -688,6 +688,16 @@ function drawHayBale(x,y,scale,width,seed){
  for(const offset of [-.28,.28]){line([[width*offset,-41],[width*offset-4,-34],[width*offset-4,0]],'#4d5839',2);line([[width*offset-2,-41],[width*offset-6,-34],[width*offset-6,0]],'#e1d8a866',.6)}
  g.restore();
 }
+function drawCone(x,y,scale){
+ g.save();g.translate(x,y);g.scale(scale,scale);
+ ellipse(3,2,15,4,'#07120d55');
+ polygon([[-13,0],[13,0],[11,-5],[-11,-5]],'#2b2b28');
+ const body=g.createLinearGradient(-8,0,8,0);body.addColorStop(0,'#ff8a2a');body.addColorStop(.55,'#f05a12');body.addColorStop(1,'#b83b08');
+ polygon([[-9,-5],[9,-5],[2.5,-38],[-2.5,-38]],body,'#8a2d06',.8);
+ polygon([[-6.9,-15],[6.9,-15],[5.4,-22],[-5.4,-22]],'#f3f1e6');
+ polygon([[-4.6,-27],[4.6,-27],[3.6,-31],[-3.6,-31]],'#f3f1e6');
+ g.restore();
+}
 function drawAnimal(animal,p){
  const direction=-animal.side,small=animal.kind==='rabbit',factor=small?.64:animal.kind==='fox'?.85:1;
  const moving=animal.start!==null&&t>animal.start+ANIMAL_WAIT&&t<animal.start+ANIMAL_WAIT+animal.duration;
@@ -820,6 +830,11 @@ function obstacleWorld(){
   if(kind==='apex'){drawApex(q,p);continue}
   const low=q.side<0?-1:-.18,high=q.side<0?.18:1,count=6,width=(high-low)*ROAD*.5/count;
   for(let i=0;i<count;i++){const center=low+(i+.5)*(high-low)/count;drawHayBale(p.x+center*ROAD*p.scale*.5,p.y,p.scale,width,q.d+i*137)}
+  if(q.cones){// Wall markers: one cone on the open road edge, one on top of the bale at the inside end of the wall.
+   const inner=q.side<0?count-1:0,baleCenter=low+(inner+.5)*(high-low)/count;
+   drawCone(p.x+(-q.side*.94)*ROAD*p.scale*.5,p.y,p.scale);
+   drawCone(p.x+baleCenter*ROAD*p.scale*.5+4*p.scale,p.y-43*p.scale,p.scale);
+  }
  }
 }
 function finish(){let d=GOAL;if(d<dist||d>dist+VIEW)return;let p=project(d),half=ROAD*p.scale*.5;for(let row=0;row<4;row++){let near=project(d-row*12),far=project(d-(row+1)*12);for(let k=0;k<14;k++){let x0=(k/14-.5)*ROAD,x1=((k+1)/14-.5)*ROAD;polygon([[far.x+x0*far.scale,far.y],[far.x+x1*far.scale,far.y],[near.x+x1*near.scale,near.y],[near.x+x0*near.scale,near.y]],(row+k)%2?'#111':'#fff')}}let pole=p.scale*120;rect(p.x-half-13*p.scale,p.y-pole,7*p.scale,pole,'#f5f5e9');rect(p.x+half+6*p.scale,p.y-pole,7*p.scale,pole,'#f5f5e9');rect(p.x-half-12*p.scale,p.y-pole,ROAD*p.scale+25*p.scale,27*p.scale,'#10291a');g.fillStyle='#f4f5e9';g.textAlign='center';g.font='bold '+Math.max(10,15*p.scale)+'px Arial';g.fillText('799 // FINISH',p.x,p.y-pole+20*p.scale);g.textAlign='left'}

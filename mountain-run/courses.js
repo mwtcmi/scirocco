@@ -47,9 +47,13 @@ function createMountainCourses() {
     "waumandee": {
       profile: "Fast straights & farm chicanes",
       turns: [[3200,5000,280],[8500,10300,-290],[13800,15800,310],[19700,21500,-300],[25100,27000,320]],
-      chicanes: [[4300,-1],[9600,1],[14950,-1],[20800,1],[26250,-1]],
-      wildlife: [["deer",7700],["fox",12300],["rabbit",17650],["deer",19350],["fox",24050]],
-      potholes: [[7000,-0.5],[13500,0.35],[24800,-0.25]]
+      // Every Waumandee chicane has four hay walls: enter on the driver's right, exit on the left.
+      // Each wall carries two cones: one on the open road edge, one on the bale at the wall's inside end.
+      chicanes: [[4300,-1],[9600,-1],[15550,-1],[20800,-1]], walls: 4, wallCones: true,
+      // Eight tighter walls on the run-in to the finish, and two more just past the line.
+      finishGates: { start: 26200, spacing: 500, before: 8, after: [30300, 30800], side: -1 },
+      wildlife: [["rabbit",1500],["fox",2900],["deer",14890],["fox",19300],["deer",24600]],
+      potholes: [[2200,-0.5],[8000,0.35],[13350,-0.25]]
     },
     "empire": {
       profile: "Open dunes & fast sweepers",
@@ -85,7 +89,12 @@ function createMountainCourses() {
       }
       return Object.freeze({ start, end, offset, apex, lane: Math.sign(offset) * .8 });
     });
-    const gates = spec.chicanes.flatMap(([start, side]) => Array.from({ length: 3 }, (_, i) => Object.freeze({ d: start + i * 1000, side: i % 2 ? -side : side })));
+    const gates = spec.chicanes.flatMap(([start, side]) => Array.from({ length: spec.walls || 3 }, (_, i) => Object.freeze({ d: start + i * 1000, side: i % 2 ? -side : side, cones: !!spec.wallCones })));
+    const fin = spec.finishGates;
+    if (fin) {
+      const spots = [...Array.from({ length: fin.before }, (_, i) => fin.start + i * fin.spacing), ...fin.after];
+      gates.push(...spots.map((d, i) => Object.freeze({ d, side: i % 2 ? -fin.side : fin.side, cones: !!spec.wallCones, finish: true })));
+    }
     const wildlife = spec.wildlife.map(([kind, d], i) => Object.freeze({ kind, d, side: i % 2 ? 1 : -1 }));
     const potholes = spec.potholes.map(([d, lane]) => Object.freeze({ d, lane, radius: 34 }));
     // Restore the compact diagonal schematic. Do not stretch lateral road offsets

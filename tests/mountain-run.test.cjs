@@ -250,7 +250,7 @@ test('brushing a marker is enough, coasting gets boosted, and a missed marker ea
 
 test('chicane gaps leave steering time and wildlife crosses briskly after its warning', () => {
   const g = game();
-  for (let i = 1; i < g.gates.length; i++) assert.ok(g.gates[i].d - g.gates[i - 1].d >= 1000);
+  for (let i = 1; i < g.gates.length; i++) assert.ok(g.gates[i].d - g.gates[i - 1].d >= (g.gates[i].finish ? 500 : 1000));
   for (const animal of g.wildlife) {
     assert.ok(animal.duration <= 2, 'crossings should take at most two seconds');
     animal.start = 0; g.set({ t: 0 });

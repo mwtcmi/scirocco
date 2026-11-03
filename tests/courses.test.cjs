@@ -9,7 +9,14 @@ test('all nine authored routes have distinct turn rhythms, maps and hazard plans
   assert.equal(new Set(entries.map(([, c]) => JSON.stringify(c.turns))).size, 9);
   assert.equal(new Set(entries.map(([, c]) => JSON.stringify([c.gates, c.wildlife, c.potholes]))).size, 9);
   assert.equal(courses.events.empire.gates.length, 6);
-  assert.equal(courses.events.waumandee.gates.length, 15);
+  assert.equal(courses.events.waumandee.gates.length, 26);
+  const w = courses.events.waumandee.gates, chicanes = w.filter(q => !q.finish), run = w.filter(q => q.finish);
+  assert.equal(chicanes.length, 16, 'Waumandee has four-wall chicanes');
+  for (let i = 0; i < chicanes.length; i += 4) assert.equal(chicanes.slice(i, i + 4).map(q => q.side).join(), '-1,1,-1,1', 'enter right, exit left');
+  assert.equal(run.filter(q => q.d < courses.length).map(q => q.side).join(), '-1,1,-1,1,-1,1,-1,1', 'finish run-in also enters right');
+  assert.equal(run.filter(q => q.d < courses.length).length, 8, 'eight walls before the finish');
+  assert.equal(run.filter(q => q.d > courses.length).length, 2, 'two walls past the finish');
+  assert.ok(w.every(q => q.cones), 'every Waumandee wall carries two cones');
   assert.ok(courses.events.pagoda.turns.length > courses.events.empire.turns.length);
   const peakSlope = c => Math.max(...c.turns.map(t => Math.abs(t.offset) * 1.875 / (t.end - t.start)));
   assert.ok(peakSlope(courses.events.empire) < peakSlope(courses.events['giants-despair']));
@@ -40,10 +47,10 @@ test('hazards leave steering and recovery space, and every route retains Uno and
   for (const [id, c] of Object.entries(courses.events)) {
     assert.equal(c.potholes.length, 3);
     assert.equal(c.wildlife.filter(q => q.kind === 'rabbit').length, 1);
-    for (let i = 1; i < c.gates.length; i++) assert.ok(c.gates[i].d - c.gates[i - 1].d >= 1000, id);
+    for (let i = 1; i < c.gates.length; i++) assert.ok(c.gates[i].d - c.gates[i - 1].d >= (c.gates[i].finish ? 500 : 1000), id);
     for (let i = 1; i < c.potholes.length; i++) assert.ok(c.potholes[i].d - c.potholes[i - 1].d >= 5000, id);
     const hazards = [...c.gates, ...c.wildlife, ...c.potholes].sort((a, b) => a.d - b.d);
-    for (let i = 1; i < hazards.length; i++) assert.ok(hazards[i].d - hazards[i - 1].d >= 650, id + ' separated hazards');
+    for (let i = 1; i < hazards.length; i++) assert.ok(hazards[i].d - hazards[i - 1].d >= (hazards[i].finish && hazards[i - 1].finish ? 500 : 650), id + ' separated hazards');
   }
 });
 
