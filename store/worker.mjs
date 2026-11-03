@@ -21,7 +21,7 @@ export const ADDONS = ['pump', 'ripper', 'tuffspout'];
 
 const ORIGINS = ['https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const SITE = 'https://scirocco799.com';
-const RETURN_PATH = '/paddock-store-preview';
+const RETURN_PATH = '/paddock';
 const MAX_LINES = 10, MAX_QTY = 10, MAX_BODY = 8192, SIG_TOLERANCE = 300;
 
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
