@@ -46,7 +46,7 @@ test('catalog returns stock and options', async t => {
   const s = service(t);
   const r = await s.call('/api/catalog');
   assert.equal(r.status, 200); assert.equal(r.body.stock['jug/color/Red'], 2); assert.equal(r.body.stock.pump, 2);
-  assert.equal(r.body.catalog.jug.spouts['Black Ripper Cap'].cents, 4999);
+  assert.equal(r.body.catalog.jug.cents, 4599); assert.equal(r.body.catalog.ripper.cents, 2745); assert.equal(r.body.stock.tuffspout, 2);
   assert.equal(r.res.headers.get('access-control-allow-origin'), 'https://scirocco799.com');
 });
 
@@ -58,10 +58,12 @@ test('other origins are refused', async t => {
 test('pickup checkout prices on the server and skips shipping address', async t => {
   const s = service(t);
   const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [
-    { product: 'jug', color: 'Red', spout: 'Black Ripper Cap', qty: 1, cents: 1 }, { product: 'pump', qty: 1 }] } });
+    { product: 'jug', color: 'Red', qty: 1, cents: 1 }, { product: 'pump', qty: 1 }, { product: 'ripper', qty: 1 }] } });
   assert.equal(r.status, 200); assert.match(r.body.url, /checkout\.stripe\.com/);
   const p = s.sent[0].params;
-  assert.equal(p.get('line_items[0][price_data][unit_amount]'), '4999');
+  assert.equal(p.get('line_items[0][price_data][unit_amount]'), '4599');
+  assert.match(p.get('line_items[0][price_data][product_data][description]'), /RUASVS20/);
+  assert.equal(p.get('line_items[2][price_data][unit_amount]'), '2745');
   assert.equal(p.get('line_items[1][price_data][unit_amount]'), '7499');
   assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
   assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
@@ -72,7 +74,7 @@ test('pickup checkout prices on the server and skips shipping address', async t 
 
 test('ship checkout collects a US address and charges the flat rate', async t => {
   const s = service(t);
-  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'ship', items: [{ product: 'jug', color: 'Black', spout: 'Auto-Stop Spout', qty: 2 }] } });
+  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'ship', items: [{ product: 'jug', color: 'Black', qty: 2 }] } });
   const p = s.sent[0].params;
   assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), 'US');
   assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '2500');
@@ -81,9 +83,9 @@ test('ship checkout collects a US address and charges the flat rate', async t =>
 
 test('bad items and over-stock carts are refused', async t => {
   const s = service(t);
-  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Pink', spout: 'Auto-Stop Spout', qty: 1 }] } })).status, 400);
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Pink', qty: 1 }] } })).status, 400);
   assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'mail', items: [{ product: 'pump', qty: 1 }] } })).status, 400);
-  const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Red', spout: 'Auto-Stop Spout', qty: 3 }] } });
+  const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Red', qty: 3 }] } });
   assert.equal(r.status, 409); assert.deepEqual(r.body.soldOut, ['jug/color/Red']);
   assert.equal(s.sent.length, 0);
 });
@@ -97,11 +99,11 @@ test('checkout without a key or with a Stripe error fails cleanly', async t => {
 
 test('paid webhook takes stock off once, even if Stripe retries', async t => {
   const s = service(t);
-  const ev = paid('cs_test_1', [{ p: 'jug', c: 'Red', s: 'Black Ripper Cap', q: 1 }, { p: 'pump', q: 1 }]);
+  const ev = paid('cs_test_1', [{ p: 'jug', c: 'Red', q: 1 }, { p: 'pump', q: 1 }, { p: 'tuffspout', q: 2 }]);
   assert.equal((await s.webhook(ev)).body.result, 'recorded');
   assert.equal((await s.webhook(ev)).body.result, 'duplicate');
   const stock = (await s.call('/api/catalog')).body.stock;
-  assert.equal(stock['jug/color/Red'], 1); assert.equal(stock['jug/spout/Black Ripper Cap'], 1); assert.equal(stock.pump, 1);
+  assert.equal(stock['jug/color/Red'], 1); assert.equal(stock.tuffspout, 0); assert.equal(stock.pump, 1);
   const order = s.sqlite.prepare('SELECT * FROM orders').get();
   assert.equal(order.fulfillment, 'pickup'); assert.equal(order.email, 'a@b.c');
 });

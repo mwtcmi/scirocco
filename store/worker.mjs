@@ -9,12 +9,15 @@ export const SHIPPING = Object.freeze({
 });
 export const CATALOG = Object.freeze({
   jug: {
-    name: 'Tuff Jug 5 Gallon Utility Jug',
+    name: 'Tuff Jug 5 Gallon Utility Jug', description: 'Auto-Stop Spout, view strip', cents: 4599, map: 3909,
     colors: ['Red', 'White', 'Yellow', 'Kawi Green', 'Orange', 'Black'],
-    spouts: { 'Auto-Stop Spout': { cents: 4599, map: 3909 }, 'Black Ripper Cap': { cents: 4999, map: 4249 } }
+    skus: { 'Red': 'RUASVS20', 'White': 'WUASVS20', 'Yellow': 'YUASVS20', 'Kawi Green': 'KUASVS20', 'Orange': 'OUAS20VS', 'Black': 'BLKUASVS20' }
   },
-  pump: { name: 'Tuff Jug Electric Transfer Pump', cents: 7499, map: 6374 }
+  pump: { name: 'Tuff Jug Electric Transfer Pump', description: 'Includes Tuff Jug adapter', cents: 7499, map: 6374, sku: '' },
+  ripper: { name: 'Tuff Jug Black Ripper Cap, 5 Gallon', description: 'Fits 5 gallon Tuff Jugs', cents: 2745, map: 2333, sku: 'BLKR20' },
+  tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: '' }
 });
+export const ADDONS = ['pump', 'ripper', 'tuffspout'];
 
 const ORIGINS = ['https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const SITE = 'https://scirocco799.com';
@@ -28,23 +31,21 @@ export function priceLine(line) {
   const qty = Number(line?.qty);
   if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) throw new APIError(400, 'Invalid quantity.');
   if (line.product === 'jug') {
-    const j = CATALOG.jug, spout = j.spouts[line.spout];
-    if (!j.colors.includes(line.color) || !spout) throw new APIError(400, 'Unknown jug option.');
-    return { product: 'jug', color: line.color, spout: line.spout, qty, cents: spout.cents, map: spout.map,
-      name: j.name, description: line.color + ', ' + line.spout, keys: ['jug/color/' + line.color, 'jug/spout/' + line.spout] };
+    const j = CATALOG.jug;
+    if (!j.colors.includes(line.color)) throw new APIError(400, 'Unknown jug color.');
+    return { product: 'jug', color: line.color, qty, cents: j.cents, map: j.map, name: j.name,
+      description: line.color + ', ' + j.description + ' (' + j.skus[line.color] + ')', keys: ['jug/color/' + line.color] };
   }
-  if (line.product === 'pump') {
-    const p = CATALOG.pump;
-    return { product: 'pump', qty, cents: p.cents, map: p.map, name: p.name, description: 'Includes Tuff Jug adapter', keys: ['pump'] };
+  if (ADDONS.includes(line.product)) {
+    const p = CATALOG[line.product];
+    return { product: line.product, qty, cents: p.cents, map: p.map, name: p.name,
+      description: p.description + (p.sku ? ' (' + p.sku + ')' : ''), keys: [line.product] };
   }
   throw new APIError(400, 'Unknown product.');
 }
 
 export function priceWarnings() {
-  const out = [];
-  for (const [spout, v] of Object.entries(CATALOG.jug.spouts)) if (v.cents < v.map) out.push('Jug with ' + spout + ' is below MAP');
-  if (CATALOG.pump.cents < CATALOG.pump.map) out.push('Pump is below MAP');
-  return out;
+  return Object.entries(CATALOG).filter(([, v]) => v.cents < v.map).map(([k]) => k + ' is below MAP');
 }
 
 function needs(lines) {
@@ -71,7 +72,7 @@ function form(params) {
 
 export function checkoutParams(lines, fulfillment, returnBase, env = {}) {
   const ship = fulfillment === 'ship', rate = SHIPPING[fulfillment];
-  const items = lines.map(l => l.product === 'jug' ? { p: 'jug', c: l.color, s: l.spout, q: l.qty } : { p: l.product, q: l.qty });
+  const items = lines.map(l => l.product === 'jug' ? { p: 'jug', c: l.color, q: l.qty } : { p: l.product, q: l.qty });
   const p = {
     mode: 'payment',
     success_url: returnBase + '?order=success&via=' + fulfillment,
@@ -113,7 +114,7 @@ export async function verifySignature(payload, header, secret, nowSec) {
 async function recordOrder(db, session, now) {
   let items;
   try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
-  const lines = items.map(i => priceLine(i.p === 'jug' ? { product: 'jug', color: i.c, spout: i.s, qty: i.q } : { product: i.p, qty: i.q }));
+  const lines = items.map(i => priceLine(i.p === 'jug' ? { product: 'jug', color: i.c, qty: i.q } : { product: i.p, qty: i.q }));
   const need = needs(lines);
   const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind(session.id, now, session.livemode ? 1 : 0, session.metadata?.fulfillment || 'unknown', session.customer_details?.email || null, session.amount_total ?? null, JSON.stringify(items))];
