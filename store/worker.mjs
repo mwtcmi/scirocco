@@ -4,7 +4,7 @@
 
 // ---- Catalog: prices in cents, MSRP from the Tuff Jug price list. MAP = MSRP - 15%. ----
 export const SHIPPING = Object.freeze({
-  ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' }, // PLACEHOLDER rate, set by Mike
+  ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' }
 });
 export const CATALOG = Object.freeze({
@@ -90,7 +90,13 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}) {
     p.phone_number_collection = { enabled: 'true' };
     p.custom_text = { submit: { message: "Pickup is by appointment in Downtown Traverse City, MI. We'll email you to set a time." } };
   }
-  if (env.STRIPE_TAX === 'on') p.automatic_tax = { enabled: 'true' };
+  // Stripe Tax: prices are pre-tax; jugs and parts are general tangible goods, shipping is taxed as shipping.
+  if (env.STRIPE_TAX === 'on') {
+    p.automatic_tax = { enabled: 'true' };
+    p.line_items.forEach(li => { li.price_data.tax_behavior = 'exclusive'; li.price_data.product_data.tax_code = 'txcd_99999999'; });
+    Object.assign(p.shipping_options[0].shipping_rate_data, { tax_behavior: 'exclusive', tax_code: 'txcd_92010001' });
+    if (!ship) p.billing_address_collection = 'required';
+  }
   return p;
 }
 
