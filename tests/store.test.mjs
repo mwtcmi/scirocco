@@ -70,7 +70,7 @@ test('pickup checkout prices on the server and skips shipping address', async t 
   assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
   assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
   assert.equal(p.get('allow_promotion_codes'), 'true');
-  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock?order=success&via=pickup');
+  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock?order=success&via=pickup&ref={CHECKOUT_SESSION_ID}');
   assert.equal(s.sent[0].init.headers.Authorization, 'Bearer rk_test_abc');
 });
 
@@ -188,4 +188,18 @@ test('sample emails go to Mike only, and only while SAMPLE_EMAILS is on', async 
   for (const m of s.mail) { assert.deepEqual(m.body.to, ['mike@scirocco799.com']); assert.equal(m.body.bcc, undefined); assert.match(m.body.subject, /^\[Sample\] /); }
   assert.match(s.mail[1].body.html, /Columbus, OH 43215/); assert.match(s.mail[1].body.html, /Discount/);
   assert.equal((await s.call('/api/stock')).status, 404);
+});
+
+test('track-table checkout: free, no phone or address, table wording, and a table email', async t => {
+  const s = service(t); s.env.STRIPE_TAX = 'on';
+  const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'table', items: [{ product: 'jug', color: 'Red', qty: 1 }] } });
+  assert.equal(r.status, 200);
+  const p = s.sent[0].params;
+  assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
+  assert.equal(p.get('phone_number_collection[enabled]'), null); assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
+  assert.equal(p.get('billing_address_collection'), 'required');
+  assert.match(p.get('custom_text[submit][message]'), /799 table/);
+  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock?order=success&via=table&ref={CHECKOUT_SESSION_ID}');
+  const m = orderEmail({ id: 'cs_live_tbl00001', metadata: { fulfillment: 'table', items: JSON.stringify([{ p: 'jug', c: 'Red', q: 1 }]) }, amount_subtotal: 4599, amount_total: 4875, total_details: { amount_tax: 276 } });
+  assert.match(m.text, /Paid at the 799 table/); assert.doesNotMatch(m.text, /Local pickup|Shipping:/); assert.match(m.text, /Total paid: \$48\.75/);
 });

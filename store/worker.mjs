@@ -8,7 +8,8 @@
 // ---- Catalog: prices in cents, MSRP from the Tuff Jug price list. MAP = MSRP - 15%. ----
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
-  pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' }
+  pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
+  table: { cents: 0, label: 'At the 799 table: paid and collected in person' }
 });
 export const CATALOG = Object.freeze({
   jug: {
@@ -78,7 +79,7 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}) {
   const items = lines.map(l => l.product === 'jug' ? { p: 'jug', c: l.color, q: l.qty } : { p: l.product, q: l.qty });
   const p = {
     mode: 'payment',
-    success_url: returnBase + '?order=success&via=' + fulfillment,
+    success_url: returnBase + '?order=success&via=' + fulfillment + '&ref={CHECKOUT_SESSION_ID}',
     cancel_url: returnBase + '?order=cancelled',
     allow_promotion_codes: 'true',
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
@@ -92,6 +93,8 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}) {
   if (ship) {
     p.shipping_address_collection = { allowed_countries: ['US'] };
     p.custom_text = { submit: { message: policy } };
+  } else if (fulfillment === 'table') {
+    p.custom_text = { submit: { message: 'Paying at the 799 table. Show the confirmation screen to collect your gear. ' + policy } };
   } else {
     p.phone_number_collection = { enabled: 'true' };
     p.custom_text = { submit: { message: "Pickup is by appointment in Downtown Traverse City, MI. We'll email you to set a time. " + policy } };
@@ -152,7 +155,7 @@ export function orderNumber(session) { return '799-' + String(session.id || '').
 export function orderEmail(session) {
   const lines = sessionLines(session);
   const who = session.customer_details || {};
-  const pickup = session.metadata?.fulfillment !== 'ship';
+  const how = session.metadata?.fulfillment, table = how === 'table', pickup = how !== 'ship' && !table;
   const shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
   const td = session.total_details || {};
   const subtotal = session.amount_subtotal ?? lines.reduce((t, l) => t + l.cents * l.qty, 0);
@@ -161,11 +164,13 @@ export function orderEmail(session) {
   const number = orderNumber(session), first = String(who.name || '').trim().split(/\s+/)[0];
   const a = shipTo?.address || {};
   const address = shipTo ? [shipTo.name, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', ') + ' ' + (a.postal_code || '')].filter(v => v && v.trim()) : [];
-  const next = pickup
+  const next = table
+    ? 'Paid at the 799 table. Show this email or your confirmation screen to collect your gear.'
+    : pickup
     ? 'Your order is set for free local pickup in Downtown Traverse City, MI. Reply to this email with a few days and times that work, and Mike will confirm a pickup time and the address.'
     : 'Orders ship within 2 business days. You will get an email from Mike when it is on the way.';
   const totals = [['Subtotal', money(subtotal)], ...(discount ? [['Discount', '-' + money(discount)]] : []),
-    [pickup ? 'Local pickup' : 'Shipping', shipping ? money(shipping) : 'Free'], ...(tax ? [['Sales tax', money(tax)]] : [])];
+    ...(table ? [] : [[pickup ? 'Local pickup' : 'Shipping', shipping ? money(shipping) : 'Free']]), ...(tax ? [['Sales tax', money(tax)]] : [])];
 
   const row = (l, r, strong) => '<tr><td style="padding:6px 0;color:' + (strong ? '#050505' : '#555') + ';font-weight:' + (strong ? '700' : '400') + '">' + l +
     '</td><td align="right" style="padding:6px 0;color:#050505;font-weight:' + (strong ? '700' : '400') + '">' + r + '</td></tr>';
@@ -282,7 +287,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           if (text.length > MAX_BODY) throw new APIError(413, 'Request too large.');
           let data; try { data = JSON.parse(text); } catch { throw new APIError(400, 'Invalid request.'); }
           if (!Array.isArray(data.items) || !data.items.length || data.items.length > MAX_LINES) throw new APIError(400, 'Your cart is empty.');
-          if (!['ship', 'pickup'].includes(data.fulfillment)) throw new APIError(400, 'Choose pickup or shipping.');
+          if (!['ship', 'pickup', 'table'].includes(data.fulfillment)) throw new APIError(400, 'Choose pickup or shipping.');
           const lines = data.items.map(priceLine);
           const stock = await stockMap(db), short = [];
           for (const [k, q] of Object.entries(needs(lines))) if ((stock[k] ?? 0) < q) short.push(k);

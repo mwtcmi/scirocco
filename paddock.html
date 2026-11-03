@@ -105,7 +105,7 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
 <div class="cat"><span class="cat-num">05</span><h3>Trackside</h3><p>The small stuff that becomes very important when you are miles from the garage.</p></div>
 <div class="cat"><span class="cat-num">06</span><h3>Cameras &amp; Data</h3><p>Video, mounts, timing and the equipment used to learn from every run.</p></div>
 </div></div></section>
-<section class="gear store"><div class="wrap"><div class="gear-head"><div class="kicker">799 Paddock Store</div><h2>Gear We<br>Sell.</h2><p>Tested in our own paddock and stocked by 799. Pick up free in Downtown Traverse City by appointment, or have it shipped.</p></div>
+<section class="gear store" id="store"><div class="wrap"><div class="gear-head"><div class="kicker">799 Paddock Store</div><h2>Gear We<br>Sell.</h2><p>Tested in our own paddock and stocked by 799. Pick up free in Downtown Traverse City by appointment, or have it shipped.</p></div>
 <p class="store-note" id="store-note" role="status" hidden></p>
 <div class="store-grid">
 
@@ -177,6 +177,7 @@ footer{padding:35px 0;border-top:1px solid #333}.footer{display:flex;justify-con
   <ul class="cart-lines" id="cart-lines"></ul>
   <div class="upsell" id="upsell" hidden><span>Add to your jug</span><div class="upsell-btns" id="upsell-btns"></div></div>
   <fieldset class="opt get"><legend>How do you want it?</legend>
+    <label id="get-table" style="display:none"><input type="radio" name="get" value="table"> <span><strong>Take it now, free</strong><small>Paying here at the 799 table. Show your confirmation screen to collect.</small></span></label>
     <label><input type="radio" name="get" value="pickup" checked> <span><strong>Local pickup, free</strong><small>Downtown Traverse City, MI, by appointment. We'll email you to set a time.</small></span></label>
     <label><input type="radio" name="get" value="ship"> <span><strong id="ship-label">Ship to me</strong><small>Lower 48. Address on the next screen.</small></span></label>
   </fieldset>
@@ -227,7 +228,7 @@ var SLUG={'Red':'red','White':'white','Yellow':'yellow','Kawi Green':'kawi','Ora
 var IDS={"Red": ["RUASVS20", "736649486232"], "White": ["WUASVS20", "736649486256"], "Yellow": ["YUASVS20", "736649486249"], "Kawi Green": ["KUASVS20", "736649486294"], "Orange": ["OUAS20VS", "736649486270"], "Black": ["BLKUASVS20", "736649486331"]};
 var ADDONS=['pump','ripper','tuffspout'],SHORT={pump:'Electric Transfer Pump',ripper:'Black Ripper Cap',tuffspout:'Tuff Spout'};
 // Used only until the store service answers, so the page never shows empty cards.
-var FALLBACK={catalog:{jug:{name:'Tuff Jug 5 Gallon Utility Jug',colors:['Red','White','Yellow','Kawi Green','Orange','Black'],cents:4599},pump:{cents:7499},ripper:{cents:2745},tuffspout:{cents:2499}},shipping:{ship:{cents:2500},pickup:{cents:0}},stock:{}};
+var FALLBACK={catalog:{jug:{name:'Tuff Jug 5 Gallon Utility Jug',colors:['Red','White','Yellow','Kawi Green','Orange','Black'],cents:4599},pump:{cents:7499},ripper:{cents:2745},tuffspout:{cents:2499}},shipping:{ship:{cents:2500},pickup:{cents:0},table:{cents:0}},stock:{}};
 var data=FALLBACK,online=false,KEY='scirocco799-cart-v2';
 var sel={color:'Kawi Green'},cart=[];
 try{cart=JSON.parse(localStorage.getItem(KEY)||'[]')||[]}catch(e){cart=[]}
@@ -247,7 +248,7 @@ function draw(){
  var img=$('jug-img'),k=(SLUG[sel.color]||'kawi')+'-spout';if(img.dataset.k!==k){img.dataset.k=k;img.src='/images/optimized/tuffjug-5gal-'+k+'-900.webp';img.srcset='/images/optimized/tuffjug-5gal-'+k+'-480.webp 480w,/images/optimized/tuffjug-5gal-'+k+'-900.webp 900w';img.alt='Tuff Jug 5 gallon utility jug in '+sel.color+' with Auto-Stop Spout';}
  var ok=online&&leftColor(sel.color)>0,ja=document.querySelector('.item [data-add=jug]');ja.disabled=!ok;ja.textContent=!online?'Store offline':ok?'Add to cart':'Sold out';
  ADDONS.forEach(function(p){var b=document.querySelector('.item [data-add='+p+']'),av=sellable(p);b.disabled=!av||left(p)<1;b.textContent=!online?'Store offline':!av?'Coming soon':left(p)<1?'Sold out':'Add to cart';if(price(p))$(p+'-price').textContent=money(price(p));$(p+'-stock').textContent=av?Math.max(left(p),0)+' in stock':''});
- var n=used(function(){return true}),sub=cart.reduce(function(s,l){return s+l.qty*(price(l.product)||0)},0),get=document.querySelector('input[name=get]:checked').value,shipC=data.shipping[get].cents;
+ var n=used(function(){return true}),sub=cart.reduce(function(s,l){return s+l.qty*(price(l.product)||0)},0),get=document.querySelector('input[name=get]:checked').value,shipC=(data.shipping[get]||{cents:0}).cents;
  $('ship-label').textContent='Ship to me, '+money(data.shipping.ship.cents)+' flat';
  $('cart-count').textContent=n;$('cart-total').textContent=money(sub);$('cart-sub').textContent=money(sub+(n?shipC:0));$('sum-label').textContent=get==='ship'&&n?'Total with shipping':'Total';
  var ul=$('cart-lines');ul.innerHTML='';if(!cart.length)ul.innerHTML='<li class="empty-cart">Your cart is empty.</li>';
@@ -274,8 +275,12 @@ $('checkout').onclick=function(){var b=this;b.disabled=true;b.textContent='Openi
  fetch(API+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fulfillment:document.querySelector('input[name=get]:checked').value,items:cart})})
  .then(function(r){return r.json().then(function(j){return{r:r,j:j}})}).then(function(x){if(x.j.url){location.href=x.j.url;return}if(x.j.stock)data.stock=x.j.stock;throw new Error(x.j.error||'Checkout is unavailable.')})
  .catch(function(e){$('cart-error').textContent=e.message||'Checkout is unavailable. Please try again.';$('cart-error').hidden=false;b.textContent='Checkout';draw()})};
-var q=new URLSearchParams(location.search);
-if(q.get('order')==='success'){cart=[];save();note(q.get('via')==='pickup'?"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email you to set a pickup time.":"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email tracking when it ships.")}
+var q=new URLSearchParams(location.search),via=q.get('via');
+// Track mode (QR code at the 799 table): offer "take it now" and preselect it.
+if(q.get('at')==='track'||via==='table'){$('get-table').style.display='';document.querySelector('input[name=get][value=table]').checked=true}
+if(q.get('order')==='success'){cart=[];save();var ref=q.get('ref')||'',num=/^cs_[A-Za-z0-9_]{8,}$/.test(ref)?' Order 799-'+ref.slice(-8).toUpperCase()+'.':'';
+ note(via==='table'?'Paid! Show this screen at the 799 table to collect your gear.'+num:(via==='pickup'?"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email you to set a pickup time.":"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email tracking when it ships.")+num);
+ setTimeout(function(){$('store-note').scrollIntoView({block:'center'})},50)}
 else if(q.get('order')==='cancelled')note('Checkout was cancelled. Your cart is saved.');
 draw();
 fetch(API+'/api/catalog').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){if(!j.catalog||!j.catalog.jug||typeof j.catalog.jug.cents!=='number')throw 0;data=j;online=true;
