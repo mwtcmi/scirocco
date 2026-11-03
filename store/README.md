@@ -35,6 +35,13 @@ Open `https://scirocco799-store.mr-mikewhite.workers.dev/`. Expect:
 
 Then open the preview page on your phone, add a jug, check out with card `4242 4242 4242 4242`, any future date, any CVC and ZIP. The order appears in Stripe → Payments, and the stock count drops by one.
 
+**6. Branded order confirmation (Resend, optional)**
+1. Resend → **Domains**: scirocco799.com must show **Verified**.
+2. Resend → **API Keys → Create API key**. Name `scirocco799-store`, permission **Sending access**, domain `scirocco799.com`. Copy it (starts with `re_`).
+3. Cloudflare Worker → **Variables and Secrets → Add → Secret** named `RESEND_API_KEY`. Deploy. The health check then shows `"email":"resend"`.
+
+After each paid order the Worker emails the buyer from `orders@scirocco799.com` (reply-to mike@scirocco799.com) with the items, part numbers, totals and pickup or shipping next steps, and sends Mike a blind copy. Optional plain variables: `ORDER_FROM` to change the sender, `ORDER_COPY` = `off` to stop the copy. If Resend fails, the order still records and the error shows in Worker → Logs; the Stripe receipt still goes out.
+
 ## Running the store
 
 - **Prices and products** are set in `worker.mjs` (`CATALOG` and `SHIPPING`, in cents). The flat shipping rate is a **placeholder ($25)** until Mike sets it. Ask Claude to change prices, then paste the new file and Deploy.
@@ -63,6 +70,6 @@ Then open the preview page on your phone, add a jug, check out with card `4242 4
 | GET | `/` or `/api/health` | Setup check |
 | GET | `/api/catalog` | Products, prices, shipping options and stock |
 | POST | `/api/checkout` | `{fulfillment: "pickup"\|"ship", items: [...]}` → Stripe Checkout URL |
-| POST | `/api/stripe-webhook` | Stripe "paid" notices (signature checked) |
+| POST | `/api/stripe-webhook` | Stripe "paid" notices (signature checked); records the order, takes stock off, sends the confirmation email |
 
 Browser requests are accepted from scirocco799.com, www.scirocco799.com and mwtcmi.github.io. Tests: `node --test tests/store.test.mjs`.

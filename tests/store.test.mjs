@@ -2,18 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
-import { createWorker, priceWarnings, verifySignature } from '../store/worker.mjs';
+import { createWorker, priceWarnings, verifySignature, orderEmail } from '../store/worker.mjs';
 
 const require = createRequire(import.meta.url);
 const { database } = require('./helpers/d1.cjs');
 const SECRET = 'whsec_test123';
 
-function service(t, { key = 'rk_test_abc', stripeStatus = 200 } = {}) {
+function service(t, { key = 'rk_test_abc', stripeStatus = 200, emailStatus = 200 } = {}) {
   const storage = database('../../store/schema.sql'); t.after(storage.close);
   let time = 1800000000000; const sent = [];
   const stripeFetch = async (url, init) => { sent.push({ url, init, params: new URLSearchParams(init.body.toString()) });
     return new Response(JSON.stringify(stripeStatus === 200 ? { id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' } : { error: { message: 'nope' } }), { status: stripeStatus }); };
-  const worker = createWorker({ now: () => time, stripeFetch });
+  const mail = [];
+  const emailFetch = async (url, init) => { mail.push({ url, init, body: JSON.parse(init.body) }); return new Response('{"id":"em_1"}', { status: emailStatus }); };
+  const worker = createWorker({ now: () => time, stripeFetch, emailFetch });
   const env = { DB: storage.db, STRIPE_SECRET_KEY: key, STRIPE_WEBHOOK_SECRET: SECRET };
   async function call(path, { method = 'GET', data, origin = 'https://scirocco799.com', raw, headers = {} } = {}) {
     const h = { ...headers }; if (origin) h.origin = origin;
@@ -29,7 +31,7 @@ function service(t, { key = 'rk_test_abc', stripeStatus = 200 } = {}) {
     const raw = JSON.stringify(event);
     return call('/api/stripe-webhook', { method: 'POST', raw, origin: null, headers: { 'stripe-signature': sig ?? sign(raw) } });
   }
-  return { ...storage, call, webhook, sign, sent, env };
+  return { ...storage, call, webhook, sign, sent, mail, env };
 }
 
 const paid = (id, items, fulfillment = 'pickup') => ({ type: 'checkout.session.completed', data: { object: {
@@ -141,4 +143,37 @@ test('Stripe Tax off by default', async t => {
   const s = service(t);
   await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'ship', items: [{ product: 'pump', qty: 1 }] } });
   assert.equal(s.sent[0].params.get('automatic_tax[enabled]'), null);
+});
+
+test('paid order sends one branded confirmation through Resend, with a copy to Mike', async t => {
+  const s = service(t); s.env.RESEND_API_KEY = 're_test';
+  const ev = paid('cs_live_abcd1234', [{ p: 'jug', c: 'Orange', q: 2 }, { p: 'ripper', q: 1 }]);
+  Object.assign(ev.data.object, { customer_details: { email: 'buyer@example.com', name: 'Pat <Smith>' }, amount_subtotal: 11943, amount_total: 12660,
+    total_details: { amount_shipping: 0, amount_tax: 717, amount_discount: 0 } });
+  const r = await s.webhook(ev);
+  assert.equal(r.body.email, 'sent'); assert.equal(s.mail.length, 1);
+  const m = s.mail[0];
+  assert.equal(m.url, 'https://api.resend.com/emails'); assert.equal(m.init.headers.Authorization, 'Bearer re_test');
+  assert.equal(m.init.headers['Idempotency-Key'], 'order-cs_live_abcd1234');
+  assert.deepEqual(m.body.to, ['buyer@example.com']); assert.deepEqual(m.body.bcc, ['mike@scirocco799.com']);
+  assert.equal(m.body.reply_to, 'mike@scirocco799.com'); assert.equal(m.body.from, 'Scirocco 799 <orders@scirocco799.com>');
+  assert.equal(m.body.subject, 'Your Scirocco 799 order 799-ABCD1234');
+  assert.match(m.body.html, /OUAS20VS/); assert.match(m.body.html, /\$91\.98/); assert.match(m.body.html, /\$7\.17/); assert.match(m.body.html, /\$126\.60/);
+  assert.match(m.body.html, /Thanks, Pat/); assert.doesNotMatch(m.body.html, /<Smith>/);
+  assert.match(m.body.text, /pickup in Downtown Traverse City/);
+  assert.equal((await s.webhook(ev)).body.email, 'skipped'); assert.equal(s.mail.length, 1);
+});
+
+test('shipping confirmation shows the address; no key means no email; Resend errors do not fail the webhook', async t => {
+  const session = { id: 'cs_x_00000001', metadata: { fulfillment: 'ship', items: JSON.stringify([{ p: 'pump', q: 1 }]) }, customer_details: { email: 'x@y.z' },
+    amount_total: 9999, collected_information: { shipping_details: { name: 'Pat Smith', address: { line1: '1 Main St', city: 'Detroit', state: 'MI', postal_code: '48201' } } },
+    total_details: { amount_shipping: 2500, amount_tax: 0 } };
+  const m = orderEmail(session);
+  assert.match(m.html, /Shipping to/); assert.match(m.html, /Detroit, MI 48201/); assert.match(m.text, /ship within 2 business days/); assert.match(m.html, /\$25\.00/);
+  const off = service(t);
+  assert.equal((await off.webhook(paid('cs_test_9', [{ p: 'pump', q: 1 }]))).body.email, 'off'); assert.equal(off.mail.length, 0);
+  assert.equal((await off.call('/')).body.email, 'off');
+  const bad = service(t, { emailStatus: 422 }); bad.env.RESEND_API_KEY = 're_test';
+  const r = await bad.webhook(paid('cs_test_10', [{ p: 'pump', q: 1 }]));
+  assert.equal(r.status, 200); assert.equal(r.body.result, 'recorded'); assert.equal(r.body.email, 'failed');
 });

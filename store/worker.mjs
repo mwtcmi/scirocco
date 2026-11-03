@@ -1,6 +1,8 @@
 // Paste this entire file into Cloudflare's Worker editor for scirocco799-store.
 // Bindings: D1 database as DB. Secrets: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET.
-// Optional variables: STRIPE_TAX=on (Stripe Tax), ALLOWED_ORIGINS (extra comma-separated origins).
+// Optional secret: RESEND_API_KEY (branded order confirmation emails through Resend).
+// Optional variables: STRIPE_TAX=on (Stripe Tax), ALLOWED_ORIGINS (extra comma-separated origins),
+// ORDER_FROM (sender, default orders@scirocco799.com), ORDER_COPY=off (stop the copy to Mike).
 
 // ---- Catalog: prices in cents, MSRP from the Tuff Jug price list. MAP = MSRP - 15%. ----
 export const SHIPPING = Object.freeze({
@@ -132,8 +134,87 @@ async function recordOrder(db, session, now) {
   catch (e) { if (/UNIQUE|PRIMARY KEY|constraint/i.test(String(e?.message))) return 'duplicate'; throw e; }
 }
 
+// ---- Branded order confirmation (sent through Resend after a paid webhook) ----
+const OWNER_EMAIL = 'mike@scirocco799.com';
+const ORDER_FROM = 'Scirocco 799 <orders@scirocco799.com>';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = c => '$' + (Number(c || 0) / 100).toFixed(2);
+
+function sessionLines(session) {
+  let items;
+  try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
+  return items.map(i => priceLine(i.p === 'jug' ? { product: 'jug', color: i.c, qty: i.q } : { product: i.p, qty: i.q }));
+}
+
+export function orderNumber(session) { return '799-' + String(session.id || '').slice(-8).toUpperCase(); }
+
+export function orderEmail(session) {
+  const lines = sessionLines(session);
+  const who = session.customer_details || {};
+  const pickup = session.metadata?.fulfillment !== 'ship';
+  const shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
+  const td = session.total_details || {};
+  const subtotal = session.amount_subtotal ?? lines.reduce((t, l) => t + l.cents * l.qty, 0);
+  const shipping = td.amount_shipping ?? session.shipping_cost?.amount_total ?? 0;
+  const tax = td.amount_tax ?? 0, discount = td.amount_discount ?? 0, total = session.amount_total ?? subtotal + shipping + tax - discount;
+  const number = orderNumber(session), first = String(who.name || '').trim().split(/\s+/)[0];
+  const a = shipTo?.address || {};
+  const address = shipTo ? [shipTo.name, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', ') + ' ' + (a.postal_code || '')].filter(v => v && v.trim()) : [];
+  const next = pickup
+    ? 'Your order is set for free local pickup in Downtown Traverse City, MI. Reply to this email with a few days and times that work, and Mike will confirm a pickup time and the address.'
+    : 'Orders ship within 2 business days. You will get an email from Mike when it is on the way.';
+  const totals = [['Subtotal', money(subtotal)], ...(discount ? [['Discount', '-' + money(discount)]] : []),
+    [pickup ? 'Local pickup' : 'Shipping', shipping ? money(shipping) : 'Free'], ...(tax ? [['Sales tax', money(tax)]] : [])];
+
+  const row = (l, r, strong) => '<tr><td style="padding:6px 0;color:' + (strong ? '#050505' : '#555') + ';font-weight:' + (strong ? '700' : '400') + '">' + l +
+    '</td><td align="right" style="padding:6px 0;color:#050505;font-weight:' + (strong ? '700' : '400') + '">' + r + '</td></tr>';
+  const items = lines.map(l => '<tr><td style="padding:12px 0;border-bottom:1px solid #e6e6e6"><div style="font-weight:700;color:#050505">' + esc(l.name) +
+    '</div><div style="color:#666;font-size:14px;margin-top:2px">' + esc(l.description) + (l.qty > 1 ? ' &times; ' + l.qty : '') +
+    '</div></td><td align="right" valign="top" style="padding:12px 0;border-bottom:1px solid #e6e6e6;color:#050505">' + money(l.cents * l.qty) + '</td></tr>').join('');
+  const html = '<!doctype html><html><body style="margin:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:24px 12px"><tr><td align="center">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:10px;overflow:hidden">' +
+    '<tr><td style="background:#050505;padding:22px 28px"><span style="color:#fff;font-size:22px;font-weight:900;letter-spacing:.04em">SCIROCCO <span style="color:#20C933">799</span></span>' +
+    '<div style="color:#20C933;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;margin-top:6px">The Paddock</div></td></tr>' +
+    '<tr><td style="padding:28px">' +
+    '<h1 style="margin:0 0 6px;font-size:22px;color:#050505">' + (first ? 'Thanks, ' + esc(first) + '.' : 'Thanks for your order.') + '</h1>' +
+    '<p style="margin:0 0 18px;color:#555;font-size:15px">Order ' + number + ' is confirmed and paid.</p>' +
+    '<p style="margin:0 0 22px;color:#050505;font-size:15px;line-height:1.6;background:#f3fbf4;border-left:4px solid #20C933;padding:12px 14px">' + esc(next) + '</p>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px">' + items + '</table>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;margin-top:10px">' +
+    totals.map(([l, r]) => row(l, r)).join('') + row('Total paid', money(total), true) + '</table>' +
+    (address.length ? '<p style="margin:22px 0 0;color:#555;font-size:14px;line-height:1.5"><strong style="color:#050505">Shipping to</strong><br>' + address.map(esc).join('<br>') + '</p>' : '') +
+    '<p style="margin:26px 0 0;color:#777;font-size:13px;line-height:1.6">Questions? Reply to this email.<br>All sales final. Wrong or damaged item? See ' +
+    '<a href="https://scirocco799.com/returns" style="color:#050505">scirocco799.com/returns</a>.</p>' +
+    '</td></tr><tr><td style="background:#050505;padding:16px 28px;color:#aaa;font-size:12px">799 Motorsport &middot; Traverse City, MI &middot; ' +
+    '<a href="https://scirocco799.com/paddock" style="color:#20C933;text-decoration:none">scirocco799.com</a></td></tr>' +
+    '</table></td></tr></table></body></html>';
+  const text = [(first ? 'Thanks, ' + first + '.' : 'Thanks for your order.'), 'Order ' + number + ' is confirmed and paid.', '', next, '',
+    ...lines.map(l => l.qty + ' x ' + l.name + ' (' + l.description + ')  ' + money(l.cents * l.qty)), '',
+    ...totals.map(([l, r]) => l + ': ' + r), 'Total paid: ' + money(total),
+    ...(address.length ? ['', 'Shipping to:', ...address] : []), '',
+    'Questions? Reply to this email.', 'All sales final. Wrong or damaged item? See https://scirocco799.com/returns'].join('\n');
+  return { to: who.email || null, subject: 'Your Scirocco 799 order ' + number, html, text };
+}
+
+async function sendOrderEmail(env, session, emailFetch) {
+  if (!env.RESEND_API_KEY) return 'off';
+  const mail = orderEmail(session);
+  if (!mail.to) return 'no-address';
+  const body = { from: env.ORDER_FROM || ORDER_FROM, to: [mail.to], reply_to: OWNER_EMAIL, subject: mail.subject, html: mail.html, text: mail.text };
+  if (env.ORDER_COPY !== 'off' && mail.to.toLowerCase() !== OWNER_EMAIL) body.bcc = [OWNER_EMAIL];
+  try {
+    const res = await emailFetch('https://api.resend.com/emails', { method: 'POST',
+      headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'order-' + session.id },
+      body: JSON.stringify(body) });
+    if (res.ok) return 'sent';
+    console.log('Resend error', res.status, await res.text().catch(() => ''));
+  } catch (e) { console.log('Resend error', e?.message || e); }
+  return 'failed';
+}
+
 // A clock and fetch dependency keep the Worker testable without Stripe.
-export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => fetch(...a) } = {}) {
+export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => fetch(...a), emailFetch = (...a) => fetch(...a) } = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url), origin = request.headers.get('origin');
@@ -156,7 +237,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const meta = await db.prepare('SELECT version FROM store_meta WHERE id = 1').first().catch(() => null);
           return json({ ok: meta?.version === 1, service: 'Scirocco 799 store', schema: meta?.version === 1 ? 'installed' : 'missing',
             stripeKey: key ? (/_test_/.test(key) ? 'test' : 'live') : 'missing', webhookSecret: env.STRIPE_WEBHOOK_SECRET ? 'set' : 'missing',
-            tax: env.STRIPE_TAX === 'on' ? 'stripe' : 'off', priceWarnings: priceWarnings() });
+            tax: env.STRIPE_TAX === 'on' ? 'stripe' : 'off', email: env.RESEND_API_KEY ? 'resend' : 'off', priceWarnings: priceWarnings() });
         }
 
         if (request.method === 'GET' && url.pathname === '/api/catalog') {
@@ -191,7 +272,9 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const event = JSON.parse(payload), session = event.data?.object;
           const paid = (event.type === 'checkout.session.completed' && session?.payment_status === 'paid') || event.type === 'checkout.session.async_payment_succeeded';
           if (!paid) return json({ received: true, ignored: event.type });
-          return json({ received: true, result: await recordOrder(db, session, now()) });
+          const result = await recordOrder(db, session, now());
+          const email = result === 'recorded' ? await sendOrderEmail(env, session, emailFetch) : 'skipped';
+          return json({ received: true, result, email });
         }
 
         throw new APIError(404, 'Not found.');
