@@ -1,6 +1,6 @@
 # 799 Paddock store (Stripe checkout on Cloudflare)
 
-The store page (`paddock-store-preview.html` for now) shows the products and cart. It calls a small Cloudflare Worker at `https://scirocco799-store.mr-mikewhite.workers.dev`. The Worker checks prices and stock, opens Stripe Checkout, and takes sold items off stock when Stripe says an order is paid. The Stripe key lives only in Cloudflare, never on GitHub or the page.
+The store on The Paddock page (`paddock.html`) shows the products and cart. It calls a small Cloudflare Worker at `https://scirocco799-store.mr-mikewhite.workers.dev`. The Worker checks prices and stock, opens Stripe Checkout, and takes sold items off stock when Stripe says an order is paid. The Stripe key lives only in Cloudflare, never on GitHub or the page.
 
 Start in the **799 Motorsport sandbox** in Stripe. Nothing here charges real money until live keys are added.
 
