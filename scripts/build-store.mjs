@@ -1,0 +1,275 @@
+#!/usr/bin/env node
+// Builds The Paddock store pages from store/catalog.json:
+//   paddock/<category>/index.html            category pages (24 products a page; more add /page/2/ ...)
+//   paddock/<category>/<product>/index.html  product pages for products sold through the 799 cart
+//   paddock.html                             the parts between <!-- store:... --> markers
+// Head styles, menus and the footer are copied from paddock.html and scripts/site-footer.html,
+// so the store pages always match the rest of the site. Run after any catalog change, then
+// node scripts/wrap-up.mjs before committing.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SITE = 'https://scirocco799.com';
+const PAGE_SIZE = 24;
+const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const catalog = JSON.parse(read('store/catalog.json'));
+const footer = read('scripts/site-footer.html').trim();
+let home = read('paddock.html');
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const cats = catalog.categories;
+const catBySlug = Object.fromEntries(cats.map(c => [c.slug, c]));
+const products = catalog.products;
+const inCat = slug => products.filter(p => p.category === slug);
+const cartProducts = products.filter(p => p.cart);
+const catUrl = c => `/paddock/${c.slug}/`;
+const prodUrl = p => p.external || `/paddock/${p.category}/${p.slug}/`;
+const abs = u => u.startsWith('http') ? u : SITE + u;
+const money = s => '$' + s;
+for (const p of products) if (!catBySlug[p.category]) throw new Error(`${p.slug}: unknown category ${p.category}`);
+
+// ---- Pieces copied from paddock.html ----
+const baseStyle = home.match(/<style>\n:root[\s\S]*?<\/style>/)[0];
+const menu = home.match(/<nav>[\s\S]*?<\/nav>/)[0]
+  .replace(/href="index\.html"/g, 'href="/"')
+  .replace(/href="photos\/"/g, 'href="/photos/"')
+  .replace(/href="([a-z0-9-]+\.html)"/g, 'href="/$1"');
+
+// The data the shared cart script needs on every store page.
+const jug = cartProducts.find(p => p.cart === 'jug');
+const clientData = {
+  jug: jug ? { name: jug.name, short: jug.short, defaultColor: jug.defaultColor, colors: jug.colors.map(c => ({ name: c.name, hex: c.hex, img: c.img, sku: c.sku, upc: c.upc })) } : null,
+  addons: cartProducts.filter(p => p.cart !== 'jug').map(p => p.cart),
+  names: Object.fromEntries(cartProducts.filter(p => p.cart !== 'jug').map(p => [p.cart, p.short])),
+  fallback: Object.fromEntries(cartProducts.map(p => [p.cart, p.cart === 'jug'
+    ? { name: p.name, colors: p.colors.map(c => c.name), cents: Math.round(p.price * 100) }
+    : { cents: Math.round(p.price * 100) }]))
+};
+
+const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog" aria-controls="cart"><span>Cart</span><b id="cart-count">0</b><em id="cart-total">$0.00</em></button>
+<div class="cart-shade" id="cart-shade" hidden></div>
+<aside class="cart" id="cart" role="dialog" aria-modal="true" aria-label="Cart" hidden>
+  <div class="cart-head"><div class="kicker">Your Cart</div><button class="cart-close" id="cart-close" aria-label="Close cart">&times;</button></div>
+  <ul class="cart-lines" id="cart-lines"></ul>
+  <div class="upsell" id="upsell" hidden><span>Add to your jug</span><div class="upsell-btns" id="upsell-btns"></div></div>
+  <fieldset class="opt get"><legend>How do you want it?</legend>
+    <label id="get-table" style="display:none"><input type="radio" name="get" value="table"> <span><strong>Take it now, free</strong><small>Paying here at the 799 table. Show your confirmation screen to collect.</small></span></label>
+    <label><input type="radio" name="get" value="pickup" checked> <span><strong>Local pickup, free</strong><small>Downtown Traverse City, MI, by appointment. We'll email you to set a time.</small></span></label>
+    <label><input type="radio" name="get" value="ship"> <span><strong id="ship-label">Ship to me</strong><small>Lower 48. Address on the next screen.</small></span></label>
+  </fieldset>
+  <p class="cart-error" id="cart-error" role="alert" hidden></p>
+  <div class="cart-sum"><span id="sum-label">Subtotal</span><strong id="cart-sub">$0.00</strong></div>
+  <button class="checkout" id="checkout">Checkout</button>
+  <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen.</p>
+</aside>
+<script>window.PADDOCK=${JSON.stringify(clientData)};</script>
+<script src="/paddock-store.js?v=2"></script>`;
+
+// ---- Structured data ----
+const seller = { '@type': 'Organization', name: catalog.seller };
+function offer(p, url) { return { '@type': 'Offer', price: p.price, priceCurrency: 'USD', availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition', seller, url: abs(url) }; }
+function productLd(p) {
+  const url = prodUrl(p), brand = { '@type': 'Brand', name: p.brand };
+  if (p.colors) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name + ' with Auto-Stop Spout', productGroupID: p.slug, brand, url: abs(url),
+    description: p.about, variesBy: ['https://schema.org/color'],
+    hasVariant: p.colors.map(c => ({ '@type': 'Product', name: `${p.name}, ${c.name}, Auto-Stop Spout`, sku: c.sku, mpn: c.sku, gtin12: c.upc, color: c.name, brand,
+      image: abs(`/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp`), offers: offer(p, `${url}?color=${encodeURIComponent(c.name)}`) })) };
+  const ld = { '@context': 'https://schema.org', '@type': 'Product', name: p.name, brand, description: p.about, image: p.images.map(i => abs(i.src)), url: abs(url), offers: offer(p, url) };
+  if (p.sku) Object.assign(ld, { sku: p.sku, mpn: p.sku });
+  if (p.upc) ld.gtin12 = p.upc;
+  if (p.color) ld.color = p.color;
+  return ld;
+}
+const crumbsLd = items => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: items.map(([name, url], i) => ({ '@type': 'ListItem', position: i + 1, name, item: abs(url) })) });
+const ldScript = data => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
+
+// ---- HTML pieces ----
+function head({ title, desc, url, image, imageAlt, ld }) {
+  const t = esc(title), d = esc(desc), img = image || `${SITE}/images/social/799-paddock-v1.jpg`;
+  const alt = esc(imageAlt || 'PADDOCK TESTED. — Tools, equipment, and lessons from race weekends.');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${t}</title>
+<meta name="description" content="${d}">
+${baseStyle}
+<link rel="stylesheet" href="/mobile-nav.css?v=1"><script src="/mobile-nav.js?v=1" defer></script><!-- Site icons and link previews -->
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<meta name="theme-color" content="#050505">
+<link rel="canonical" href="${url}">
+<meta property="og:site_name" content="Scirocco 799">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${t}">
+<meta property="og:description" content="${d}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${img}">${image ? '' : `
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">`}
+<meta property="og:image:alt" content="${alt}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${t}">
+<meta name="twitter:description" content="${d}">
+<meta name="twitter:image" content="${img}">
+<meta name="twitter:image:alt" content="${alt}">
+<!-- /Site icons and link previews -->
+<link rel="stylesheet" href="/footer.css?v=1">
+<link rel="stylesheet" href="/paddock-store.css?v=2">
+${ld.map(ldScript).join('\n')}
+</head>
+<body>
+${menu}`;
+}
+const foot = `${cartBlock}
+${footer}
+</body></html>
+`;
+function crumbs(items) {
+  return `<nav class="crumbs" aria-label="Breadcrumb"><div class="wrap"><ol>${items.map(([name, url], i) =>
+    i === items.length - 1 ? `<li><span aria-current="page">${esc(name)}</span></li>` : `<li><a href="${url}">${esc(name)}</a></li>`).join('')}</ol></div></nav>`;
+}
+function photoTag(p, { big = false, lazy = true } = {}) {
+  if (p.colors) {
+    const c = p.colors.find(x => x.name === p.defaultColor);
+    return `<img data-jug-img${big ? ' id="main-photo"' : ''} src="/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp" srcset="/images/optimized/tuffjug-5gal-${c.img}-spout-480.webp 480w,/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp 900w" sizes="(max-width:800px) 100vw,560px" alt="${esc(p.name)} in ${esc(c.name)} with Auto-Stop Spout" width="900" height="900"${lazy ? ' loading="lazy"' : ''}>`;
+  }
+  const i = p.images[0];
+  const src = !big && i.src480 ? i.src480 : i.src;
+  return `<img${big ? ' id="main-photo"' : ''} src="${src}"${i.src480 && big ? ` srcset="${i.src480} 480w,${i.src} ${i.w}w" sizes="(max-width:800px) 100vw,560px"` : ''} alt="${esc(i.alt)}" width="${big ? i.w : (i.src480 ? 480 : i.w)}" height="${big ? i.h : (i.src480 ? 480 : i.h)}"${lazy ? ' loading="lazy"' : ''}>`;
+}
+const idLine = p => p.colors ? `<div class="idline" data-jug-ids>SKU ${p.colors.find(c => c.name === p.defaultColor).sku} · UPC ${p.colors.find(c => c.name === p.defaultColor).upc}</div>`
+  : `<div class="idline">${p.sku ? `SKU ${esc(p.sku)}${p.upc ? ` · UPC ${esc(p.upc)}` : ''}` : 'SKU and UPC to come'}</div>`;
+const options = p => p.colors ? `<fieldset class="opt"><legend>Color <span data-color-name>${esc(p.defaultColor)}</span></legend><div class="swatches" data-colors></div></fieldset>` : '';
+const stockLine = p => p.colors ? '' : `<div class="stock" data-stock="${p.cart}"></div>`;
+const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';
+
+// A product card in a grid (store front, category pages, "goes with" rows).
+function card(p, lazy = true) {
+  const url = prodUrl(p), link = p.colors ? ` data-jug-link="${url}"` : '';
+  return `<article class="item" data-id="${p.cart}">
+  <div class="item-photo"><a href="${url}"${link} tabindex="-1" aria-hidden="true">${photoTag(p, { lazy })}</a></div>
+  <div class="item-body">
+    <span class="badge">${esc(catBySlug[p.category].name)}</span>
+    <h3><a href="${url}"${link}>${esc(p.name)}</a></h3>
+    <div class="price" data-price="${p.cart}">${money(p.price)}</div>
+    ${idLine(p)}
+    <p class="desc">${esc(p.desc)}</p>
+    <ul class="facts">${p.facts.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+    ${options(p)}${fine(p)}${stockLine(p)}
+    <button class="add" data-add="${p.cart}">Add to cart</button>
+  </div>
+</article>`;
+}
+// Products sold elsewhere (merch for now) link out.
+function extCard(p) {
+  return `<a class="ext" href="${p.external}" target="_blank" rel="noopener"><img src="${p.image}-750.webp" srcset="${p.image}-400.webp 400w, ${p.image}-750.webp 750w" sizes="(max-width:800px) 50vw, 280px" width="750" height="750" loading="lazy" alt="${esc(p.alt)}"><div class="ext-body"><h3>${esc(p.name)}</h3><span class="price">${esc(p.priceLabel)}</span><span class="ext-buy">Buy Now →</span></div></a>`;
+}
+function grid(list) {
+  const cartList = list.filter(p => p.cart), ext = list.filter(p => p.external);
+  let html = '';
+  if (cartList.length) html += `<div class="store-grid">\n${cartList.map(p => card(p)).join('\n')}\n</div>`;
+  if (ext.length) {
+    const groups = [...new Set(ext.map(p => p.group || ''))];
+    html += groups.map(g => `${g ? `<div class="group-label">${esc(g)}</div>` : ''}<div class="ext-grid">${ext.filter(p => (p.group || '') === g).map(extCard).join('')}</div>`).join('\n');
+  }
+  return html;
+}
+
+// ---- Write pages ----
+const written = [];
+function write(rel, html) {
+  const f = path.join(ROOT, rel);
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, html);
+  written.push(rel);
+}
+// Clear old generated pages so removed products and categories disappear.
+const storeDir = path.join(ROOT, 'paddock');
+if (fs.existsSync(storeDir)) fs.rmSync(storeDir, { recursive: true });
+
+const live = cats.filter(c => inCat(c.slug).length);
+for (const c of live) {
+  const list = inCat(c.slug), pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  for (let n = 1; n <= pages; n++) {
+    const url = catUrl(c) + (n > 1 ? `page/${n}/` : ''), slice = list.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
+    const title = `${c.name}${n > 1 ? ` (page ${n})` : ''} | The Paddock | Scirocco 799`;
+    const desc = c.intro || c.blurb;
+    const trail = [['The Paddock', '/paddock'], [c.name, catUrl(c)]];
+    const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: slice.map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
+    const pager = pages > 1 ? `<nav class="pager" aria-label="Pages">${n > 1 ? `<a href="${catUrl(c) + (n > 2 ? `page/${n - 1}/` : '')}" rel="prev">‹ Prev</a>` : ''}${Array.from({ length: pages }, (_, i) => i + 1).map(k => k === n ? `<span aria-current="page">${k}</span>` : `<a href="${catUrl(c) + (k > 1 ? `page/${k}/` : '')}">${k}</a>`).join('')}${n < pages ? `<a href="${catUrl(c)}page/${n + 1}/" rel="next">Next ›</a>` : ''}</nav>` : '';
+    write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
+      head({ title, desc, url: SITE + url, ld: [crumbsLd(trail), itemList] }) + `
+${crumbs(trail)}
+<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(desc)}</p></div></header>
+<section class="store-page store" id="store"><div class="wrap">
+<p class="store-note" id="store-note" role="status" hidden></p>
+${grid(slice)}
+${pager}
+<p class="store-fine">${c.note || 'All sales final. <a href="/returns">Returns, warranty &amp; shipping</a>'}</p>
+</div></section>
+` + foot);
+  }
+}
+
+for (const p of cartProducts) {
+  const c = catBySlug[p.category], url = prodUrl(p);
+  const trail = [['The Paddock', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
+  const rows = p.colors ? p.colors.map(x => [x.name, x.sku, x.upc]) : [[p.color || '', p.sku || 'To come', p.upc || 'To come']];
+  const thumbs = !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
+  const related = inCat(p.category).filter(x => x.cart && x !== p);
+  const image = p.colors ? abs(`/images/optimized/tuffjug-5gal-${p.colors.find(x => x.name === p.defaultColor).img}-spout-900.webp`) : abs(p.images[0].src);
+  write(`paddock/${p.category}/${p.slug}/index.html`,
+    head({ title: `${p.name} | The Paddock | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
+      url: abs(url), image, imageAlt: p.name, ld: [productLd(p), crumbsLd(trail)] }) + `
+${crumbs(trail)}
+<section class="pd store" id="store"><div class="wrap">
+<p class="store-note" id="store-note" role="status" hidden></p>
+<div class="pd-grid">
+<div><div class="pd-photo">${photoTag(p, { big: true, lazy: false })}</div>${thumbs}</div>
+<div class="pd-info item" data-id="${p.cart}">
+  <span class="badge">${esc(c.name)}</span>
+  <h1>${esc(p.name)}</h1>
+  <div class="price" data-price="${p.cart}">${money(p.price)}</div>
+  ${idLine(p)}
+  <p class="desc">${esc(p.desc)}</p>
+  <ul class="facts">${p.facts.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+  ${options(p)}${fine(p)}${stockLine(p)}
+  <button class="add" data-add="${p.cart}">Add to cart</button>
+  <p class="policy-link">All sales final. <a href="/returns">Returns, warranty &amp; shipping</a></p>
+</div>
+</div>
+</div></section>
+<section class="pd-about"><div class="wrap pd-about-grid">
+<div><h2>About</h2><p>${esc(p.about)}</p></div>
+<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>Color</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
+</div></section>
+${related.length ? `<section class="related store"><div class="wrap"><h2>Goes With</h2><div class="store-grid${related.length % 3 === 0 ? ' cols-3' : ''}">\n${related.map(x => card(x)).join('\n')}\n</div></div></section>` : '<div class="related"></div>'}
+` + foot);
+}
+
+// ---- paddock.html: the parts between markers ----
+function fill(name, html) {
+  const re = new RegExp(`(<!-- store:${name} -->)[\\s\\S]*?(<!-- /store:${name} -->)`);
+  if (!re.test(home)) throw new Error(`paddock.html is missing <!-- store:${name} --> markers`);
+  home = home.replace(re, `$1\n${html}\n$2`);
+}
+fill('categories', cats.map((c, i) => {
+  const n = inCat(c.slug).length, num = String(i + 1).padStart(2, '0');
+  return n ? `<a class="cat" href="${catUrl(c)}"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Shop ${n} ${n === 1 ? 'item' : 'items'} →</span></a>`
+    : `<div class="cat soon"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Coming soon</span></div>`;
+}).join('\n'));
+const featured = cartProducts.filter(p => p.featured);
+fill('featured', `<div class="store-grid">\n${featured.map((p, i) => card(p, i > 1)).join('\n')}\n</div>`);
+fill('jsonld', ldScript({ '@context': 'https://schema.org', '@type': 'ItemList', name: 'The Paddock: featured gear',
+  itemListElement: featured.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(prodUrl(p)), name: p.name })) }));
+fill('cart', cartBlock);
+fs.writeFileSync(path.join(ROOT, 'paddock.html'), home);
+written.push('paddock.html');
+
+console.log(`Store built: ${written.length} files\n  ${written.join('\n  ')}`);

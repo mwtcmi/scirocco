@@ -1,6 +1,6 @@
 # 799 Paddock store (Stripe checkout on Cloudflare)
 
-The store on The Paddock page (`paddock.html`) shows the products and cart. It calls a small Cloudflare Worker at `https://scirocco799-store.mr-mikewhite.workers.dev`. The Worker checks prices and stock, opens Stripe Checkout, and takes sold items off stock when Stripe says an order is paid. The Stripe key lives only in Cloudflare, never on GitHub or the page.
+The store lives under The Paddock: the front page (`paddock.html`), category pages (`paddock/<category>/`) and product pages (`paddock/<category>/<product>/`), all sharing one cart (`paddock-store.js`, `paddock-store.css`). It calls a small Cloudflare Worker at `https://scirocco799-store.mr-mikewhite.workers.dev`. The Worker checks prices and stock, opens Stripe Checkout, and takes sold items off stock when Stripe says an order is paid. The Stripe key lives only in Cloudflare, never on GitHub or the page.
 
 Start in the **799 Motorsport sandbox** in Stripe. Nothing here charges real money until live keys are added.
 
@@ -41,6 +41,15 @@ Then open the preview page on your phone, add a jug, check out with card `4242 4
 3. Cloudflare Worker → **Variables and Secrets → Add → Secret** named `RESEND_API_KEY`. Deploy. The health check then shows `"email":"resend"`.
 
 After each paid order the Worker emails the buyer from `orders@scirocco799.com` (reply-to mike@scirocco799.com) with the items, part numbers, totals and pickup or shipping next steps, and sends Mike a blind copy. Optional plain variables: `ORDER_FROM` to change the sender, `ORDER_COPY` = `off` to stop the copy. To see samples in your inbox: add a plain variable `SAMPLE_EMAILS` = `on`, Deploy, open `https://scirocco799-store.mr-mikewhite.workers.dev/api/sample-emails` (three samples go to mike@scirocco799.com only), then delete the variable and Deploy. If Resend fails, the order still records and the error shows in Worker → Logs; the Stripe receipt still goes out.
+
+## Adding or changing products
+
+1. Edit [catalog.json](catalog.json): categories, and products with their category, photos, facts, part numbers and display price. Products with `"external"` (merch for now) link out and never enter the cart.
+2. Run `node scripts/build-store.mjs`. It rewrites every category and product page, plus the category tiles and featured cards on `paddock.html` (between the `<!-- store:... -->` markers; don't hand-edit those parts).
+3. A new cart product, or a price change, also needs `CATALOG` in [worker.mjs](worker.mjs) updated and the Worker pasted and deployed: checkout always charges the Worker's price.
+4. Run `node scripts/wrap-up.mjs` and commit the generated pages with the sitemap.
+
+Categories with no products show "Coming soon" on the front page and get no page. A category with more than 24 products gets numbered pages (`/page/2/`, ...).
 
 ## Running the store
 

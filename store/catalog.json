@@ -1,0 +1,95 @@
+{
+  "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the featured cards on paddock.html. Prices shown here are display prices; checkout charges the prices in store/worker.mjs (CATALOG), so a new or changed cart product also needs the Worker updated. External products link out and never enter the cart.",
+  "seller": "799 Motorsport LLC",
+  "categories": [
+    { "slug": "tools", "name": "Tools", "blurb": "Hand tools, cordless tools, storage and the things that get repairs done." },
+    { "slug": "fuel-fluids", "name": "Fuel & Fluids", "blurb": "Fuel jugs, funnels, transfer gear, fluids and trackside cleanup.",
+      "intro": "The fuel and transfer gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
+    { "slug": "tire-wheel", "name": "Tire & Wheel", "blurb": "Pressure, temperature, torque, transport and tire-management gear." },
+    { "slug": "trailer-pit", "name": "Trailer & Pit", "blurb": "Loading, tie-downs, lighting, power, tables, canopy and paddock setup." },
+    { "slug": "trackside", "name": "Trackside", "blurb": "The small stuff that becomes very important when you are miles from the garage." },
+    { "slug": "cameras-data", "name": "Cameras & Data", "blurb": "Video, mounts, timing and the equipment used to learn from every run." },
+    { "slug": "apparel", "name": "799 Apparel", "blurb": "Tees, hoodies, caps and paddock jackets carrying the 799 Bergrennen mark.",
+      "intro": "\"Bergrennen\" is German for hill climb, the kind of racing 799 is built for. Every piece is made to order, and every order supports the race program.",
+      "note": "Apparel checks out through the 799 collection in the <a href=\"https://www.empirehillclimb.racing/799\" target=\"_blank\" rel=\"noopener\">Empire Hill Climb store</a>. <a href=\"https://www.empirehillclimb.racing/799\" target=\"_blank\" rel=\"noopener\">Shop the full collection →</a>" }
+  ],
+  "products": [
+    {
+      "slug": "tuff-jug-5-gallon", "category": "fuel-fluids", "cart": "jug", "featured": true,
+      "brand": "Tuff Jug", "name": "Tuff Jug 5 Gallon Utility Jug", "short": "Tuff Jug 5 Gallon", "price": "45.99",
+      "desc": "Five gallons with the Auto-Stop Spout, internal venting and a clear view strip for fast, controlled pours.",
+      "about": "The 5 gallon Tuff Jug is the jug in the 799 trailer: multi-layer HDPE, a 1 in NPT spout thread and a clear view strip so you can see the level without opening it. It comes with the Auto-Stop Spout, which vents internally and stops the pour when the tank is full. Swap in the Black Ripper Cap for maximum flow, or the flexible Tuff Spout for awkward fillers.",
+      "facts": ["5 gal / 20 L, 20 × 10 × 10 in", "Multi-layer HDPE, 1 in NPT spout thread", "Made in Idaho, lifetime warranty"],
+      "fine": "Utility container. Not a certified portable fuel container.",
+      "colors": [
+        { "name": "Red", "hex": "#d6202a", "img": "red", "sku": "RUASVS20", "upc": "736649486232" },
+        { "name": "White", "hex": "#f4f4f2", "img": "white", "sku": "WUASVS20", "upc": "736649486256" },
+        { "name": "Yellow", "hex": "#f2d600", "img": "yellow", "sku": "YUASVS20", "upc": "736649486249" },
+        { "name": "Kawi Green", "hex": "#47d22f", "img": "kawi", "sku": "KUASVS20", "upc": "736649486294" },
+        { "name": "Orange", "hex": "#f26a10", "img": "orange", "sku": "OUAS20VS", "upc": "736649486270" },
+        { "name": "Black", "hex": "#151515", "img": "black", "sku": "BLKUASVS20", "upc": "736649486331" }
+      ],
+      "defaultColor": "Kawi Green",
+      "idNote": "5 gallon jugs are the view-strip (VS) models."
+    },
+    {
+      "slug": "electric-transfer-pump", "category": "fuel-fluids", "cart": "pump", "featured": true,
+      "brand": "Tuff Jug", "name": "Tuff Jug Electric Transfer Pump", "short": "Electric Transfer Pump", "price": "74.99",
+      "desc": "Hands-free transfer with one button and automatic shutoff. Includes the Tuff Jug adapter. Fits current Tuff Jugs.",
+      "about": "Battery electric transfer pump with automatic shutoff, so you can fill without lifting a full jug over the car. One button to run, and it stops itself when the tank is full. Includes the Tuff Jug adapter and fits current Tuff Jugs.",
+      "facts": ["21 in intake hose, 51 in discharge hose", "4 AA batteries (not included), up to 250 gal per set", "1-year limited warranty"],
+      "images": [
+        { "src": "/images/optimized/tuffjug-pump-480.webp", "w": 480, "h": 480, "alt": "Tuff Jug Electric Transfer Pump with intake and discharge hoses" },
+        { "src": "/images/optimized/tuffjug-pump-hoses-480.webp", "w": 480, "h": 480, "alt": "Tuff Jug Electric Transfer Pump hoses laid out" }
+      ],
+      "color": "Red", "sku": "", "upc": ""
+    },
+    {
+      "slug": "black-ripper-cap", "category": "fuel-fluids", "cart": "ripper", "featured": true,
+      "brand": "Tuff Jug", "name": "Tuff Jug Black Ripper Cap, 5 Gallon", "short": "Black Ripper Cap", "price": "27.45",
+      "desc": "Tuff Jug's maximum-flow pour cap. Swaps onto any 5 gallon Tuff Jug in place of the Auto-Stop Spout.",
+      "about": "The Ripper Cap is Tuff Jug's maximum-flow pour cap. It threads onto any 5 gallon Tuff Jug in place of the Auto-Stop Spout when you want the jug empty fast.",
+      "facts": ["Fits 5 gal / 20 L Tuff Jugs", "Black", "Maximum-flow pour"],
+      "images": [
+        { "src": "/images/optimized/tuffjug-ripper-black-900.webp", "src480": "/images/optimized/tuffjug-ripper-black-480.webp", "w": 900, "h": 900, "alt": "Black Ripper Cap on a 5 gallon Tuff Jug" }
+      ],
+      "color": "Black", "sku": "BLKR20", "upc": "735345298644"
+    },
+    {
+      "slug": "tuff-spout", "category": "fuel-fluids", "cart": "tuffspout", "featured": true,
+      "brand": "Tuff Jug", "name": "Tuff Jug Tuff Spout with Auto Stop, 5 Gallon", "short": "Tuff Spout", "price": "24.99",
+      "desc": "Flexible hose spout with Auto Stop. Stays flexible from −22°F to 200°F and won't yellow, harden or crack.",
+      "about": "A flexible hose spout with Auto Stop for 5 gallon Tuff Jugs, for fillers the stock spout can't reach. It stays flexible from −22°F to 200°F, with a nitrile inner layer, a UV and weather resistant outer layer, internal venting and a multi O-ring seal.",
+      "facts": ["Fits 5 gal / 20 L Tuff Jugs", "Nitrile inner layer, UV-resistant outer layer", "Auto Stop, internal venting, multi O-ring seal"],
+      "images": [
+        { "src": "/images/optimized/tuffjug-tuffspout-820.webp", "src480": "/images/optimized/tuffjug-tuffspout-480.webp", "w": 820, "h": 820, "alt": "Tuff Jug Tuff Spout flexible hose spout with Auto Stop" },
+        { "src": "/images/optimized/tuffjug-tuffspout-on-jug-820.webp", "src480": "/images/optimized/tuffjug-tuffspout-on-jug-480.webp", "w": 820, "h": 820, "alt": "Tuff Spout fitted to a 5 gallon Tuff Jug" }
+      ],
+      "color": "Black", "sku": "", "upc": ""
+    },
+    { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
+      "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
+      "image": "/images/shop/799-bergrennen-paddock-jacket", "alt": "Champion packable quarter-zip anorak with the embroidered 799 Bergrennen mark" },
+    { "slug": "bergrennen-stealth-hoodie", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/799-bergrennen-stealth-hoodie",
+      "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Stealth Hoodie", "priceLabel": "From $40.00",
+      "image": "/images/shop/799-bergrennen-stealth-hoodie", "alt": "Black camo heavyweight hoodie with the 799 Bergrennen mark" },
+    { "slug": "bergrennen-crewneck", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/799-bergrennen-crewneck",
+      "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Crewneck", "priceLabel": "From $29.00",
+      "image": "/images/shop/799-bergrennen-crewneck", "alt": "Black crewneck sweatshirt with the 799 Bergrennen mark" },
+    { "slug": "bergrennen-race-tee", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-race-tee",
+      "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Race Tee", "priceLabel": "From $15.50",
+      "image": "/images/shop/799-bergrennen-race-tee", "alt": "Black heather T-shirt with the 799 Bergrennen mark" },
+    { "slug": "bergrennen-paddock-cap", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-paddock-cap",
+      "group": "Headwear", "name": "799 Bergrennen Paddock Cap", "priceLabel": "$23.50",
+      "image": "/images/shop/799-bergrennen-paddock-cap", "alt": "Black five-panel cap with an embroidered 799 Bergrennen mark" },
+    { "slug": "racing-logistics-cap", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/799-racing-logistics-cap",
+      "group": "Headwear", "name": "799 Racing Logistics Cap", "priceLabel": "$20.00",
+      "image": "/images/shop/799-racing-logistics-cap", "alt": "Black mesh trucker cap with an embroidered 799 mark" },
+    { "slug": "paddock-beanie", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/799-paddock-beanie",
+      "group": "Headwear", "name": "799 Paddock Beanie", "priceLabel": "$17.00",
+      "image": "/images/shop/799-paddock-beanie", "alt": "Black cuffed beanie with an embroidered 799 mark" },
+    { "slug": "grid-pom-beanie", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/799-grid-pom-beanie",
+      "group": "Headwear", "name": "799 Grid Pom Beanie", "priceLabel": "$18.00",
+      "image": "/images/shop/799-grid-pom-beanie", "alt": "Black pom-pom beanie with an embroidered 799 mark" }
+  ]
+}
