@@ -85,10 +85,13 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}) {
     metadata: { items: JSON.stringify(items), fulfillment },
     payment_intent_data: { description: '799 Motorsport store order', metadata: { fulfillment } }
   };
-  if (ship) p.shipping_address_collection = { allowed_countries: ['US'] };
-  else {
+  const policy = 'All sales final. Wrong or damaged items and warranty help: scirocco799.com/returns';
+  if (ship) {
+    p.shipping_address_collection = { allowed_countries: ['US'] };
+    p.custom_text = { submit: { message: policy } };
+  } else {
     p.phone_number_collection = { enabled: 'true' };
-    p.custom_text = { submit: { message: "Pickup is by appointment in Downtown Traverse City, MI. We'll email you to set a time." } };
+    p.custom_text = { submit: { message: "Pickup is by appointment in Downtown Traverse City, MI. We'll email you to set a time. " + policy } };
   }
   // Stripe Tax: prices are pre-tax; jugs and parts are general tangible goods, shipping is taxed as shipping.
   if (env.STRIPE_TAX === 'on') {
