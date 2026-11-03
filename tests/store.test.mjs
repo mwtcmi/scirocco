@@ -124,3 +124,21 @@ test('unpaid sessions are ignored', async t => {
   assert.match((await s.webhook(ev)).body.ignored, /completed/);
   assert.equal((await s.call('/api/catalog')).body.stock.pump, 2);
 });
+
+test('Stripe Tax on: pre-tax prices with tax codes, and pickup collects a billing address', async t => {
+  const s = service(t); s.env.STRIPE_TAX = 'on';
+  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Red', qty: 1 }] } });
+  const p = s.sent[0].params;
+  assert.equal(p.get('automatic_tax[enabled]'), 'true');
+  assert.equal(p.get('line_items[0][price_data][tax_behavior]'), 'exclusive');
+  assert.equal(p.get('line_items[0][price_data][product_data][tax_code]'), 'txcd_99999999');
+  assert.equal(p.get('shipping_options[0][shipping_rate_data][tax_code]'), 'txcd_92010001');
+  assert.equal(p.get('billing_address_collection'), 'required');
+  assert.equal((await s.call('/')).body.tax, 'stripe');
+});
+
+test('Stripe Tax off by default', async t => {
+  const s = service(t);
+  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'ship', items: [{ product: 'pump', qty: 1 }] } });
+  assert.equal(s.sent[0].params.get('automatic_tax[enabled]'), null);
+});
