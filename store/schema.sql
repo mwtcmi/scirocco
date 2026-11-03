@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS store_meta (id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL);
+INSERT OR IGNORE INTO store_meta (id, version) VALUES (1, 1);
+CREATE TABLE IF NOT EXISTS stock (key TEXT PRIMARY KEY, qty INTEGER NOT NULL CHECK (qty >= 0), updated_at INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS orders (session_id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, livemode INTEGER NOT NULL, fulfillment TEXT NOT NULL, email TEXT, amount_total INTEGER, items TEXT NOT NULL);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/Red', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/White', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/Yellow', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/Kawi Green', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/Orange', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/Black', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/spout/Auto-Stop Spout', 12);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/spout/Black Ripper Cap', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/spout/Tuff Spout', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('pump', 2);
