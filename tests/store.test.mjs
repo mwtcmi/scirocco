@@ -177,3 +177,15 @@ test('shipping confirmation shows the address; no key means no email; Resend err
   const r = await bad.webhook(paid('cs_test_10', [{ p: 'pump', q: 1 }]));
   assert.equal(r.status, 200); assert.equal(r.body.result, 'recorded'); assert.equal(r.body.email, 'failed');
 });
+
+test('sample emails go to Mike only, and only while SAMPLE_EMAILS is on', async t => {
+  const s = service(t); s.env.RESEND_API_KEY = 're_test';
+  assert.equal((await s.call('/api/sample-emails')).status, 404); assert.equal(s.mail.length, 0);
+  s.env.SAMPLE_EMAILS = 'on';
+  const r = await s.call('/api/sample-emails');
+  assert.equal(r.status, 200); assert.deepEqual(r.body.results, ['sent', 'sent', 'sent']);
+  assert.equal(s.mail.length, 3);
+  for (const m of s.mail) { assert.deepEqual(m.body.to, ['mike@scirocco799.com']); assert.equal(m.body.bcc, undefined); assert.match(m.body.subject, /^\[Sample\] /); }
+  assert.match(s.mail[1].body.html, /Columbus, OH 43215/); assert.match(s.mail[1].body.html, /Discount/);
+  assert.equal((await s.call('/api/stock')).status, 404);
+});

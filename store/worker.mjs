@@ -2,7 +2,8 @@
 // Bindings: D1 database as DB. Secrets: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET.
 // Optional secret: RESEND_API_KEY (branded order confirmation emails through Resend).
 // Optional variables: STRIPE_TAX=on (Stripe Tax), ALLOWED_ORIGINS (extra comma-separated origins),
-// ORDER_FROM (sender, default orders@scirocco799.com), ORDER_COPY=off (stop the copy to Mike).
+// ORDER_FROM (sender, default orders@scirocco799.com), ORDER_COPY=off (stop the copy to Mike),
+// SAMPLE_EMAILS=on (temporarily lets /api/sample-emails send three sample confirmations to Mike only).
 
 // ---- Catalog: prices in cents, MSRP from the Tuff Jug price list. MAP = MSRP - 15%. ----
 export const SHIPPING = Object.freeze({
@@ -213,6 +214,31 @@ async function sendOrderEmail(env, session, emailFetch) {
   return 'failed';
 }
 
+// Sample orders for /api/sample-emails: they go to Mike only, and only while SAMPLE_EMAILS=on.
+export const SAMPLE_ORDERS = [
+  { id: 'cs_sample_pickup01', metadata: { fulfillment: 'pickup', items: JSON.stringify([{ p: 'jug', c: 'Orange', q: 2 }, { p: 'ripper', q: 1 }]) },
+    customer_details: { name: 'Pat Sample' }, amount_subtotal: 11943, amount_total: 12660, total_details: { amount_shipping: 0, amount_tax: 717, amount_discount: 0 } },
+  { id: 'cs_sample_shipped2', metadata: { fulfillment: 'ship', items: JSON.stringify([{ p: 'jug', c: 'Kawi Green', q: 1 }, { p: 'pump', q: 1 }, { p: 'tuffspout', q: 1 }]) },
+    customer_details: { name: 'Jordan Sample' }, amount_subtotal: 14597, amount_total: 16257, total_details: { amount_shipping: 2500, amount_tax: 0, amount_discount: 840 },
+    collected_information: { shipping_details: { name: 'Jordan Sample', address: { line1: '123 Main Street', line2: 'Apt 4', city: 'Columbus', state: 'OH', postal_code: '43215' } } } },
+  { id: 'cs_sample_single03', metadata: { fulfillment: 'ship', items: JSON.stringify([{ p: 'jug', c: 'Black', q: 1 }]) },
+    customer_details: { name: 'Sam Sample' }, amount_subtotal: 4599, amount_total: 7525, total_details: { amount_shipping: 2500, amount_tax: 426, amount_discount: 0 },
+    collected_information: { shipping_details: { name: 'Sam Sample', address: { line1: '400 Front Street', city: 'Traverse City', state: 'MI', postal_code: '49684' } } } }
+];
+
+async function sendSamples(env, emailFetch, stamp) {
+  const results = [];
+  for (const order of SAMPLE_ORDERS) {
+    const mail = orderEmail(order);
+    const res = await emailFetch('https://api.resend.com/emails', { method: 'POST',
+      headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': order.id + '-' + stamp },
+      body: JSON.stringify({ from: env.ORDER_FROM || ORDER_FROM, to: [OWNER_EMAIL], reply_to: OWNER_EMAIL, subject: '[Sample] ' + mail.subject, html: mail.html, text: mail.text }) })
+      .catch(e => ({ ok: false, status: 0, text: async () => String(e?.message || e) }));
+    results.push(res.ok ? 'sent' : 'failed ' + res.status + ' ' + (await res.text().catch(() => '')).slice(0, 200));
+  }
+  return results;
+}
+
 // A clock and fetch dependency keep the Worker testable without Stripe.
 export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => fetch(...a), emailFetch = (...a) => fetch(...a) } = {}) {
   return {
@@ -238,6 +264,11 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           return json({ ok: meta?.version === 1, service: 'Scirocco 799 store', schema: meta?.version === 1 ? 'installed' : 'missing',
             stripeKey: key ? (/_test_/.test(key) ? 'test' : 'live') : 'missing', webhookSecret: env.STRIPE_WEBHOOK_SECRET ? 'set' : 'missing',
             tax: env.STRIPE_TAX === 'on' ? 'stripe' : 'off', email: env.RESEND_API_KEY ? 'resend' : 'off', priceWarnings: priceWarnings() });
+        }
+
+        if (request.method === 'GET' && url.pathname === '/api/sample-emails') {
+          if (env.SAMPLE_EMAILS !== 'on' || !env.RESEND_API_KEY) throw new APIError(404, 'Not found.');
+          return json({ to: OWNER_EMAIL, results: await sendSamples(env, emailFetch, now()) });
         }
 
         if (request.method === 'GET' && url.pathname === '/api/catalog') {

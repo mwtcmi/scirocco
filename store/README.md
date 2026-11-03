@@ -40,7 +40,7 @@ Then open the preview page on your phone, add a jug, check out with card `4242 4
 2. Resend → **API Keys → Create API key**. Name `scirocco799-store`, permission **Sending access**, domain `scirocco799.com`. Copy it (starts with `re_`).
 3. Cloudflare Worker → **Variables and Secrets → Add → Secret** named `RESEND_API_KEY`. Deploy. The health check then shows `"email":"resend"`.
 
-After each paid order the Worker emails the buyer from `orders@scirocco799.com` (reply-to mike@scirocco799.com) with the items, part numbers, totals and pickup or shipping next steps, and sends Mike a blind copy. Optional plain variables: `ORDER_FROM` to change the sender, `ORDER_COPY` = `off` to stop the copy. If Resend fails, the order still records and the error shows in Worker → Logs; the Stripe receipt still goes out.
+After each paid order the Worker emails the buyer from `orders@scirocco799.com` (reply-to mike@scirocco799.com) with the items, part numbers, totals and pickup or shipping next steps, and sends Mike a blind copy. Optional plain variables: `ORDER_FROM` to change the sender, `ORDER_COPY` = `off` to stop the copy. To see samples in your inbox: add a plain variable `SAMPLE_EMAILS` = `on`, Deploy, open `https://scirocco799-store.mr-mikewhite.workers.dev/api/sample-emails` (three samples go to mike@scirocco799.com only), then delete the variable and Deploy. If Resend fails, the order still records and the error shows in Worker → Logs; the Stripe receipt still goes out.
 
 ## Running the store
 
