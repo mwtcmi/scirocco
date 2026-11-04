@@ -203,3 +203,14 @@ test('track-table checkout: free, no phone or address, table wording, and a tabl
   const m = orderEmail({ id: 'cs_live_tbl00001', metadata: { fulfillment: 'table', items: JSON.stringify([{ p: 'jug', c: 'Red', q: 1 }]) }, amount_subtotal: 4599, amount_total: 4875, total_details: { amount_tax: 276 } });
   assert.match(m.text, /Paid at the 799 table/); assert.doesNotMatch(m.text, /Local pickup|Shipping:/); assert.match(m.text, /Total paid: \$48\.75/);
 });
+
+test('cancelled checkout returns to the store page the buyer came from, and only under /paddock', async t => {
+  const s = service(t);
+  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: '/paddock/fuel-fluids/tuff-spout/', items: [{ product: 'tuffspout', qty: 1 }] } });
+  assert.equal(s.sent[0].params.get('cancel_url'), 'https://scirocco799.com/paddock/fuel-fluids/tuff-spout/?order=cancelled');
+  assert.match(s.sent[0].params.get('success_url'), /^https:\/\/scirocco799\.com\/paddock\?order=success/);
+  for (const bad of ['https://evil.example/', '//evil.example', '/returns', '/paddock/../x', '/paddock/a?b=1']) {
+    await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: bad, items: [{ product: 'tuffspout', qty: 1 }] } });
+    assert.equal(s.sent.at(-1).params.get('cancel_url'), 'https://scirocco799.com/paddock?order=cancelled', bad);
+  }
+});

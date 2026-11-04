@@ -65,7 +65,7 @@ document.addEventListener('click',function(e){var a=e.target.closest('[data-add]
 all('input[name=get]').forEach(function(r){r.onchange=draw});
 $('cart-btn').onclick=open;$('cart-close').onclick=close;$('cart-shade').onclick=close;document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('cart').hidden)close()});
 $('checkout').onclick=function(){var b=this;b.disabled=true;b.textContent='Opening secure checkout…';$('cart-error').hidden=true;
- fetch(API+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fulfillment:document.querySelector('input[name=get]:checked').value,items:cart})})
+ fetch(API+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fulfillment:document.querySelector('input[name=get]:checked').value,items:cart,returnPath:location.pathname})})
  .then(function(r){return r.json().then(function(j){return{r:r,j:j}})}).then(function(x){if(x.j.url){location.href=x.j.url;return}if(x.j.stock)data.stock=x.j.stock;throw new Error(x.j.error||'Checkout is unavailable.')})
  .catch(function(e){$('cart-error').textContent=e.message||'Checkout is unavailable. Please try again.';$('cart-error').hidden=false;b.textContent='Checkout';draw()})};
 // Track mode (QR code at the 799 table): offer "take it now" and preselect it, on every store page this visit.

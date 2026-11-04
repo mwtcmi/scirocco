@@ -74,13 +74,13 @@ function form(params) {
   return body;
 }
 
-export function checkoutParams(lines, fulfillment, returnBase, env = {}) {
+export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelBase = returnBase) {
   const ship = fulfillment === 'ship', rate = SHIPPING[fulfillment];
   const items = lines.map(l => l.product === 'jug' ? { p: 'jug', c: l.color, q: l.qty } : { p: l.product, q: l.qty });
   const p = {
     mode: 'payment',
     success_url: returnBase + '?order=success&via=' + fulfillment + '&ref={CHECKOUT_SESSION_ID}',
-    cancel_url: returnBase + '?order=cancelled',
+    cancel_url: cancelBase + '?order=cancelled',
     allow_promotion_codes: 'true',
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
       product_data: { name: l.name, description: l.description } } })),
@@ -292,10 +292,12 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const stock = await stockMap(db), short = [];
           for (const [k, q] of Object.entries(needs(lines))) if ((stock[k] ?? 0) < q) short.push(k);
           if (short.length) return json({ error: 'Some items just sold out. Please update your cart.', soldOut: short, stock }, 409);
-          const base = (origin && allowed.includes(origin) ? origin : SITE) + RETURN_PATH;
+          const site = origin && allowed.includes(origin) ? origin : SITE, base = site + RETURN_PATH;
+          // Cancelled checkouts go back to the store page the buyer came from (only paths under /paddock).
+          const back = typeof data.returnPath === 'string' && /^\/paddock(\/[a-z0-9-]+){0,4}\/?$/.test(data.returnPath) ? site + data.returnPath : base;
           const res = await stripeFetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST',
             headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: form(checkoutParams(lines, data.fulfillment, base, env)) });
+            body: form(checkoutParams(lines, data.fulfillment, base, env, back)) });
           const session = await res.json().catch(() => ({}));
           if (!res.ok || !session.url) { console.log('Stripe error', res.status, JSON.stringify(session.error || session)); throw new APIError(502, 'Checkout is unavailable right now. Please try again.'); }
           return json({ url: session.url });
