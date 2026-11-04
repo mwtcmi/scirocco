@@ -82,6 +82,7 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     success_url: returnBase + '?order=success&via=' + fulfillment + '&ref={CHECKOUT_SESSION_ID}',
     cancel_url: cancelBase + '?order=cancelled',
     allow_promotion_codes: 'true',
+    excluded_payment_method_types: ['affirm', 'klarna'], // no pay-later: they cost about 6% a sale
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
       product_data: { name: l.name, description: l.description } } })),
     shipping_options: [{ shipping_rate_data: { type: 'fixed_amount', display_name: rate.label,
