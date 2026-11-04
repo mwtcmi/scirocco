@@ -137,6 +137,27 @@
     if (!current(view)) return;
     $('sharedFinish').hidden = false; $('sharedFinish').textContent = text; $('sharedFinish').dataset.state = state;
   }
+  // The run just finished leads the podium in large type, with where it stands on this hill.
+  function showRun(board) {
+    const view = finishView, panel = $('podiumRun');
+    if (!view || !current(view) || $('podiumEvent').value !== view.eventId) { panel.hidden = true; return; }
+    const name = game.events.find(e => e.id === view.eventId)?.short || '';
+    $('podiumRunLabel').textContent = 'YOUR TIME' + (name ? ' · ' + name.toUpperCase() : '');
+    $('podiumRunTime').textContent = time(view.timeMs);
+    const parts = [view.apexes + (view.apexes === 1 ? ' clean apex' : ' clean apexes')];
+    if (board && Array.isArray(board.entries)) {
+      const others = board.entries.filter(p => p.playerId !== profile?.playerId), leader = others[0];
+      const rank = 1 + others.filter(p => p.timeMs <= view.timeMs).length;
+      if (!leader || view.timeMs < leader.timeMs) parts.push('Fastest on the hill');
+      else {
+        if (rank <= board.entries.length || board.total <= board.entries.length) parts.push('Good for #' + rank);
+        parts.push('+' + ((view.timeMs - leader.timeMs) / 1000).toFixed(3) + 's to the crown');
+      }
+      if (board.self && view.timeMs > board.self.timeMs) parts.push('Your best: ' + time(board.self.timeMs));
+    }
+    $('podiumRunDetail').textContent = parts.join(' · ');
+    panel.hidden = false;
+  }
   function clearBoard() {
     const season = $('podiumEvent').value === 'season';
     for (const place of dialog.querySelectorAll('.podium-place')) {
@@ -146,7 +167,7 @@
     $('podiumRows').replaceChildren(); $('podiumSelf').textContent = season ? 'Finish and post all nine events to qualify for the season podium.' : 'Finish this hill to post your first time.';
   }
   function renderBoard(board) {
-    rememberHillLeader(board);
+    rememberHillLeader(board); showRun(board);
     for (const place of dialog.querySelectorAll('.podium-place')) {
       const entry = board.entries.find(p => p.rank === Number(place.dataset.rank));
       place.querySelector('.place-name').textContent = entry ? publicName(entry) : 'Open spot';
@@ -173,7 +194,7 @@
   }
   async function loadBoard(force = false) {
     const generation = ++boardGeneration, eventId = $('podiumEvent').value;
-    dialog.dataset.state = 'loading'; status('Loading shared times…'); clearBoard();
+    dialog.dataset.state = 'loading'; status('Loading shared times…'); clearBoard(); showRun();
     if (!await ready(force)) {
       if (generation === boardGeneration) {
         dialog.dataset.state = 'offline';

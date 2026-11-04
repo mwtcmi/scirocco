@@ -186,7 +186,7 @@ button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
  .season-picker label{display:block;line-height:1.6}.season-picker label span{display:block}
  .course-map{top:42px}
 }
- </style><link rel="stylesheet" href="leaderboard.css?v=2"><link rel="stylesheet" href="welcome.css?v=4"><link rel="preload" as="image" href="../images/sponsor-logos.webp?v=1" type="image/webp"><script src="courses.js?v=6.1"></script><script src="audio.js?v=1.2"></script><!-- Site icons and link previews -->
+ </style><link rel="stylesheet" href="leaderboard.css?v=3"><link rel="stylesheet" href="welcome.css?v=4"><link rel="preload" as="image" href="../images/sponsor-logos.webp?v=1" type="image/webp"><script src="courses.js?v=6.2"></script><script src="audio.js?v=1.2"></script><!-- Site icons and link previews -->
 <link rel="icon" href="../favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png" sizes="180x180">
@@ -251,6 +251,7 @@ button:focus-visible,.home-link:focus-visible{outline-color:var(--green)}
 <dialog class="podium" id="podiumDialog" aria-labelledby="podiumTitle">
  <header><div><p>2027 SEASON · GAMEPLAY V6</p><h2 id="podiumTitle">THE <span>PODIUM.</span></h2></div><button class="podium-close" id="podiumClose" aria-label="Close podium">×</button></header>
  <div class="podium-body">
+  <section class="podium-run" id="podiumRun" aria-label="Your run" hidden><span class="run-label" id="podiumRunLabel">YOUR TIME</span><strong class="run-time" id="podiumRunTime">—</strong><span class="run-detail" id="podiumRunDetail"></span></section>
   <div class="podium-picker"><div><label for="podiumEvent">CHOOSE YOUR HILL OR FULL SEASON</label><select id="podiumEvent"></select></div><button id="podiumRefresh">REFRESH</button></div>
   <form class="driver-form" id="driverForm" hidden>
    <label for="driverInput">YOUR DRIVER NAME</label><input id="driverInput" name="driver" autocomplete="nickname" minlength="2" maxlength="18" required placeholder="e.g. Mike 799" aria-describedby="driverHelp nameError">
@@ -987,7 +988,7 @@ for(let k of Object.keys(keys)){let b=$(k);b.addEventListener('contextmenu',e=>e
 addEventListener('visibilitychange',()=>{if(document.hidden){for(const k of Object.keys(keys))keys[k]=false;if(state==='play')togglePause();audioUpdate()}});
 addEventListener('pagehide',()=>{if(state==='play')togglePause();MountainAudio.stopPlayback();if(audio?.state==='running')audio.suspend().catch(()=>{})});
 function frame(now){let dt=Math.min(.05,(now-last)/1000||0);last=now;if(state==='play')update(dt);audioUpdate();render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
-})();</script><script src="welcome.js?v=5" defer></script><script src="name-policy.js?v=1" defer></script><script src="leaderboard.js?v=6.1" defer></script><script>
+})();</script><script src="welcome.js?v=5" defer></script><script src="name-policy.js?v=1" defer></script><script src="leaderboard.js?v=6.2" defer></script><script>
 // Reveal the complete welcome screen after styles, controls and its car image are ready.
 document.addEventListener('DOMContentLoaded',()=>{
  const car=document.querySelector('.hero-car');

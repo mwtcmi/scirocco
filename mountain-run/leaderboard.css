@@ -125,3 +125,8 @@ dialog.podium::backdrop{background:#050505db}
  .podium-body{padding:10px 14px}.podium footer{padding:6px 12px}.shared-finish{font-size:9px;margin:4px 0}
  .game.results .panel h1{font-size:24px;margin-bottom:6px}.game.results .panel p{margin:5px 0;font-size:10px;line-height:1.3}
 }
+.podium-run{display:grid;gap:4px;margin:0 0 16px;padding:16px 18px;border-left:6px solid #20c933;background:#050505;color:#fff;text-align:center}
+.podium-run .run-label{color:#20c933;font-size:10px;font-weight:900;letter-spacing:.18em}
+.podium-run .run-time{font:900 clamp(40px,11vw,64px)/1 Arial,Helvetica,sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.podium-run .run-detail{color:#cfcfcf;font-size:12px;line-height:1.4}
+.podium-run[hidden]{display:none}
