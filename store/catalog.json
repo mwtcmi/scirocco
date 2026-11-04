@@ -67,6 +67,18 @@
       ],
       "color": "Black", "sku": "TUFFSPOUT", "upc": "790019889733"
     },
+    {
+      "slug": "spout-bender", "category": "fuel-fluids", "cart": "spoutbender",
+      "brand": "Tuff Jug", "name": "Tuff Jug Spout Bender", "short": "Spout Bender", "price": "7.99",
+      "desc": "A curved clip that holds the flexible Tuff Spout in a bend, so the pour lands where the filler is.",
+      "about": "The Spout Bender is a rigid curved clip from Tuff Jug. Press the flexible Tuff Spout into its open channel and it holds the hose in a set bend, for fillers that sit at an awkward angle.",
+      "facts": ["Rigid curved clip, black", "Pairs with the flexible Tuff Spout", "Tuff Jug part SpoutBender"],
+      "images": [
+        { "src": "/images/optimized/tuffjug-spout-bender-820.webp", "src480": "/images/optimized/tuffjug-spout-bender-480.webp", "w": 820, "h": 820, "alt": "Tuff Jug Spout Bender curved clip, front view" },
+        { "src": "/images/optimized/tuffjug-spout-bender-open-820.webp", "src480": "/images/optimized/tuffjug-spout-bender-open-480.webp", "w": 820, "h": 820, "alt": "Tuff Jug Spout Bender showing the open channel that holds the spout hose" }
+      ],
+      "color": "Black", "sku": "SpoutBender", "upc": ""
+    },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
       "image": "/images/shop/799-bergrennen-paddock-jacket", "alt": "Champion packable quarter-zip anorak with the embroidered 799 Bergrennen mark" },

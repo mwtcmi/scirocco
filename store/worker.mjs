@@ -21,7 +21,7 @@ export const CATALOG = Object.freeze({
   ripper: { name: 'Tuff Jug Black Ripper Cap, 5 Gallon', description: 'Fits 5 gallon Tuff Jugs', cents: 2745, map: 2333, sku: 'BLKR20' },
   tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: 'TUFFSPOUT' },
   // Tuff Jug gave MSRP only; MAP is held at MSRP until they confirm one.
-  spoutbender: { name: 'Tuff Jug Spout Bender', description: 'Tuff Jug accessory', cents: 799, map: 799, sku: 'SpoutBender' }
+  spoutbender: { name: 'Tuff Jug Spout Bender', description: 'Holds the Tuff Spout in a bend', cents: 799, map: 799, sku: 'SpoutBender' }
 });
 export const ADDONS = ['pump', 'ripper', 'tuffspout', 'spoutbender'];
 
