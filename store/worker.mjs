@@ -19,9 +19,11 @@ export const CATALOG = Object.freeze({
   },
   pump: { name: 'Tuff Jug Electric Transfer Pump', description: 'Includes Tuff Jug adapter', cents: 7499, map: 6374, sku: 'LTP' },
   ripper: { name: 'Tuff Jug Black Ripper Cap, 5 Gallon', description: 'Fits 5 gallon Tuff Jugs', cents: 2745, map: 2333, sku: 'BLKR20' },
-  tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: 'TUFFSPOUT' }
+  tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: 'TUFFSPOUT' },
+  // Tuff Jug gave MSRP only; MAP is held at MSRP until they confirm one.
+  spoutbender: { name: 'Tuff Jug Spout Bender', description: 'Tuff Jug accessory', cents: 799, map: 799, sku: 'SpoutBender' }
 });
-export const ADDONS = ['pump', 'ripper', 'tuffspout'];
+export const ADDONS = ['pump', 'ripper', 'tuffspout', 'spoutbender'];
 
 const ORIGINS = ['https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const SITE = 'https://scirocco799.com';

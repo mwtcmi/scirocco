@@ -8,7 +8,7 @@ Start in the **799 Motorsport sandbox** in Stripe. Nothing here charges real mon
 
 **1. Database**
 1. Cloudflare → **Storage & Databases → D1 → Create database**. Name: `scirocco799-store`.
-2. Open it → **Console**. Paste the whole of [schema.sql](schema.sql) and run it. It creates the tables and the starting stock (2 jugs of each color, 2 pumps, 2 Black Ripper Caps, 2 Tuff Spouts). Rerunning is safe; it never resets counts.
+2. Open it → **Console**. Paste the whole of [schema.sql](schema.sql) and run it. It creates the tables and the starting stock (2 jugs of each color, 2 pumps, 2 Black Ripper Caps, 2 Tuff Spouts, 2 Spout Benders). Rerunning is safe; it never resets counts.
 
 **2. Worker**
 1. Cloudflare → **Workers & Pages → Create → Worker**. Name: `scirocco799-store`. Deploy the starter code.

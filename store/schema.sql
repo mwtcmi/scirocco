@@ -11,3 +11,4 @@ INSERT OR IGNORE INTO stock (key, qty) VALUES ('jug/color/Black', 2);
 INSERT OR IGNORE INTO stock (key, qty) VALUES ('pump', 2);
 INSERT OR IGNORE INTO stock (key, qty) VALUES ('ripper', 2);
 INSERT OR IGNORE INTO stock (key, qty) VALUES ('tuffspout', 2);
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('spoutbender', 2);

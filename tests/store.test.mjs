@@ -49,6 +49,7 @@ test('catalog returns stock and options', async t => {
   const r = await s.call('/api/catalog');
   assert.equal(r.status, 200); assert.equal(r.body.stock['jug/color/Red'], 2); assert.equal(r.body.stock.pump, 2);
   assert.equal(r.body.catalog.jug.cents, 4599); assert.equal(r.body.catalog.ripper.cents, 2745); assert.equal(r.body.stock.tuffspout, 2);
+  assert.equal(r.body.catalog.spoutbender.cents, 799); assert.equal(r.body.stock.spoutbender, 2);
   assert.equal(r.res.headers.get('access-control-allow-origin'), 'https://scirocco799.com');
 });
 
