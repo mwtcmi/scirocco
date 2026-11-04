@@ -125,7 +125,7 @@ for (const file of htmlFiles) {
     const copies = (html.match(/<footer\b[^>]*class=["'][^"']*site-footer/g) || []).length;
     if (count > 1 || copies > 1) errors.push(`${rel(file)}: has the shared footer more than once`);
     else if (count === 0) errors.push(`${rel(file)}: ${copies ? 'footer differs from scripts/site-footer.html (edit that file, then copy it to every page)' : 'missing the shared footer (copy scripts/site-footer.html into the page)'}`);
-    if (!/href=["']\/footer\.css(\?[^"']*)?["']/.test(html)) errors.push(`${rel(file)}: missing <link rel="stylesheet" href="/footer.css?v=1"> in <head>`);
+    if (!/href=["']\/footer\.css(\?[^"']*)?["']/.test(html)) errors.push(`${rel(file)}: missing <link rel="stylesheet" href="/footer.css?v=2"> in <head>`);
   }
   const noindex = robots.includes('noindex');
   const is404 = page === '404.html';

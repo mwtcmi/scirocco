@@ -119,7 +119,7 @@ ${baseStyle}
 <meta name="twitter:image" content="${img}">
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
-<link rel="stylesheet" href="/footer.css?v=1">
+<link rel="stylesheet" href="/footer.css?v=2">
 <link rel="stylesheet" href="/paddock-store.css?v=2">
 ${ld.map(ldScript).join('\n')}
 </head>
