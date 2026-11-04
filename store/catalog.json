@@ -42,7 +42,7 @@
         { "src": "/images/optimized/tuffjug-pump-480.webp", "w": 480, "h": 480, "alt": "Tuff Jug Electric Transfer Pump with intake and discharge hoses" },
         { "src": "/images/optimized/tuffjug-pump-hoses-480.webp", "w": 480, "h": 480, "alt": "Tuff Jug Electric Transfer Pump hoses laid out" }
       ],
-      "color": "Red", "sku": "", "upc": ""
+      "color": "Red", "sku": "LTP", "upc": ""
     },
     {
       "slug": "black-ripper-cap", "category": "fuel-fluids", "cart": "ripper", "featured": true,
@@ -65,7 +65,7 @@
         { "src": "/images/optimized/tuffjug-tuffspout-820.webp", "src480": "/images/optimized/tuffjug-tuffspout-480.webp", "w": 820, "h": 820, "alt": "Tuff Jug Tuff Spout flexible hose spout with Auto Stop" },
         { "src": "/images/optimized/tuffjug-tuffspout-on-jug-820.webp", "src480": "/images/optimized/tuffjug-tuffspout-on-jug-480.webp", "w": 820, "h": 820, "alt": "Tuff Spout fitted to a 5 gallon Tuff Jug" }
       ],
-      "color": "Black", "sku": "", "upc": ""
+      "color": "Black", "sku": "TUFFSPOUT", "upc": ""
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",

@@ -17,9 +17,9 @@ export const CATALOG = Object.freeze({
     colors: ['Red', 'White', 'Yellow', 'Kawi Green', 'Orange', 'Black'],
     skus: { 'Red': 'RUASVS20', 'White': 'WUASVS20', 'Yellow': 'YUASVS20', 'Kawi Green': 'KUASVS20', 'Orange': 'OUAS20VS', 'Black': 'BLKUASVS20' }
   },
-  pump: { name: 'Tuff Jug Electric Transfer Pump', description: 'Includes Tuff Jug adapter', cents: 7499, map: 6374, sku: '' },
+  pump: { name: 'Tuff Jug Electric Transfer Pump', description: 'Includes Tuff Jug adapter', cents: 7499, map: 6374, sku: 'LTP' },
   ripper: { name: 'Tuff Jug Black Ripper Cap, 5 Gallon', description: 'Fits 5 gallon Tuff Jugs', cents: 2745, map: 2333, sku: 'BLKR20' },
-  tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: '' }
+  tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: 'TUFFSPOUT' }
 });
 export const ADDONS = ['pump', 'ripper', 'tuffspout'];
 
