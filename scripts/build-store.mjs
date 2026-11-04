@@ -257,7 +257,7 @@ ${related.length ? `<section class="related store"><div class="wrap"><h2>Goes Wi
 function fill(name, html) {
   const re = new RegExp(`(<!-- store:${name} -->)[\\s\\S]*?(<!-- /store:${name} -->)`);
   if (!re.test(home)) throw new Error(`paddock.html is missing <!-- store:${name} --> markers`);
-  home = home.replace(re, `$1\n${html}\n$2`);
+  home = home.replace(re, (_, open, close) => `${open}\n${html}\n${close}`); // a function, so "$2" in a price is never read as a pattern
 }
 fill('categories', cats.map((c, i) => {
   const n = inCat(c.slug).length, num = String(i + 1).padStart(2, '0');
