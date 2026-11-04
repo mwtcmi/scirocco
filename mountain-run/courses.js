@@ -46,14 +46,14 @@ function createMountainCourses() {
     },
     "waumandee": {
       profile: "Fast straights & farm chicanes",
-      turns: [[3200,5000,280],[8500,10300,-290],[13800,15800,310],[19700,21500,-300],[25100,27000,320]],
+      turns: [[3090,4890,280],[8070,9870,-290],[13010,15010,310],[18690,20490,-300],[23650,25550,320]],
       // Every Waumandee chicane has four hay walls: enter on the driver's right, exit on the left.
       // Each wall carries two cones: one on the open road edge, one on the bale at the wall's inside end.
-      chicanes: [[4300,-1],[9600,-1],[15550,-1],[20800,-1]], walls: 4, wallCones: true,
-      // Eight tighter walls on the run-in to the finish, and two more just past the line.
-      finishGates: { start: 26200, spacing: 500, before: 8, after: [30300, 30800], side: -1 },
-      wildlife: [["rabbit",1500],["fox",2900],["deer",14890],["fox",19300],["deer",24600]],
-      potholes: [[2200,-0.5],[8000,0.35],[13350,-0.25]]
+      chicanes: [[4140,-1],[9120,-1],[14760,-1],[19740,-1]], walls: 4, wallCones: true,
+      // Eight walls on the run-in to the finish; the run continues through two more past the line.
+      finishGates: { start: 24720, spacing: 690, before: 8, after: [30690, 31380], side: -1 },
+      wildlife: [["rabbit",1500],["fox",2820],["deer",12780],["fox",18420],["deer",23400]],
+      potholes: [[2160,-0.5],[7800,0.35],[14100,-0.25]]
     },
     "empire": {
       profile: "Open dunes & fast sweepers",

@@ -262,6 +262,23 @@ test('chicane gaps leave steering time and wildlife crosses briskly after its wa
   }
 });
 
+test('Waumandee stops the clock at the line but runs on through the two walls past it', () => {
+  const g = game(); g.selectEvent(6); g.reset();
+  const past = g.gates.filter(q => q.d > g.GOAL);
+  assert.equal(past.length, 2);
+  let crossed = null;
+  for (let i = 0; i < 12000 && g.get().state === 'play'; i++) {
+    const run = g.get();
+    g.keys.left = run.lane > .06; g.keys.right = run.lane < -.06;
+    g.keys.down = g.wildlife.some(q => q.kind !== 'rabbit' && q.start !== null && !q.passed && run.t < q.start + g.ANIMAL_WAIT + q.duration);
+    g.keys.up = !g.keys.down; g.update(.05);
+    if (crossed === null && g.get().dist >= g.GOAL) { crossed = g.get().t; assert.equal(g.get().state, 'play', 'the run continues past the line'); }
+  }
+  assert.equal(g.get().state, 'end'); assert.equal(g.get().won, true);
+  assert.ok(past.every(q => q.passed), 'the car drives through both run-out walls');
+  assert.equal(g.get().t, crossed, 'the official time is taken at the finish line');
+});
+
 function driveToFinish(g) {
   for (let i = 0; i < 12000 && g.get().state === 'play'; i++) {
     const run = g.get();
@@ -291,7 +308,7 @@ test('all nine scheduled venues are selectable, themed and complete a saved seas
     }
     driveToFinish(g);
     assert.equal(g.get().state, 'end', g.EVENTS[i].name); assert.equal(g.get().won, true, g.EVENTS[i].name);
-    assert.equal(g.get().dist, 30000); assert.ok(Number(g.storage.get(g.scoreKey())) > 0);
+    assert.ok(g.get().dist >= 30000); assert.ok(Number(g.storage.get(g.scoreKey())) > 0);
     assert.equal(g.seasonCount(), i+1);
     if (i < 8) { g.element('start').onclick(); assert.equal(g.get().dist, 0); }
   }

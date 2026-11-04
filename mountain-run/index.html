@@ -302,7 +302,7 @@ const EVENTS=[
 ];
 const LAST_COURSE_KEY='799mountainrun-last-course';
 let courseChosen=false;
-let eventIndex=0,foxSlowUntil=0,won=false;const sessionBests=new Map();
+let eventIndex=0,foxSlowUntil=0,won=false,finishedAt=null;const sessionBests=new Map();
 const welcomeTitle=$('title').innerHTML,welcomeMessage=$('msg').innerHTML;
 function event(){return EVENTS[eventIndex]}
 function course(){return MountainCourses.events[event().id]}
@@ -338,7 +338,7 @@ function selectEvent(index,remember=true){
  return true;
 }
 function openSeason(){
- state='menu';won=false;t=0;dist=0;speed=0;lane=0;boostUntil=0;skidUntil=0;burnoutUntil=0;foxSlowUntil=0;
+ state='menu';won=false;finishedAt=null;t=0;dist=0;speed=0;lane=0;boostUntil=0;skidUntil=0;burnoutUntil=0;foxSlowUntil=0;
  $('game').classList.remove('results');
  particles=[];tireSmoke=[];for(const k of Object.keys(keys))keys[k]=false;
  $('feedback').classList.remove('visible');$('game').classList.add('menu');$('gamePanel').classList.add('welcome');
@@ -857,7 +857,7 @@ function render(){
  if(flash>0)rect(0,0,W,H,'rgba(255,240,194,'+flash*.5+')');
  rect(16,16,140,11,'#11291e');rect(16,16,140*clamp((boostUntil-t)/2.5,0,1),11,'#a8ff79');
  g.font='bold 10px Arial';g.fillStyle='#d6ecc8';g.textAlign='left';g.fillText(boostUntil>t?'APEX SPEED BOOST':'TOUCH INSIDE ARROWS · SPEED BOOST',16,42);
- $('time').textContent=fmt(t);$('speed').textContent=Math.round(speed*.15)+' MPH';$('dist').textContent=Math.min(100,Math.floor(dist/GOAL*100))+'%';
+ $('time').textContent=fmt(raceTime());$('speed').textContent=Math.round(speed*.15)+' MPH';$('dist').textContent=Math.min(100,Math.floor(dist/GOAL*100))+'%';
  $('apexes').textContent=String(apexes);$('round').textContent=(eventIndex+1)+' / '+EVENTS.length;$('best').textContent=best?fmt(best):'--';
 }
 
@@ -869,20 +869,23 @@ function slowContact(kind){
  const pos=playerPosition();
  for(let i=0;i<(pothole?8:18);i++){const a=Math.random()*Math.PI*2;particles.push({x:pos.x,y:535,vx:Math.cos(a)*100,vy:Math.sin(a)*65,life:.3+Math.random()*.5,r:1+Math.random()*3,color:pothole?'#7c8478':kind==='bale'?'#d5b777':'#c6ba98'})}
 }
+// Courses with walls past the finish keep the run going through them; the clock stops at the line.
+function runoutEnd(){let end=GOAL;for(const q of gates)if(q.d>GOAL)end=Math.max(end,q.d+400);return end}
+function raceTime(){return finishedAt??t}
 function update(dt){
  if(state!=='play')return;
  t+=dt;
  const was=dist+CAR_AHEAD,boosted=t<boostUntil&&!keys.down;
  const target=t<foxSlowUntil?45:keys.down?85:boosted?900:keys.up?750:350;
  speed+=(target-speed)*Math.min(1,dt*(keys.down?3.2:boosted?2.8:1.6));
- dist=Math.min(GOAL,dist+speed*dt);
+ dist=Math.min(runoutEnd(),dist+speed*dt);
  const steer=(keys.right?1:0)-(keys.left?1:0),curvature=(path(dist+110)-path(dist-50))/600;
  if(keys.down&&skidUntil>t)skidUntil=Math.max(t,skidUntil-dt*.8);
  const skid=skidStrength(),grip=1-skid*.45;
  lane=clamp(lane+steer*dt*(.9+speed/950)*grip+skidDirection*skid*dt*.6-curvature*dt*(speed/420),-1.45,1.45);
  const now=dist+CAR_AHEAD,halfCar=CAR_HALF_WIDTH/(ROAD*project(now).scale*.5);
  const departure=roadDeparture();
- if(departure>=.75){end(false,'offroad');return}
+ if(departure>=.75){if(finishedAt!==null)end(true);else end(false,'offroad');return}
  if(departure>.35&&!wasNearEdge)notice('ROAD EDGE · GET BACK ON LINE');
  wasNearEdge=departure>.35;
  for(const gate of gates){
@@ -921,7 +924,8 @@ function update(dt){
  updateTireSmoke(dt);
  shake=Math.max(0,shake-dt*1.6);flash=Math.max(0,flash-dt);
  if(t>feedbackUntil)$('feedback').classList.remove('visible');
- if(dist>=GOAL)end(true);
+ if(dist>=GOAL&&finishedAt===null){finishedAt=t;if(runoutEnd()>GOAL)notice('FINISH · '+fmt(finishedAt)+' · RUN OUT','reward',3,3)}
+ if(dist>=runoutEnd())end(true);
 }
 function show(title,msg,button){
  $('intro').hidden=true;$('seasonPicker').hidden=true;$('gamePanel').classList.remove('welcome');
@@ -929,6 +933,7 @@ function show(title,msg,button){
  $('replay').hidden=!(state==='end'&&won);$('eventMenu').hidden=false;
 }
 function end(win,reason){
+ if(win&&finishedAt!==null)t=finishedAt;
  state='end';won=win;boostUntil=0;skidUntil=0;skidDirection=0;burnoutUntil=0;foxSlowUntil=0;
  $('game').classList.add('results');
  if(!win){
@@ -949,7 +954,7 @@ function end(win,reason){
 }
 function reset(){
  if(!courseChosen){$('eventSelect').focus();return}
- feedbackUntil=0;feedbackPriority=0;wasNearEdge=false;won=false;foxSlowUntil=0;
+ feedbackUntil=0;feedbackPriority=0;wasNearEdge=false;won=false;foxSlowUntil=0;finishedAt=null;
  $('game').classList.remove('results');
  $('feedback').classList.remove('visible');$('seasonPicker').hidden=true;$('replay').hidden=true;$('eventMenu').hidden=true;
  $('intro').hidden=true;$('gamePanel').classList.remove('welcome');$('game').classList.remove('menu');
