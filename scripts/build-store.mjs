@@ -198,9 +198,9 @@ for (const c of live) {
   const list = inCat(c.slug), pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   for (let n = 1; n <= pages; n++) {
     const url = catUrl(c) + (n > 1 ? `page/${n}/` : ''), slice = list.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
-    const title = `${c.name}${n > 1 ? ` (page ${n})` : ''} | The Paddock | Scirocco 799`;
+    const title = `${c.name}${n > 1 ? ` (page ${n})` : ''} | Paddock Store | Scirocco 799`;
     const desc = c.intro || c.blurb;
-    const trail = [['The Paddock', '/paddock'], [c.name, catUrl(c)]];
+    const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)]];
     const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: slice.map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
     const pager = pages > 1 ? `<nav class="pager" aria-label="Pages">${n > 1 ? `<a href="${catUrl(c) + (n > 2 ? `page/${n - 1}/` : '')}" rel="prev">‹ Prev</a>` : ''}${Array.from({ length: pages }, (_, i) => i + 1).map(k => k === n ? `<span aria-current="page">${k}</span>` : `<a href="${catUrl(c) + (k > 1 ? `page/${k}/` : '')}">${k}</a>`).join('')}${n < pages ? `<a href="${catUrl(c)}page/${n + 1}/" rel="next">Next ›</a>` : ''}</nav>` : '';
     write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
@@ -219,13 +219,13 @@ ${pager}
 
 for (const p of cartProducts) {
   const c = catBySlug[p.category], url = prodUrl(p);
-  const trail = [['The Paddock', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
+  const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
   const rows = p.colors ? p.colors.map(x => [x.name, x.sku, x.upc]) : [[p.color || '', p.sku || 'To come', p.upc || 'To come']];
   const thumbs = !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
   const related = inCat(p.category).filter(x => x.cart && x !== p);
   const image = p.colors ? abs(`/images/optimized/tuffjug-5gal-${p.colors.find(x => x.name === p.defaultColor).img}-spout-900.webp`) : abs(p.images[0].src);
   write(`paddock/${p.category}/${p.slug}/index.html`,
-    head({ title: `${p.name} | The Paddock | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
+    head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
       url: abs(url), image, imageAlt: p.name, ld: [productLd(p), crumbsLd(trail)] }) + `
 ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
@@ -266,7 +266,7 @@ fill('categories', cats.map((c, i) => {
 }).join('\n'));
 const featured = cartProducts.filter(p => p.featured);
 fill('featured', `<div class="store-grid">\n${featured.map((p, i) => card(p, i > 1)).join('\n')}\n</div>`);
-fill('jsonld', ldScript({ '@context': 'https://schema.org', '@type': 'ItemList', name: 'The Paddock: featured gear',
+fill('jsonld', ldScript({ '@context': 'https://schema.org', '@type': 'ItemList', name: 'Paddock Store: featured gear',
   itemListElement: featured.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(prodUrl(p)), name: p.name })) }));
 fill('cart', cartBlock);
 fs.writeFileSync(path.join(ROOT, 'paddock.html'), home);

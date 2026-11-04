@@ -181,7 +181,7 @@ export function orderEmail(session) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:24px 12px"><tr><td align="center">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:10px;overflow:hidden">' +
     '<tr><td style="background:#050505;padding:22px 28px"><span style="color:#fff;font-size:22px;font-weight:900;letter-spacing:.04em">SCIROCCO <span style="color:#20C933">799</span></span>' +
-    '<div style="color:#20C933;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;margin-top:6px">The Paddock</div></td></tr>' +
+    '<div style="color:#20C933;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;margin-top:6px">Paddock Store</div></td></tr>' +
     '<tr><td style="padding:28px">' +
     '<h1 style="margin:0 0 6px;font-size:22px;color:#050505">' + (first ? 'Thanks, ' + esc(first) + '.' : 'Thanks for your order.') + '</h1>' +
     '<p style="margin:0 0 18px;color:#555;font-size:15px">Order ' + number + ' is confirmed and paid.</p>' +
