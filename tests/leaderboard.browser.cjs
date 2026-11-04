@@ -60,7 +60,12 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await page.evaluate(() => stepGame(1)); await wait(page, () => window.testCar);
   return page;
  }
+ // A fresh browser must choose a course before the start button enables.
+ async function choose(page) {
+  if (await page.locator('#start').isDisabled()) await page.locator('#eventSelect').selectOption('0');
+ }
  async function start(page) {
+  await choose(page);
   const ticket = page.waitForResponse(r => r.url() === API + '/api/runs' && r.status() === 201);
   await page.locator('#start').click(); await ticket; await page.evaluate(() => stepGame(1));
  }
@@ -79,6 +84,8 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
    localStorage.setItem('799mountainrunbest-v5-pine-mountain', '12.3');
    localStorage.setItem('799-podium-pending-v1', JSON.stringify([{ runId: 'old-ticket', ruleset: '2027-v5' }]));
   });
+  // The king-of-the-hill card stays hidden until a course is chosen.
+  await a.locator('#eventSelect').selectOption('0');
   await wait(a, () => document.getElementById('hillLeader').textContent === 'Silver Fox');
   assert.equal(await a.locator('#hillRecord').innerText(), '02:00.000');
   await a.locator('#eventSelect').selectOption('2');
@@ -256,21 +263,22 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   assert.equal(await offline.locator('.podium-places').isVisible(), false, 'offline podiums do not show empty winner cards');
   await offline.locator('#podiumEvent').selectOption('season');
   assert.equal(await offline.locator('[data-rank="1"] .place-title').textContent(), 'SEASON CHAMPION');
-  await offline.locator('#podiumClose').click(); await offline.locator('#start').click();
+  await offline.locator('#podiumClose').click(); await choose(offline); await offline.locator('#start').click();
   await offline.evaluate(() => stepGame(30));
   assert.equal(await offline.locator('#modal').isVisible(), false, 'racing remains available before Cloudflare publication');
   await offline.route(API + '/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"ruleset":"2027-v5"}' }));
   await offline.reload(); await wait(offline, () => window.MountainLeaderboard);
   await offline.locator('#podiumOpen').click();
   await wait(offline, () => document.getElementById('podiumStatus').textContent.includes('new courses'));
-  await offline.locator('#podiumClose').click(); await offline.locator('#start').click();
+  await offline.locator('#podiumClose').click(); await choose(offline); await offline.locator('#start').click();
   assert.equal(await offline.locator('#modal').isVisible(), false, 'the old Worker cannot mix records or prevent a new-course race');
   // A cached V5 document receiving the newer controller must not acquire a V6 ticket.
   const cached = await browser.newPage();
   cached.on('pageerror', error => errors.push(error.message));
   await cached.addInitScript(() => { window.requestAnimationFrame = () => 1; });
   const source = fs.readFileSync(require.resolve('../mountain-run/index.html'), 'utf8');
-  await cached.route(baseURL, route => route.fulfill({ status: 200, contentType: 'text/html', body: source.replace('<script src="welcome.js?v=2" defer>', '<script>delete window.MountainCourses;</script><script src="welcome.js?v=2" defer>') }));
+  assert.match(source, /<script src="welcome\.js\?v=[^"]*" defer>/, 'the cached-page simulation must find the welcome script');
+  await cached.route(baseURL, route => route.fulfill({ status: 200, contentType: 'text/html', body: source.replace(/<script src="welcome\.js\?v=[^"]*" defer>/, tag => '<script>delete window.MountainCourses;</script>' + tag) }));
   let staleTickets = 0;
   await cached.route(API + '/**', async route => {
    const req = route.request();

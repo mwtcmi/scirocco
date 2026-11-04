@@ -69,6 +69,9 @@ const car = fs.readFileSync(path.join(root, 'images/799-scirocco-rear.svg'));
     assert.equal(await page.locator('.hero-car').evaluate(el => el.complete && el.naturalWidth > 0), true);
     assert.equal(await page.locator('.stage-tag').isVisible(), false);
     await page.screenshot({ path: '/tmp/game-loading-complete-' + size.width + '.png' });
+    // Start stays disabled until a course is chosen.
+    assert.equal(await page.locator('#start').isDisabled(), true);
+    await page.locator('#eventSelect').selectOption('0');
     await page.locator('#start').click();
     for (const selector of ['.stage-tag', '.course-map', '#scene']) assert.equal(await page.locator(selector).isVisible(), true, selector + ' must appear during play');
     assert.equal(await page.locator('.finish-marker text').textContent(), 'FINISH');
