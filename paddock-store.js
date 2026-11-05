@@ -37,23 +37,25 @@ function drawEvents(){var box=$('get-events');if(!box)return;var was=getChoice()
  // "Order ahead" line above the store, for the next event taking orders.
  var line=$('event-line'),n=$('store-note');if(!line&&n&&evs.length){line=document.createElement('p');line.id='event-line';line.className='store-note event-line';n.parentNode.insertBefore(line,n)}
  if(line){line.hidden=!evs.length;if(evs.length)line.textContent='Order ahead, pick up in the 799 paddock: '+evs[0].name+', '+evs[0].dates+(evs[0].place?' ('+evs[0].place+')':'')+'.'}}
+// Stock wording: never "0 in stock".
+function stockText(onHand,left){return onHand<1?'Out of stock':left<1?'All in your cart':left===1?'Only 1 left':left+' in stock'}
 function label(l){return l.product==='jug'?(J?J.short:'Jug'):(SHORT[l.product]||l.product)}
 function drawJug(){
  if(!J)return;
- all('[data-colors]').forEach(function(cw){cw.innerHTML='';J.colors.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='sw';b.style.background=c.hex;b.title=c.name;b.setAttribute('aria-label',c.name+(online&&leftColor(c.name)<1?' (sold out)':''));b.setAttribute('aria-pressed',sel.color===c.name);b.disabled=online&&leftColor(c.name)<1;b.onclick=function(){sel.color=c.name;draw()};cw.appendChild(b)})});
+ all('[data-colors]').forEach(function(cw){cw.innerHTML='';J.colors.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='sw';b.style.background=c.hex;b.title=c.name;b.setAttribute('aria-label',c.name+(online&&leftColor(c.name)<1?' (out of stock)':''));b.setAttribute('aria-pressed',sel.color===c.name);b.disabled=online&&leftColor(c.name)<1;b.onclick=function(){sel.color=c.name;draw()};cw.appendChild(b)})});
  all('[data-color-name]').forEach(function(e){e.textContent=sel.color});
  all('[data-price=jug]').forEach(function(e){if(price('jug'))e.textContent=money(price('jug'))});
  var id=IDS[sel.color];all('[data-jug-ids]').forEach(function(e){e.textContent=id?'SKU '+id[0]+' · UPC '+id[1]:''});
  var k=(IMG[sel.color]||'kawi')+'-spout';all('[data-jug-img]').forEach(function(img){if(img.dataset.k!==k){img.dataset.k=k;img.src='/images/optimized/tuffjug-5gal-'+k+'-900.webp';img.srcset='/images/optimized/tuffjug-5gal-'+k+'-480.webp 480w,/images/optimized/tuffjug-5gal-'+k+'-900.webp 900w';img.alt=J.name+' in '+sel.color+' with Auto-Stop Spout'}});
  all('[data-jug-link]').forEach(function(a){a.href=a.dataset.jugLink+'?color='+encodeURIComponent(sel.color)});
- var ok=online&&leftColor(sel.color)>0;all('.add[data-add=jug]').forEach(function(b){b.disabled=!ok;b.textContent=!online?'Store offline':ok?'Add to cart':'Sold out'});
+ var ok=online&&leftColor(sel.color)>0;all('.add[data-add=jug]').forEach(function(b){b.disabled=!ok;b.textContent=!online?'Store offline':ok?'Add to cart':'Out of stock'});
 }
 function draw(){
  drawJug();
  ADDONS.forEach(function(p){var av=sellable(p);
-  all('.add[data-add='+p+']').forEach(function(b){b.disabled=!av||left(p)<1;b.textContent=!online?'Store offline':!av?'Coming soon':left(p)<1?'Sold out':'Add to cart'});
+  all('.add[data-add='+p+']').forEach(function(b){b.disabled=!av||left(p)<1;b.textContent=!online?'Store offline':!av?'Coming soon':left(p)<1?'Out of stock':'Add to cart'});
   all('[data-price='+p+']').forEach(function(e){if(price(p))e.textContent=money(price(p))});
-  all('[data-stock='+p+']').forEach(function(e){e.textContent=av?Math.max(left(p),0)+' in stock':''})});
+  all('[data-stock='+p+']').forEach(function(e){e.textContent=av?stockText(have(p),left(p)):''})});
  var n=used(function(){return true}),sub=cart.reduce(function(s,l){return s+l.qty*(price(l.product)||0)},0),get=getChoice().fulfillment,shipC=(data.shipping[get]||{cents:0}).cents;
  $('ship-label').textContent='Ship to me, '+money((data.shipping.ship||{cents:2500}).cents)+' flat';
  $('cart-count').textContent=n;$('cart-total').textContent=money(sub);$('cart-sub').textContent=money(sub+(n?shipC:0));$('sum-label').textContent=get==='ship'&&n?'Total with shipping':'Total';

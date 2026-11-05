@@ -337,7 +337,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const lines = data.items.map(priceLine);
           const stock = await stockMap(db), short = [];
           for (const [k, q] of Object.entries(needs(lines))) if ((stock[k] ?? 0) < q) short.push(k);
-          if (short.length) return json({ error: 'Some items just sold out. Please update your cart.', soldOut: short, stock }, 409);
+          if (short.length) return json({ error: 'Some items just went out of stock. Please update your cart.', soldOut: short, stock }, 409);
           const site = origin && allowed.includes(origin) ? origin : SITE, base = site + RETURN_PATH;
           // Cancelled checkouts go back to the store page the buyer came from (only paths under /paddock).
           const back = typeof data.returnPath === 'string' && /^\/paddock(\/[a-z0-9-]+){0,4}\/?$/.test(data.returnPath) ? site + data.returnPath : base;
