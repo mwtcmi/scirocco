@@ -8,6 +8,7 @@
 // ---- Catalog: built from store/catalog.json, the one product list for the site and checkout. ----
 // Prices in cents. map = minimum advertised price (Tuff Jug policy: MSRP - 15%).
 import catalogFile from './catalog.json' with { type: 'json' };
+import { frame, FROM as PADDOCK_FROM, REPLY_TO } from './emails.mjs';
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
@@ -15,19 +16,29 @@ export const SHIPPING = Object.freeze({
   event: { cents: 0, label: 'Paddock pickup at the event' }
 });
 const cents = v => Math.round(Number(v) * 100);
+// Every sellable thing is a variant with its own SKU. A product with "colors" has one variant per color;
+// any other product has a single variant (its own SKU). Stock, cart lines and orders all use SKUs.
+export function variantsOf(p) {
+  return p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku })) : [{ name: '', sku: p.sku }];
+}
 export function buildCatalog(file) {
   const out = {};
   for (const p of file.products) {
     if (!p.cart || (p.status || 'live') !== 'live') continue; // only live products can be bought
-    const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price) };
+    const variants = variantsOf(p);
+    for (const v of variants) if (!v.sku) throw new Error(p.slug + ': every variant needs a SKU');
+    const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price), option: p.colors ? 'Color' : null, variants };
+    // Older field names, kept so a cached copy of the store page keeps working during a deploy.
     if (p.colors) { item.colors = p.colors.map(c => c.name); item.skus = Object.fromEntries(p.colors.map(c => [c.name, c.sku])); }
-    else if (p.sku) item.sku = p.sku;
+    else item.sku = p.sku;
     out[p.cart] = item;
   }
   return out;
 }
 export const CATALOG = Object.freeze(buildCatalog(catalogFile));
-export const ADDONS = Object.keys(CATALOG).filter(k => k !== 'jug');
+export const SKUS = Object.freeze(Object.fromEntries(Object.entries(CATALOG).flatMap(([id, p]) => p.variants.map(v => [v.sku, { id, variant: v }]))));
+// The stock keys used before SKUs (jug/color/<Color> and the product id). Kept as aliases in /api/catalog.
+export const legacyKey = (id, v) => CATALOG[id].colors ? 'jug/color/' + v.name : id;
 
 const ORIGINS = ['https://799motorsport.com', 'https://www.799motorsport.com', 'https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const SITE = 'https://799motorsport.com';
@@ -58,23 +69,28 @@ async function eventRow(db, id) {
 
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
-// Each cart line becomes a priced line plus the stock keys it uses.
+// Each cart line ({sku, qty}; older carts send {product, color, qty}) becomes a priced line plus the stock it uses.
 export function priceLine(line) {
   const qty = Number(line?.qty);
   if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) throw new APIError(400, 'Invalid quantity.');
-  if (line.product === 'jug') {
-    const j = CATALOG.jug;
-    if (!j.colors.includes(line.color)) throw new APIError(400, 'Unknown jug color.');
-    return { product: 'jug', color: line.color, qty, cents: j.cents, map: j.map, name: j.name,
-      description: line.color + ', ' + j.description + ' (' + j.skus[line.color] + ')', keys: ['jug/color/' + line.color] };
+  let id, v;
+  if (typeof line.sku === 'string') {
+    const hit = Object.hasOwn(SKUS, line.sku) ? SKUS[line.sku] : null;
+    if (!hit) throw new APIError(400, 'Unknown product.');
+    id = hit.id; v = hit.variant;
+  } else {
+    id = line.product;
+    const p = typeof id === 'string' && Object.hasOwn(CATALOG, id) ? CATALOG[id] : null;
+    if (!p) throw new APIError(400, 'Unknown product.');
+    v = p.variants.length > 1 ? p.variants.find(x => x.name === line.color) : p.variants[0];
+    if (!v) throw new APIError(400, 'Unknown option.');
   }
-  if (ADDONS.includes(line.product)) {
-    const p = CATALOG[line.product];
-    return { product: line.product, qty, cents: p.cents, map: p.map, name: p.name,
-      description: p.description + (p.sku ? ' (' + p.sku + ')' : ''), keys: [line.product] };
-  }
-  throw new APIError(400, 'Unknown product.');
+  const p = CATALOG[id], multi = p.variants.length > 1;
+  return { product: id, sku: v.sku, variant: v.name, qty, cents: p.cents, map: p.map, name: p.name,
+    description: (multi ? v.name + ', ' : '') + p.description + ' (' + v.sku + ')', keys: [v.sku] };
 }
+// Order metadata items: {s: sku, q} now, {p, c, q} before SKUs.
+const itemLine = i => priceLine(i.s ? { sku: i.s, qty: i.q } : { product: i.p, color: i.c, qty: i.q });
 
 export function priceWarnings() {
   return Object.entries(CATALOG).filter(([, v]) => v.cents < v.map).map(([k]) => k + ' is below MAP');
@@ -89,6 +105,12 @@ function needs(lines) {
 async function stockMap(db) {
   const { results } = await db.prepare('SELECT key, qty FROM stock').all();
   return Object.fromEntries(results.map(r => [r.key, r.qty]));
+}
+// Stock by SKU, plus the older keys as aliases for a cached copy of the store page.
+function publicStock(stock) {
+  const out = {};
+  for (const [sku, { id, variant }] of Object.entries(SKUS)) { out[sku] = stock[sku] ?? 0; out[legacyKey(id, variant)] = stock[sku] ?? 0; }
+  return out;
 }
 
 function form(params) {
@@ -105,7 +127,7 @@ function form(params) {
 export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelBase = returnBase, event = null) {
   const ship = fulfillment === 'ship', rate = SHIPPING[fulfillment];
   const rateLabel = fulfillment === 'event' && event ? 'Paddock pickup: ' + event.name + ', ' + eventDates(event) : rate.label;
-  const items = lines.map(l => l.product === 'jug' ? { p: 'jug', c: l.color, q: l.qty } : { p: l.product, q: l.qty });
+  const items = lines.map(l => ({ s: l.sku, q: l.qty }));
   const p = {
     mode: 'payment',
     success_url: returnBase + '?order=success&via=' + fulfillment + '&ref={CHECKOUT_SESSION_ID}',
@@ -162,7 +184,7 @@ export async function verifySignature(payload, header, secret, nowSec) {
 async function recordOrder(db, session, now) {
   let items;
   try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
-  const lines = items.map(i => priceLine(i.p === 'jug' ? { product: 'jug', color: i.c, qty: i.q } : { product: i.p, qty: i.q }));
+  const lines = items.map(itemLine);
   const need = needs(lines);
   const who = session.customer_details || {}, shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
   const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
@@ -174,15 +196,15 @@ async function recordOrder(db, session, now) {
 }
 
 // ---- Branded order confirmation (sent through Resend after a paid webhook) ----
-const OWNER_EMAIL = 'mike@scirocco799.com';
-const ORDER_FROM = 'Scirocco 799 <orders@scirocco799.com>';
+const OWNER_EMAIL = REPLY_TO;
+const ORDER_FROM = PADDOCK_FROM;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = c => '$' + (Number(c || 0) / 100).toFixed(2);
 
 function sessionLines(session) {
   let items;
   try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
-  return items.map(i => priceLine(i.p === 'jug' ? { product: 'jug', color: i.c, qty: i.q } : { product: i.p, qty: i.q }));
+  return items.map(itemLine);
 }
 
 export function orderNumber(session) { return '799-' + String(session.id || '').slice(-8).toUpperCase(); }
@@ -216,13 +238,7 @@ export function orderEmail(session, event = null) {
   const items = lines.map(l => '<tr><td style="padding:12px 0;border-bottom:1px solid #e6e6e6"><div style="font-weight:700;color:#050505">' + esc(l.name) +
     '</div><div style="color:#666;font-size:14px;margin-top:2px">' + esc(l.description) + (l.qty > 1 ? ' &times; ' + l.qty : '') +
     '</div></td><td align="right" valign="top" style="padding:12px 0;border-bottom:1px solid #e6e6e6;color:#050505">' + money(l.cents * l.qty) + '</td></tr>').join('');
-  const html = '<!doctype html><html><body style="margin:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:24px 12px"><tr><td align="center">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:10px;overflow:hidden">' +
-    '<tr><td style="background:#050505;padding:22px 28px"><span style="color:#fff;font-size:22px;font-weight:900;letter-spacing:.04em">SCIROCCO <span style="color:#20C933">799</span></span>' +
-    '<div style="color:#20C933;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;margin-top:6px">Paddock Store</div></td></tr>' +
-    '<tr><td style="padding:28px">' +
-    '<h1 style="margin:0 0 6px;font-size:22px;color:#050505">' + (first ? 'Thanks, ' + esc(first) + '.' : 'Thanks for your order.') + '</h1>' +
+  const html = frame({ preheader: 'Order ' + number + ' is confirmed and paid.', body: '<h1 style="margin:0 0 6px;font-size:22px;color:#050505">' + (first ? 'Thanks, ' + esc(first) + '.' : 'Thanks for your order.') + '</h1>' +
     '<p style="margin:0 0 18px;color:#555;font-size:15px">Order ' + number + ' is confirmed and paid.</p>' +
     '<p style="margin:0 0 22px;color:#050505;font-size:15px;line-height:1.6;background:#f3fbf4;border-left:4px solid #20C933;padding:12px 14px">' + esc(next) + '</p>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px">' + items + '</table>' +
@@ -230,16 +246,13 @@ export function orderEmail(session, event = null) {
     totals.map(([l, r]) => row(l, r)).join('') + row('Total paid', money(total), true) + '</table>' +
     (address.length ? '<p style="margin:22px 0 0;color:#555;font-size:14px;line-height:1.5"><strong style="color:#050505">Shipping to</strong><br>' + address.map(esc).join('<br>') + '</p>' : '') +
     '<p style="margin:26px 0 0;color:#777;font-size:13px;line-height:1.6">Questions? Reply to this email.<br>All sales final. Wrong or damaged item? See ' +
-    '<a href="https://799motorsport.com/returns" style="color:#050505">799motorsport.com/returns</a>.</p>' +
-    '</td></tr><tr><td style="background:#050505;padding:16px 28px;color:#aaa;font-size:12px">799 Motorsport &middot; Traverse City, MI &middot; ' +
-    '<a href="https://799motorsport.com/paddock" style="color:#20C933;text-decoration:none">799motorsport.com</a></td></tr>' +
-    '</table></td></tr></table></body></html>';
+    '<a href="https://799motorsport.com/returns" style="color:#050505">799motorsport.com/returns</a>.</p>' });
   const text = [(first ? 'Thanks, ' + first + '.' : 'Thanks for your order.'), 'Order ' + number + ' is confirmed and paid.', '', next, '',
     ...lines.map(l => l.qty + ' x ' + l.name + ' (' + l.description + ')  ' + money(l.cents * l.qty)), '',
     ...totals.map(([l, r]) => l + ': ' + r), 'Total paid: ' + money(total),
     ...(address.length ? ['', 'Shipping to:', ...address] : []), '',
     'Questions? Reply to this email.', 'All sales final. Wrong or damaged item? See https://799motorsport.com/returns'].join('\n');
-  return { to: who.email || null, subject: 'Your Scirocco 799 order ' + number, html, text };
+  return { to: who.email || null, subject: 'Your 799 Motorsport order ' + number, html, text };
 }
 
 async function sendOrderEmail(env, session, emailFetch, event = null) {
@@ -318,7 +331,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
         if (request.method === 'GET' && url.pathname === '/api/catalog') {
           const stock = await stockMap(db);
           const events = await upcomingEvents(db, localDate(now())).catch(() => []);
-          return json({ catalog: CATALOG, shipping: SHIPPING, stock, events, mode: /_test_/.test(key) ? 'test' : 'live' });
+          return json({ catalog: CATALOG, shipping: SHIPPING, stock: publicStock(stock), events, mode: /_test_/.test(key) ? 'test' : 'live' });
         }
 
         if (request.method === 'POST' && url.pathname === '/api/checkout') {
@@ -337,7 +350,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const lines = data.items.map(priceLine);
           const stock = await stockMap(db), short = [];
           for (const [k, q] of Object.entries(needs(lines))) if ((stock[k] ?? 0) < q) short.push(k);
-          if (short.length) return json({ error: 'Some items just went out of stock. Please update your cart.', soldOut: short, stock }, 409);
+          if (short.length) return json({ error: 'Some items just went out of stock. Please update your cart.', soldOut: short, stock: publicStock(stock) }, 409);
           const site = origin && allowed.includes(origin) ? origin : SITE, base = site + RETURN_PATH;
           // Cancelled checkouts go back to the store page the buyer came from (only paths under /paddock).
           const back = typeof data.returnPath === 'string' && /^\/paddock(\/[a-z0-9-]+){0,4}\/?$/.test(data.returnPath) ? site + data.returnPath : base;
@@ -347,6 +360,23 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const session = await res.json().catch(() => ({}));
           if (!res.ok || !session.url) { console.log('Stripe error', res.status, JSON.stringify(session.error || session)); throw new APIError(502, 'Checkout is unavailable right now. Please try again.'); }
           return json({ url: session.url });
+        }
+
+        // "Email me when it's back" for an out-of-stock item. Pitwall sends the email when stock comes back.
+        if (request.method === 'POST' && url.pathname === '/api/notify') {
+          const text = await request.text();
+          if (text.length > 1024) throw new APIError(413, 'Request too large.');
+          let data; try { data = JSON.parse(text); } catch { throw new APIError(400, 'Invalid request.'); }
+          if (data.website) return json({ ok: true }); // filled in only by bots (hidden field)
+          const sku = typeof data.sku === 'string' && Object.hasOwn(SKUS, data.sku) ? data.sku : null;
+          const email = String(data.email || '').trim().toLowerCase();
+          if (!sku) throw new APIError(400, 'Unknown product.');
+          if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new APIError(400, 'Please enter a valid email address.');
+          const waiting = await db.prepare('SELECT COUNT(*) AS n FROM restock_requests WHERE email = ? AND notified_at IS NULL').bind(email).first();
+          if ((waiting?.n || 0) >= 20) throw new APIError(429, 'That email already has a lot of requests waiting.');
+          await db.prepare('INSERT INTO restock_requests (sku, email, created_at) VALUES (?, ?, ?) ON CONFLICT (sku, email) DO UPDATE SET created_at = excluded.created_at, notified_at = NULL')
+            .bind(sku, email, now()).run();
+          return json({ ok: true });
         }
 
         if (request.method === 'POST' && isWebhook) {

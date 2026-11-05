@@ -36,6 +36,12 @@ button.alt{background:none;border:1px solid #555;color:#fff}button:disabled{opac
 .pill.on{border-color:var(--green);color:var(--green)}.pill.done{border-color:#555;color:#777}
 td input.num{width:110px}
 .sub{margin-top:56px;padding-top:40px;border-top:1px solid #292929}.h2{margin:0 0 6px;font-size:30px;line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
+.savebar{position:sticky;top:0;z-index:5;background:var(--black);padding:12px 0;margin-bottom:6px}
+.stock th.n,.stock td.n{text-align:right}.stock td.n{width:120px}.stock input.num{width:96px;text-align:right}.stock input.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.stock .sku{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#bbb}.flag{display:inline-block;min-width:44px;padding:3px 8px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;text-align:center}
+.flag.out{border:1px solid var(--red);color:var(--red)}.flag.low{border:1px solid #f2d600;color:#f2d600}.flag.ok{border:1px solid #444;color:#777}.wait{color:var(--green);font-weight:700}
+.stock table{table-layout:fixed;min-width:640px}.stock col.c1{width:26%}.stock col.c2{width:20%}.stock col.c3{width:16%}.stock col.c4{width:10%}.stock col.c5{width:10%}.stock col.c6{width:18%}.stock th.n,.stock td.n{padding-right:24px}
+.stock h3{margin:0 0 10px;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
 .policy{color:#aaa;font-size:13px;line-height:1.5;white-space:pre-wrap}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}h1{font-size:32px}}
 </style>
@@ -76,8 +82,9 @@ td input.num{width:110px}
 
 <section data-panel="orders" class="sub">
 <div class="kicker">Paddock Store</div><h2 class="h2">Stock</h2>
-<p class="help">What's on hand. Online orders take stock off by themselves. Set a count after a restock, or after a cash or Tap to Pay sale.</p>
-<div class="scroll"><table><thead><tr><th>Item</th><th>On hand</th><th></th><th>Last changed</th></tr></thead><tbody id="stock"></tbody></table></div>
+<p class="help">What's on hand, by SKU. Online orders take stock off by themselves. Change counts after a restock, or after a cash or Tap to Pay sale, then save. Anyone waiting for an item gets one "It's back" email when you bring it above 0.</p>
+<div class="row savebar"><button class="go" id="stock-save" disabled>Save changes</button><button class="alt" id="stock-reset" disabled>Undo</button><span class="muted" id="stock-note"></span></div>
+<div id="stock"></div>
 </section>
 
 <section data-panel="prices" hidden>
@@ -140,10 +147,25 @@ $('e-starts').onchange=function(){if(!$('e-ends').value||$('e-ends').value<$('e-
 $('event-form').onsubmit=function(ev){ev.preventDefault();var b={name:$('e-name').value,place:$('e-place').value,starts:$('e-starts').value,ends:$('e-ends').value,orderBy:$('e-orderby').value,whereToFind:$('e-where').value,active:$('e-active').checked};
  $('e-save').disabled=true;api(editing?'/events/'+encodeURIComponent(editing):'/events',{method:editing?'PUT':'POST',body:b}).then(function(){msg(editing?'Event saved.':'Event added.');resetEvent();loadEvents()}).catch(fail).then(function(){$('e-save').disabled=false})};
 
-// Stock
-function loadStock(){api('/stock').then(function(j){$('stock').innerHTML=j.stock.map(function(s){return '<tr><td>'+esc(s.label)+'</td><td><input class="num" type="number" min="0" max="9999" step="1" value="'+s.qty+'" data-key="'+esc(s.key)+'" aria-label="'+esc(s.label)+' on hand"></td><td><button class="go" data-save="'+esc(s.key)+'">Save</button></td><td class="muted">'+when(s.updated_at)+'</td></tr>'}).join('');
- document.querySelectorAll('[data-save]').forEach(function(b){b.onclick=function(){var i=document.querySelector('input[data-key="'+CSS.escape(b.dataset.save)+'"]');b.disabled=true;
-  api('/stock',{method:'PUT',body:{key:b.dataset.save,qty:Number(i.value)}}).then(function(){msg('Stock saved.');loadStock()}).catch(fail).then(function(){b.disabled=false})}})}).catch(fail)}
+// Stock: grouped by product, one row per SKU; edit any counts, then one save.
+var stockOrig={};
+function flag(q){return q<1?'<span class="flag out">Out</span>':q<2?'<span class="flag low">Low</span>':'<span class="flag ok">OK</span>'}
+function loadStock(){api('/stock').then(function(j){stockOrig={};
+ $('stock').innerHTML=j.groups.map(function(g){return '<div class="card stock"><h3>'+esc(g.name)+(g.status!=='live'?' <span class="pill">'+(g.status==='retired'?'Retired':'Coming soon')+'</span>':'')+'</h3><div class="scroll"><table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>'+(g.items.length>1?'Color':'Option')+'</th><th>SKU</th><th class="n">On hand</th><th></th><th class="n">Waiting</th><th>Last changed</th></tr></thead><tbody>'+
+  g.items.map(function(i){stockOrig[i.sku]=i.qty;return '<tr><td>'+esc(i.variant||'—')+'</td><td class="sku">'+esc(i.sku)+'</td><td class="n"><input class="num" type="number" min="0" max="9999" step="1" inputmode="numeric" value="'+i.qty+'" data-sku="'+esc(i.sku)+'" aria-label="'+esc(i.label)+' on hand"></td><td data-flag="'+esc(i.sku)+'">'+flag(i.qty)+'</td>'+
+   '<td class="n">'+(i.waiting?'<span class="wait">'+i.waiting+'</span>':'<span class="muted">0</span>')+'</td><td class="muted">'+when(i.updated_at)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}).join('');
+ if(!j.email&&j.groups.some(function(g){return g.items.some(function(i){return i.waiting})}))$('stock-note').textContent='Back-in-stock email is not connected yet, so requests will wait.';
+ document.querySelectorAll('#stock input[data-sku]').forEach(function(i){i.oninput=stockDirty});stockDirty()}).catch(fail)}
+function stockChanges(){var out=[];document.querySelectorAll('#stock input[data-sku]').forEach(function(i){var v=i.value===''?NaN:Number(i.value);if(v!==stockOrig[i.dataset.sku])out.push({sku:i.dataset.sku,qty:v,el:i})});return out}
+function stockDirty(){var ch=stockChanges();document.querySelectorAll('#stock input[data-sku]').forEach(function(i){i.classList.remove('changed')});
+ ch.forEach(function(c){c.el.classList.add('changed');var f=document.querySelector('[data-flag="'+CSS.escape(c.sku)+'"]');if(f&&Number.isInteger(c.qty))f.innerHTML=flag(c.qty)});
+ $('stock-save').disabled=!ch.length;$('stock-reset').disabled=!ch.length;$('stock-save').textContent=ch.length?'Save '+ch.length+(ch.length===1?' change':' changes'):'Save changes'}
+$('stock-reset').onclick=loadStock;
+$('stock-save').onclick=function(){var ch=stockChanges(),bad=ch.filter(function(c){return !Number.isInteger(c.qty)||c.qty<0||c.qty>9999});
+ if(bad.length){msg('Counts must be whole numbers from 0 to 9999.',true);bad[0].el.focus();return}
+ var b=this;b.disabled=true;b.textContent='Saving…';api('/stock',{method:'PUT',body:{changes:ch.map(function(c){return{sku:c.sku,qty:c.qty}})}})
+ .then(function(r){msg('Saved '+r.saved+(r.saved===1?' change.':' changes.')+(r.notified?' Sent '+r.notified+' back-in-stock email'+(r.notified===1?'':'s')+'.':'')+(r.held?' '+r.held+' waiting (email not connected yet).':'')+(r.failed?' '+r.failed+' email(s) failed; they stay waiting.':''),!!r.failed);loadStock()})
+ .catch(function(e){fail(e);stockDirty()})};
 
 // Prices
 function loadPrices(){$('prices').innerHTML='<p class="muted">Loading…</p>';api('/products').then(function(j){

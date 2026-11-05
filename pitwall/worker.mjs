@@ -7,6 +7,7 @@
 import { PAGE } from './page.mjs';
 // Product names and order come from the product list bundled at deploy time (every catalog change redeploys Pitwall).
 import bundledCatalog from '../store/catalog.json' with { type: 'json' };
+import { backInStockEmail, FROM, REPLY_TO, SITE } from '../store/emails.mjs';
 
 const CATALOG_PATH = 'store/catalog.json';
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -116,22 +117,54 @@ export function eventInput(d) {
   return e;
 }
 // One naming rule everywhere in Pitwall: the product's full name, then ", Color" for a color option.
-// Stock rows follow the product list order (and its color order).
-export function stockItems(data) {
-  const out = [];
-  for (const p of data.products.filter(p => p.cart)) {
-    const note = (p.status || 'live') === 'live' ? '' : ' (' + (p.status === 'retired' ? 'retired' : 'coming soon') + ')';
-    if (p.colors) for (const c of p.colors) out.push({ key: 'jug/color/' + c.name, label: p.name + ', ' + c.name + note });
-    else out.push({ key: p.cart, label: p.name + note });
-  }
+// Stock is grouped by product, one row per variant (SKU), in the product list's order.
+const variantsOf = p => p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku, img: c.img })) : [{ name: '', sku: p.sku }];
+export function stockGroups(data) {
+  return data.products.filter(p => p.cart).map(p => ({ product: p.cart, name: p.name, status: p.status || 'live',
+    items: variantsOf(p).map(v => ({ sku: v.sku, variant: v.name, label: p.name + (v.name ? ', ' + v.name : '') })) }));
+}
+export function skuIndex(data) {
+  const out = {};
+  for (const p of data.products.filter(p => p.cart)) for (const v of variantsOf(p)) out[v.sku] = { p, v };
   return out;
 }
 function lineNames(data) {
-  const byCart = Object.fromEntries(data.products.filter(p => p.cart).map(p => [p.cart, p.name]));
-  return items => items.map(i => (i.q || 1) + ' × ' + (byCart[i.p] || i.p) + (i.c ? ', ' + i.c : ''));
+  const idx = skuIndex(data);
+  const byCart = Object.fromEntries(data.products.filter(p => p.cart).map(p => [p.cart, p]));
+  return items => items.map(i => {
+    const hit = i.s ? idx[i.s] : null, p = hit ? hit.p : byCart[i.p], variant = hit ? hit.v.name : i.c;
+    return (i.q || 1) + ' × ' + (p ? p.name : (i.s || i.p)) + (variant ? ', ' + variant : '');
+  });
+}
+// The "It's back" email for one SKU, with the product's own photo and page.
+export function restockMessage(data, sku) {
+  const hit = skuIndex(data)[sku];
+  if (!hit) return null;
+  const { p, v } = hit;
+  const base = p.variantImage && v.img ? p.variantImage.replace('{img}', v.img) : null;
+  const image = base ? SITE + base + '-900.webp' : p.images?.[0]?.src ? SITE + p.images[0].src : '';
+  const alt = p.variantAlt ? p.variantAlt.replace('{name}', p.name).replace('{variant}', v.name) : p.images?.[0]?.alt || p.name;
+  return backInStockEmail({ name: p.name, variant: v.name, cents: Math.round(Number(p.price) * 100), image, imageAlt: alt, url: SITE + '/paddock/' + p.category + '/' + p.slug + '/' });
+}
+async function sendRestockNotices(env, db, data, sku, mailFetch, now) {
+  const { results } = await db.prepare('SELECT id, email FROM restock_requests WHERE sku = ? AND notified_at IS NULL ORDER BY created_at').bind(sku).all();
+  if (!results.length) return { sent: 0, failed: 0 };
+  if (!env.RESEND_API_KEY) return { sent: 0, failed: 0, waiting: results.length, off: true };
+  const mail = restockMessage(data, sku);
+  if (!mail) return { sent: 0, failed: results.length };
+  let sent = 0, failed = 0;
+  for (const r of results) {
+    const res = await mailFetch('https://api.resend.com/emails', { method: 'POST',
+      headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'restock-' + r.id + '-' + sku },
+      body: JSON.stringify({ from: env.MAIL_FROM || FROM, to: [r.email], reply_to: REPLY_TO, subject: mail.subject, html: mail.html, text: mail.text }) })
+      .catch(e => ({ ok: false, status: 0, text: async () => String(e?.message || e) }));
+    if (res.ok) { sent++; await db.prepare('UPDATE restock_requests SET notified_at = ? WHERE id = ?').bind(now, r.id).run(); }
+    else { failed++; console.log('Resend error', res.status, (await res.text().catch(() => '')).slice(0, 200)); }
+  }
+  return { sent, failed };
 }
 
-export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), catalogData = bundledCatalog } = {}) {
+export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), mailFetch = (...a) => fetch(...a), catalogData = bundledCatalog } = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -190,18 +223,30 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           }
         }
 
-        // Stock
+        // Stock (by SKU), with how many people are waiting for each one to come back
         if (path === '/api/stock' && request.method === 'GET') {
           const { results } = await db.prepare('SELECT key, qty, updated_at FROM stock').all();
           const rows = Object.fromEntries(results.map(r => [r.key, r]));
-          return json({ stock: stockItems(catalogData).map(i => ({ key: i.key, label: i.label, qty: rows[i.key]?.qty ?? 0, updated_at: rows[i.key]?.updated_at || 0 })) });
+          const wait = Object.fromEntries((await db.prepare('SELECT sku, COUNT(*) AS n FROM restock_requests WHERE notified_at IS NULL GROUP BY sku').all()).results.map(r => [r.sku, r.n]));
+          return json({ groups: stockGroups(catalogData).map(g => ({ ...g, items: g.items.map(i => ({ ...i, qty: rows[i.sku]?.qty ?? 0, updated_at: rows[i.sku]?.updated_at || 0, waiting: wait[i.sku] || 0 })) })),
+            email: !!env.RESEND_API_KEY });
         }
         if (path === '/api/stock' && request.method === 'PUT') {
-          const qty = Number(body.qty), key = clean(body.key, 80);
-          if (!Number.isInteger(qty) || qty < 0 || qty > 9999) throw new APIError(400, 'Stock must be a whole number from 0 to 9999.');
-          const r = await db.prepare('UPDATE stock SET qty = ?, updated_at = ? WHERE key = ?').bind(qty, t, key).run();
-          if (!r.meta?.changes) await db.prepare('INSERT INTO stock (key, qty, updated_at) VALUES (?, ?, ?)').bind(key, qty, t).run();
-          return json({ key, qty });
+          const known = skuIndex(catalogData), changes = Array.isArray(body.changes) ? body.changes : [];
+          if (!changes.length || changes.length > 200) throw new APIError(400, 'Nothing to save.');
+          for (const c of changes) {
+            if (!Object.hasOwn(known, c.sku)) throw new APIError(400, 'Unknown SKU: ' + String(c.sku).slice(0, 40));
+            if (!Number.isInteger(c.qty) || c.qty < 0 || c.qty > 9999) throw new APIError(400, 'Stock must be a whole number from 0 to 9999.');
+          }
+          const notices = {};
+          for (const c of changes) {
+            const r = await db.prepare('UPDATE stock SET qty = ?, updated_at = ? WHERE key = ?').bind(c.qty, t, c.sku).run();
+            if (!r.meta?.changes) await db.prepare('INSERT INTO stock (key, qty, updated_at) VALUES (?, ?, ?)').bind(c.sku, c.qty, t).run();
+            if (c.qty > 0) notices[c.sku] = await sendRestockNotices(env, db, catalogData, c.sku, mailFetch, t);
+          }
+          const sent = Object.values(notices).reduce((n, x) => n + x.sent, 0), failed = Object.values(notices).reduce((n, x) => n + x.failed, 0);
+          const held = Object.values(notices).reduce((n, x) => n + (x.off ? x.waiting : 0), 0);
+          return json({ saved: changes.length, notified: sent, failed, held });
         }
 
         // Orders

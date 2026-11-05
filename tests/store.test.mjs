@@ -92,7 +92,7 @@ test('bad items and over-stock carts are refused', async t => {
   assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Pink', qty: 1 }] } })).status, 400);
   assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'mail', items: [{ product: 'pump', qty: 1 }] } })).status, 400);
   const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ product: 'jug', color: 'Red', qty: 3 }] } });
-  assert.equal(r.status, 409); assert.deepEqual(r.body.soldOut, ['jug/color/Red']);
+  assert.equal(r.status, 409); assert.deepEqual(r.body.soldOut, ['RUASVS20']);
   assert.equal(s.sent.length, 0);
 });
 
@@ -160,8 +160,8 @@ test('paid order sends one branded confirmation through Resend, with a copy to M
   assert.equal(m.url, 'https://api.resend.com/emails'); assert.equal(m.init.headers.Authorization, 'Bearer re_test');
   assert.equal(m.init.headers['Idempotency-Key'], 'order-cs_live_abcd1234');
   assert.deepEqual(m.body.to, ['buyer@example.com']); assert.deepEqual(m.body.bcc, ['mike@scirocco799.com']);
-  assert.equal(m.body.reply_to, 'mike@scirocco799.com'); assert.equal(m.body.from, 'Scirocco 799 <orders@scirocco799.com>');
-  assert.equal(m.body.subject, 'Your Scirocco 799 order 799-ABCD1234');
+  assert.equal(m.body.reply_to, 'mike@scirocco799.com'); assert.equal(m.body.from, '799 Motorsport Paddock <paddock@799motorsport.com>');
+  assert.equal(m.body.subject, 'Your 799 Motorsport order 799-ABCD1234'); assert.match(m.body.html, /799 <span style="color:#20C933">MOTORSPORT/);
   assert.match(m.body.html, /OUAS20VS/); assert.match(m.body.html, /\$91\.98/); assert.match(m.body.html, /\$7\.17/); assert.match(m.body.html, /\$126\.60/);
   assert.match(m.body.html, /Thanks, Pat/); assert.doesNotMatch(m.body.html, /<Smith>/);
   assert.match(m.body.text, /pickup in Downtown Traverse City/);
@@ -283,4 +283,42 @@ test('paddock pickup order: saved with the event, buyer details, and an email th
   assert.match(m.text, /waiting in the 799 paddock at Empire Hill Climb \(Sep 18–19, 2027, Empire, MI\)/);
   assert.match(m.text, /Find us: Paddock row B, green Scirocco/);
   assert.match(m.text, /Paddock pickup: Free/);
+});
+
+test('SKU carts: lines by SKU, stock by SKU, orders stored by SKU; older carts and orders still work', async t => {
+  const s = service(t);
+  const cat = (await s.call('/api/catalog')).body;
+  assert.equal(cat.stock.RUASVS20, 2); assert.equal(cat.stock['jug/color/Red'], 2); assert.equal(cat.stock.LTP, 2); assert.equal(cat.stock.pump, 2);
+  assert.deepEqual(cat.catalog.jug.variants.map(v => v.sku).slice(0, 2), ['RUASVS20', 'WUASVS20']);
+  assert.deepEqual(cat.catalog.pump.variants, [{ name: '', sku: 'LTP' }]);
+  const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: 'KUASVS20', qty: 1 }, { sku: 'LTP', qty: 1 }] } });
+  assert.equal(r.status, 200);
+  const p = s.sent[0].params;
+  assert.equal(p.get('line_items[0][price_data][product_data][description]'), 'Kawi Green, Auto-Stop Spout, view strip (KUASVS20)');
+  assert.equal(p.get('line_items[1][price_data][product_data][description]'), 'Includes Tuff Jug adapter (LTP)');
+  assert.equal(p.get('metadata[items]'), JSON.stringify([{ s: 'KUASVS20', q: 1 }, { s: 'LTP', q: 1 }]));
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: 'NOPE', qty: 1 }] } })).status, 400);
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: '__proto__', qty: 1 }] } })).status, 400);
+  // A new-style order and an old-style order both take stock off by SKU.
+  await s.webhook(paid('cs_test_new1', [{ s: 'KUASVS20', q: 2 }]));
+  await s.webhook(paid('cs_test_old1', [{ p: 'pump', q: 1 }]));
+  const after = (await s.call('/api/catalog')).body.stock;
+  assert.equal(after.KUASVS20, 0); assert.equal(after['jug/color/Kawi Green'], 0); assert.equal(after.LTP, 1);
+});
+
+test('notify me: saves one request per SKU and email, refuses bad input, ignores bots, re-arms after a notice', async t => {
+  const s = service(t);
+  const ok = await s.call('/api/notify', { method: 'POST', data: { sku: 'SpoutBender', email: ' Pat@Example.com ' } });
+  assert.equal(ok.status, 200);
+  await s.call('/api/notify', { method: 'POST', data: { sku: 'SpoutBender', email: 'pat@example.com' } });
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM restock_requests").get().n, 1);
+  assert.equal(s.sqlite.prepare("SELECT email FROM restock_requests").get().email, 'pat@example.com');
+  assert.equal((await s.call('/api/notify', { method: 'POST', data: { sku: 'NOPE', email: 'a@b.co' } })).status, 400);
+  assert.equal((await s.call('/api/notify', { method: 'POST', data: { sku: 'LTP', email: 'not-an-email' } })).status, 400);
+  assert.equal((await s.call('/api/notify', { method: 'POST', data: { sku: 'LTP', email: 'bot@spam.co', website: 'x' } })).status, 200);
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM restock_requests WHERE email = 'bot@spam.co'").get().n, 0);
+  s.sqlite.prepare("UPDATE restock_requests SET notified_at = 5").run();
+  await s.call('/api/notify', { method: 'POST', data: { sku: 'SpoutBender', email: 'pat@example.com' } });
+  assert.equal(s.sqlite.prepare("SELECT notified_at FROM restock_requests").get().notified_at, null);
+  assert.equal((await s.call('/api/notify', { method: 'POST', data: { sku: 'LTP', email: 'x@y.co' }, origin: 'https://evil.example' })).status, 403);
 });

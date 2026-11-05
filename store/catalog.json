@@ -20,7 +20,7 @@
   ],
   "products": [
     {
-      "slug": "tuff-jug-5-gallon", "category": "tuff-jug", "cart": "jug", "map": 39.09, "checkoutNote": "Auto-Stop Spout, view strip", "featured": true,
+      "slug": "tuff-jug-5-gallon", "variantImage": "/images/optimized/tuffjug-5gal-{img}-spout", "variantAlt": "{name} in {variant} with Auto-Stop Spout", "category": "tuff-jug", "cart": "jug", "map": 39.09, "checkoutNote": "Auto-Stop Spout, view strip", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug 5 Gallon Utility Jug", "short": "Tuff Jug 5 Gallon", "price": "45.99",
       "desc": "Five gallons with the Auto-Stop Spout, internal venting and a clear view strip for fast, controlled pours.",
       "about": "The 5 gallon Tuff Jug is the jug in the 799 trailer: multi-layer HDPE, a 1 in NPT spout thread and a clear view strip so you can see the level without opening it. It comes with the Auto-Stop Spout, which vents internally and stops the pour when the tank is full. Swap in the Black Ripper Cap for maximum flow, or the flexible Tuff Spout for awkward fillers.",

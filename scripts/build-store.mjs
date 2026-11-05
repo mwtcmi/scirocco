@@ -45,15 +45,24 @@ const menu = home.match(/<nav>[\s\S]*?<\/nav>/)[0]
   .replace(/href="photos\/"/g, 'href="/photos/"')
   .replace(/href="([a-z0-9-]+\.html)"/g, 'href="/$1"');
 
+// Variants: every sellable thing has a SKU. A product with "colors" has one variant per color (photo from
+// "variantImage" with {img}); any other product is a single variant with its own SKU and first photo.
+function variantsOf(p) {
+  if (!p.colors) { const i = p.images?.[0]; return [{ name: '', sku: p.sku || '', upc: p.upc || '', img: i ? { src: i.src, srcset: i.src480 ? `${i.src480} 480w,${i.src} ${i.w}w` : '', alt: i.alt } : null }]; }
+  return p.colors.map(c => {
+    const base = p.variantImage ? p.variantImage.replace('{img}', c.img) : null;
+    const alt = (p.variantAlt || '{name}, {variant}').replace('{name}', p.name).replace('{variant}', c.name);
+    return { name: c.name, sku: c.sku, upc: c.upc, hex: c.hex, img: base ? { src: `${base}-900.webp`, srcset: `${base}-480.webp 480w,${base}-900.webp 900w`, alt } : null };
+  });
+}
+const defaultVariant = p => { const vs = variantsOf(p); return vs.find(v => v.name === p.defaultColor) || vs[0]; };
+const multi = p => !!p.colors;
+
 // The data the shared cart script needs on every store page.
-const jug = sellable.find(p => p.cart === 'jug');
 const clientData = {
-  jug: jug ? { name: jug.name, short: jug.short, defaultColor: jug.defaultColor, colors: jug.colors.map(c => ({ name: c.name, hex: c.hex, img: c.img, sku: c.sku, upc: c.upc })) } : null,
-  addons: sellable.filter(p => p.cart !== 'jug').map(p => p.cart),
-  names: Object.fromEntries(sellable.filter(p => p.cart !== 'jug').map(p => [p.cart, p.short])),
-  fallback: Object.fromEntries(sellable.map(p => [p.cart, p.cart === 'jug'
-    ? { name: p.name, colors: p.colors.map(c => c.name), cents: Math.round(p.price * 100) }
-    : { cents: Math.round(p.price * 100) }]))
+  products: Object.fromEntries(sellable.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: multi(p) ? 'Color' : null,
+    default: defaultVariant(p).name, variants: variantsOf(p) }])),
+  fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
 
 const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog" aria-controls="cart"><span>Cart</span><b id="cart-count">0</b><em id="cart-total">$0.00</em></button>
@@ -61,7 +70,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
 <aside class="cart" id="cart" role="dialog" aria-modal="true" aria-label="Cart" hidden>
   <div class="cart-head"><div class="kicker">Your Cart</div><button class="cart-close" id="cart-close" aria-label="Close cart">&times;</button></div>
   <ul class="cart-lines" id="cart-lines"></ul>
-  <div class="upsell" id="upsell" hidden><span>Add to your jug</span><div class="upsell-btns" id="upsell-btns"></div></div>
+  <div class="upsell" id="upsell" hidden><span>Goes with your order</span><div class="upsell-btns" id="upsell-btns"></div></div>
   <fieldset class="opt get"><legend>How do you want it?</legend>
     <label id="get-table" style="display:none"><input type="radio" name="get" value="table"> <span><strong>Take it now, free</strong><small>Paying here at the 799 table. Show your confirmation screen to collect.</small></span></label>
     <div id="get-events"></div>
@@ -74,7 +83,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=6"></script>`;
+<script src="/paddock-store.js?v=7"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -84,7 +93,7 @@ function productLd(p) {
   if (p.colors) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name + ' with Auto-Stop Spout', productGroupID: p.slug, brand, url: abs(url),
     description: p.about, variesBy: ['https://schema.org/color'],
     hasVariant: p.colors.map(c => ({ '@type': 'Product', name: `${p.name}, ${c.name}, Auto-Stop Spout`, sku: c.sku, mpn: c.sku, gtin12: c.upc, color: c.name, brand,
-      image: abs(`/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp`), offers: offer(p, `${url}?color=${encodeURIComponent(c.name)}`) })) };
+      image: abs(variantsOf(p).find(v => v.sku === c.sku).img.src), offers: offer(p, `${url}?color=${encodeURIComponent(c.name)}`) })) };
   const ld = { '@context': 'https://schema.org', '@type': 'Product', name: p.name, brand, description: p.about, image: p.images.map(i => abs(i.src)), url: abs(url), offers: offer(p, url) };
   if (p.sku) Object.assign(ld, { sku: p.sku, mpn: p.sku });
   if (p.upc) ld.gtin12 = p.upc;
@@ -129,7 +138,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=4">
+<link rel="stylesheet" href="/paddock-store.css?v=5">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -144,23 +153,24 @@ function crumbs(items) {
     i === items.length - 1 ? `<li><span aria-current="page">${esc(name)}</span></li>` : `<li><a href="${url}">${esc(name)}</a></li>`).join('')}</ol></div></nav>`;
 }
 function photoTag(p, { big = false, lazy = true } = {}) {
-  if (p.colors) {
-    const c = p.colors.find(x => x.name === p.defaultColor);
-    return `<img data-jug-img${big ? ' id="main-photo"' : ''} src="/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp" srcset="/images/optimized/tuffjug-5gal-${c.img}-spout-480.webp 480w,/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp 900w" sizes="(max-width:800px) 100vw,560px" alt="${esc(p.name)} in ${esc(c.name)} with Auto-Stop Spout" width="900" height="900"${lazy ? ' loading="lazy"' : ''}>`;
+  if (multi(p)) {
+    const v = defaultVariant(p);
+    return `<img data-variant-img="${p.cart}"${big ? ' id="main-photo"' : ''} src="${v.img.src}" srcset="${v.img.srcset}" sizes="(max-width:800px) 100vw,560px" alt="${esc(v.img.alt)}" width="900" height="900"${lazy ? ' loading="lazy"' : ''}>`;
   }
   const i = p.images[0];
   const src = !big && i.src480 ? i.src480 : i.src;
   return `<img${big ? ' id="main-photo"' : ''} src="${src}"${i.src480 && big ? ` srcset="${i.src480} 480w,${i.src} ${i.w}w" sizes="(max-width:800px) 100vw,560px"` : ''} alt="${esc(i.alt)}" width="${big ? i.w : (i.src480 ? 480 : i.w)}" height="${big ? i.h : (i.src480 ? 480 : i.h)}"${lazy ? ' loading="lazy"' : ''}>`;
 }
-const idLine = p => p.colors ? `<div class="idline" data-jug-ids>SKU ${p.colors.find(c => c.name === p.defaultColor).sku} · UPC ${p.colors.find(c => c.name === p.defaultColor).upc}</div>`
-  : `<div class="idline">${p.sku ? `SKU ${esc(p.sku)}${p.upc ? ` · UPC ${esc(p.upc)}` : ''}` : 'SKU and UPC to come'}</div>`;
-const options = p => p.colors ? `<fieldset class="opt"><legend>Color <span data-color-name>${esc(p.defaultColor)}</span></legend><div class="swatches" data-colors></div></fieldset>` : '';
-const stockLine = p => p.colors ? '' : `<div class="stock" data-stock="${p.cart}"></div>`;
+const idLine = p => { const v = defaultVariant(p); return v.sku ? `<div class="idline"${multi(p) ? ` data-variant-ids="${p.cart}"` : ''}>SKU ${esc(v.sku)}${v.upc ? ` · UPC ${esc(v.upc)}` : ''}</div>` : '<div class="idline">SKU and UPC to come</div>'; };
+const options = p => multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
+const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
 const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';
+// "Email me when it's back", shown by paddock-store.js only when the chosen item is out of stock.
+const notifyForm = p => `<form class="notify" data-notify="${p.cart}" hidden novalidate><label for="notify-${p.cart}">Want one? Get an email when it's back.</label><div class="notify-row"><input id="notify-${p.cart}" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Notify me</button></div><input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"><p class="notify-msg" role="status"></p></form>`;
 
 // A product card in a grid (store front, category pages, "goes with" rows).
 function card(p, lazy = true) {
-  const url = prodUrl(p), link = p.colors ? ` data-jug-link="${url}"` : '';
+  const url = prodUrl(p), link = multi(p) ? ` data-variant-link="${p.cart}"` : '';
   return `<article class="item" data-id="${p.cart}">
   <div class="item-photo"><a href="${url}"${link} tabindex="-1" aria-hidden="true">${photoTag(p, { lazy })}</a></div>
   <div class="item-body">
@@ -182,17 +192,14 @@ function extCard(p) {
 // Products sold through the 799 cart, as a tile on a category page (same layout as the apparel tiles).
 // The tile links to the product page, which has the options and the Add to cart button.
 function tile(p) {
-  const url = prodUrl(p);
-  const img = p.colors
-    ? (c => ({ src: `/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp`, srcset: `/images/optimized/tuffjug-5gal-${c.img}-spout-480.webp 480w, /images/optimized/tuffjug-5gal-${c.img}-spout-900.webp 900w`, alt: `${p.name} in ${c.name} with Auto-Stop Spout` }))(p.colors.find(x => x.name === p.defaultColor))
-    : (i => ({ src: i.src, srcset: i.src480 ? `${i.src480} 480w, ${i.src} ${i.w}w` : '', alt: i.alt }))(p.images[0]);
-  const pic = `<img${p.colors ? ' data-jug-img' : ''} src="${img.src}"${img.srcset ? ` srcset="${img.srcset}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(img.alt)}">`;
+  const url = prodUrl(p), v = defaultVariant(p);
+  const pic = `<img${multi(p) ? ` data-variant-img="${p.cart}"` : ''} src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(v.img.alt)}">`;
   const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
     : `<h3>${esc(p.name)}</h3><span class="price">Coming soon</span><span class="ext-buy">See details →</span>`;
-  if (!p.colors) return `<a class="ext" href="${url}">${pic}<div class="ext-body">${body}</div></a>`;
-  // Jug: color swatches sit over the bottom of the photo, so the tile keeps the same size as its neighbours.
-  // paddock-store.js fills [data-colors], swaps [data-jug-img] and adds ?color= to [data-jug-link].
-  return `<div class="ext ext-pick"><div class="ext-photo"><a href="${url}" data-jug-link="${url}" tabindex="-1" aria-hidden="true">${pic}</a><div class="ext-colors" data-colors role="group" aria-label="Jug color"></div></div><a class="ext-body" href="${url}" data-jug-link="${url}">${body}</a></div>`;
+  if (!multi(p) || !isLive(p)) return `<a class="ext" href="${url}">${pic}<div class="ext-body">${body}</div></a>`;
+  // Products with options: swatches sit over the bottom of the photo, so the tile keeps the same size as its
+  // neighbours. paddock-store.js fills [data-options], swaps [data-variant-img] and adds ?color= to [data-variant-link].
+  return `<div class="ext ext-pick"><div class="ext-photo"><a href="${url}" data-variant-link="${p.cart}" tabindex="-1" aria-hidden="true">${pic}</a><div class="ext-colors" data-options="${p.cart}" role="group" aria-label="${esc(p.short || p.name)} color"></div></div><a class="ext-body" href="${url}" data-variant-link="${p.cart}">${body}</a></div>`;
 }
 function grid(list) {
   const cartList = list.filter(p => p.cart), ext = list.filter(p => p.external);
@@ -253,8 +260,9 @@ for (const p of cartProducts) {
     ? `<div class="retired-note"><strong>No longer available.</strong> ${instead ? `See the <a href="${prodUrl(instead)}">${esc(instead.name)}</a>, or browse` : 'Browse'} <a href="${catUrl(c)}">${esc(c.name)}</a>.</div>`
     : soon ? `<button class="add" type="button" disabled>Coming soon</button>`
     : `${options(p)}${fine(p)}${stockLine(p)}
-  <button class="add" data-add="${p.cart}">Add to cart</button>`;
-  const image = p.colors ? abs(`/images/optimized/tuffjug-5gal-${p.colors.find(x => x.name === p.defaultColor).img}-spout-900.webp`) : abs(p.images[0].src);
+  <button class="add" data-add="${p.cart}">Add to cart</button>
+  ${notifyForm(p)}`;
+  const image = abs(defaultVariant(p).img.src);
   write(`paddock/${p.category}/${p.slug}/index.html`,
     head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
       url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
