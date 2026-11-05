@@ -290,7 +290,7 @@ function driveToFinish(g) {
 
 test('all nine scheduled venues are selectable, themed and complete a saved season without a difficulty ladder', () => {
   const g = game();
-  const schedule = fs.readFileSync(path.join(__dirname, '..', 'schedule-2027.html'), 'utf8');
+  const schedule = fs.readFileSync(path.join(__dirname, '..', 'racing.html'), 'utf8').split('id="schedule"')[1].split('</section>')[0];
   const names = Array.from(schedule.matchAll(/class="event">([^<]+)</g), match => match[1]);
   assert.deepEqual(Array.from(g.EVENTS, q => q.name), names, 'include the full planned website schedule in order');
   assert.equal(g.EVENTS.length, 9); assert.equal(new Set(g.EVENTS.map(q => q.habitat)).size, 9);

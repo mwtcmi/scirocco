@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const base = (process.env.SITE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
-const pages = ['index.html', 'racing.html', 'schedule-2027.html', 'car.html', 'michael-white.html', 'paddock.html', 'partners.html'];
+const pages = ['index.html', 'racing.html', 'car.html', 'michael-white.html', 'paddock.html', 'partners.html'];
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 // Each event has its own gallery page under /photos/.
 const galleries = [{ path: '/photos/grattan-2026/' }, { path: '/photos/empire-2026/' }];
