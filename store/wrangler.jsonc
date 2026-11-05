@@ -1,6 +1,6 @@
 // Cloudflare config for the Paddock Store Worker. GitHub Actions deploys it (.github/workflows/workers.yml):
 //   push to main    -> live store  "scirocco799-store"      (Stripe live keys, database scirocco799-store)
-//   push to preview -> test store  "scirocco799-store-test" (Stripe test keys, database scirocco799-store-test)
+//   push to staging -> test store  "scirocco799-store-test" (Stripe test keys, database scirocco799-store-test)
 // Secrets (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY) are set in Cloudflare, never here;
 // deploys keep them. Database changes go in migrations/ as numbered files and are applied before each deploy.
 {
@@ -25,7 +25,7 @@
         { "binding": "DB", "database_name": "scirocco799-store-test", "database_id": "33c6396a-1344-4c34-825f-a1e57732f29f", "migrations_dir": "migrations" }
       ],
       // Stripe Tax is off in the test store (test mode has no tax registrations). Preview links may call it.
-      "vars": { "STRIPE_TAX": "off", "ALLOWED_ORIGINS": "https://preview.scirocco-4s4.pages.dev,http://127.0.0.1:8799,http://localhost:8788" }
+      "vars": { "STRIPE_TAX": "off", "ALLOWED_ORIGINS": "https://staging.scirocco-4s4.pages.dev,http://127.0.0.1:8799,http://localhost:8788" }
     }
   }
 }

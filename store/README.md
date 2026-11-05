@@ -7,14 +7,14 @@ The store lives under The Paddock: the front page (`paddock.html`), category pag
 - **Website pages** deploy through Cloudflare Pages on every push (`main` = the live site, other branches = preview links).
 - **This Worker** deploys through GitHub Actions ([.github/workflows/workers.yml](../.github/workflows/workers.yml)) using [wrangler.jsonc](wrangler.jsonc):
   - push to `main` → **live store** `scirocco799-store` (Stripe live keys, D1 `scirocco799-store`)
-  - push to `preview` → **test store** `scirocco799-store-test` (Stripe test keys, D1 `scirocco799-store-test`, Stripe Tax off)
+  - push to `staging` → **test store** `scirocco799-store-test` (Stripe test keys, D1 `scirocco799-store-test`, Stripe Tax off)
 - Tests run first; a failing test stops the deploy. Never paste code into the Cloudflare editor: the next deploy would overwrite it.
 - **Secrets** stay in Cloudflare (Worker → Settings → Variables and Secrets): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`. Deploys keep them. The GitHub Action needs the repository secret `CLOUDFLARE_API_TOKEN`.
 - **Database changes** go in [migrations/](migrations/) as new numbered files (`0002_events.sql`, ...). The Action applies them before each deploy. Never edit a migration that has already run. `0001_initial.sql` was marked as applied on the live database on 2026-11-05 (its tables already existed).
 
 ## Previewing changes with the test store
 
-1. Push the change to the `preview` branch. Cloudflare Pages builds `https://preview.scirocco-4s4.pages.dev`, and the Action deploys the test store.
+1. Push the change to the `staging` branch. Cloudflare Pages builds `https://staging.scirocco-4s4.pages.dev`, and the Action deploys the test store.
 2. On any `*.pages.dev` address, the cart talks to the test store, which is set in `paddock-store.js`. Pay with Stripe's test card `4242 4242 4242 4242`, any future date, any CVC and ZIP.
 3. When it looks right, merge to `main`.
 

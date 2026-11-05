@@ -1,12 +1,12 @@
 # Deploys the Cloudflare Workers from this repo. The website itself deploys through Cloudflare Pages.
 #   push to main    -> tests, then database migrations + deploy for the live store and the leaderboard
-#   push to preview -> tests, then database migrations + deploy for the test store (Stripe test mode)
+#   push to staging -> tests, then database migrations + deploy for the test store (Stripe test mode)
 # Needs the repository secret CLOUDFLARE_API_TOKEN (Workers Scripts: Edit, D1: Edit, on this account).
 name: Workers
 
 on:
   push:
-    branches: [main, preview]
+    branches: [main, staging]
     paths:
       - 'store/**'
       - 'leaderboard/**'
