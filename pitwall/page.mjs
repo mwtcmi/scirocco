@@ -92,7 +92,7 @@ var $=function(id){return document.getElementById(id)},esc=function(v){var d=doc
 var money=function(c){return '$'+(Number(c||0)/100).toFixed(2)},dollars=function(n){return '$'+Number(n||0).toFixed(2)};
 var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function day(d){if(!d)return '';var p=d.split('-');return M[+p[1]-1]+' '+(+p[2])+', '+p[0]}
-function when(ms){if(!ms)return '';var d=new Date(ms);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
+function when(ms){if(!ms)return '—';var d=new Date(ms);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
 function msg(t,bad){var m=$('msg');m.textContent=t||'';m.className='msg '+(bad?'bad':'ok')}
 function api(path,opt){opt=opt||{};return fetch('/api'+path,{method:opt.method||'GET',headers:opt.body?{'Content-Type':'application/json'}:{},body:opt.body?JSON.stringify(opt.body):undefined,credentials:'same-origin'})
  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j})})}

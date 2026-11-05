@@ -5,6 +5,8 @@
 // ACCESS_AUD (the Access application's audience tag), ALLOWED_EMAILS (comma-separated, optional),
 // GITHUB_REPO, GITHUB_BRANCH, STORE_LABEL. Secret: GITHUB_TOKEN (repo contents read/write, for prices).
 import { PAGE } from './page.mjs';
+// Product names and order come from the product list bundled at deploy time (every catalog change redeploys Pitwall).
+import bundledCatalog from '../store/catalog.json' with { type: 'json' };
 
 const CATALOG_PATH = 'store/catalog.json';
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -113,20 +115,23 @@ export function eventInput(d) {
   if (e.orderBy > e.ends) throw new APIError(400, 'The order-by date must be on or before the last day of the event.');
   return e;
 }
-function stockLabels(data) {
-  const out = {};
+// One naming rule everywhere in Pitwall: the product's full name, then ", Color" for a color option.
+// Stock rows follow the product list order (and its color order).
+export function stockItems(data) {
+  const out = [];
   for (const p of data.products.filter(p => p.cart)) {
-    if (p.colors) for (const c of p.colors) out['jug/color/' + c.name] = p.short + ', ' + c.name;
-    else out[p.cart] = p.short || p.name;
+    const note = (p.status || 'live') === 'live' ? '' : ' (' + (p.status === 'retired' ? 'retired' : 'coming soon') + ')';
+    if (p.colors) for (const c of p.colors) out.push({ key: 'jug/color/' + c.name, label: p.name + ', ' + c.name + note });
+    else out.push({ key: p.cart, label: p.name + note });
   }
   return out;
 }
 function lineNames(data) {
-  const byCart = Object.fromEntries(data.products.filter(p => p.cart).map(p => [p.cart, p.short || p.name]));
-  return items => items.map(i => (i.q || 1) + ' × ' + (byCart[i.p] || i.p) + (i.c ? ' (' + i.c + ')' : ''));
+  const byCart = Object.fromEntries(data.products.filter(p => p.cart).map(p => [p.cart, p.name]));
+  return items => items.map(i => (i.q || 1) + ' × ' + (byCart[i.p] || i.p) + (i.c ? ', ' + i.c : ''));
 }
 
-export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), catalogFallback = null } = {}) {
+export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), catalogData = bundledCatalog } = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -152,7 +157,6 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
         const hasBody = request.method === 'POST' || request.method === 'PUT';
         const db = env.DB, body = hasBody ? await request.json().catch(() => { throw new APIError(400, 'Invalid request.'); }) : null;
         const t = now(), path = url.pathname.replace(/\/+$/, ''), seg = path.split('/');
-        const catalog = async () => catalogFallback || (await readCatalog(env, ghFetch)).data;
 
         if (path === '/api/me') return json({ email: user.email, store: env.STORE_LABEL || '', branch: env.GITHUB_BRANCH || '', prices: !!env.GITHUB_TOKEN });
 
@@ -188,9 +192,9 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
 
         // Stock
         if (path === '/api/stock' && request.method === 'GET') {
-          const labels = stockLabels(await catalog().catch(() => ({ products: [] })));
-          const { results } = await db.prepare('SELECT key, qty, updated_at FROM stock ORDER BY key').all();
-          return json({ stock: results.filter(r => labels[r.key] || !r.key.startsWith('jug/spout/')).map(r => ({ ...r, label: labels[r.key] || r.key })) });
+          const { results } = await db.prepare('SELECT key, qty, updated_at FROM stock').all();
+          const rows = Object.fromEntries(results.map(r => [r.key, r]));
+          return json({ stock: stockItems(catalogData).map(i => ({ key: i.key, label: i.label, qty: rows[i.key]?.qty ?? 0, updated_at: rows[i.key]?.updated_at || 0 })) });
         }
         if (path === '/api/stock' && request.method === 'PUT') {
           const qty = Number(body.qty), key = clean(body.key, 80);
@@ -202,7 +206,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
 
         // Orders
         if (path === '/api/orders' && request.method === 'GET') {
-          const names = lineNames(await catalog().catch(() => ({ products: [] })));
+          const names = lineNames(catalogData);
           const { results } = await db.prepare('SELECT o.*, e.name AS event_name, e.starts AS event_starts FROM orders o LEFT JOIN events e ON e.id = o.event_id ORDER BY o.created_at DESC LIMIT 200').all();
           return json({ orders: results.map(o => {
             let items = []; try { items = JSON.parse(o.items || '[]'); } catch {}

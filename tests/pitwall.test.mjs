@@ -88,8 +88,9 @@ test('events: add, list, edit, refuse bad dates, delete only without orders', as
 test('stock: list with product names, set a count, refuse bad counts', async t => {
   const s = setup(t);
   const list = (await s.call('/api/stock')).body.stock;
-  assert.equal(list.find(r => r.key === 'pump').label, 'Electric Transfer Pump');
-  assert.equal(list.find(r => r.key === 'jug/color/Red').label, 'Tuff Jug 5 Gallon, Red');
+  assert.equal(list.find(r => r.key === 'pump').label, 'Tuff Jug Electric Transfer Pump');
+  assert.equal(list.find(r => r.key === 'jug/color/Red').label, 'Tuff Jug 5 Gallon Utility Jug, Red');
+  assert.deepEqual(list.slice(0, 2).map(r => r.label), ['Tuff Jug 5 Gallon Utility Jug, Red', 'Tuff Jug 5 Gallon Utility Jug, White']);
   assert.equal(list.some(r => r.key.startsWith('jug/spout/')), false);
   assert.equal((await s.call('/api/stock', { method: 'PUT', data: { key: 'pump', qty: 6 } })).status, 200);
   assert.equal(s.sqlite.prepare("SELECT qty FROM stock WHERE key = 'pump'").get().qty, 6);
@@ -104,7 +105,7 @@ test('orders: newest first with readable lines and event, and done / reopen', as
   s.sqlite.prepare("INSERT INTO orders (session_id, created_at, livemode, fulfillment, items) VALUES ('cs_old', 1, 1, 'ship', '[]')").run();
   const o = (await s.call('/api/orders')).body.orders;
   assert.equal(o[0].number, '799-11112222'); assert.equal(o[0].event, 'Empire Hill Climb');
-  assert.deepEqual(o[0].lines, ['1 × Tuff Jug 5 Gallon (Red)', '1 × Electric Transfer Pump']);
+  assert.deepEqual(o[0].lines, ['1 × Tuff Jug 5 Gallon Utility Jug, Red', '1 × Tuff Jug Electric Transfer Pump']);
   assert.equal(o[0].status, 'new'); assert.equal(o[1].id, 'cs_old');
   assert.equal((await s.call('/api/orders/cs_test_aaaaaaaa11112222', { method: 'PUT', data: { status: 'done' } })).status, 200);
   const row = s.sqlite.prepare("SELECT status, handled_at FROM orders WHERE session_id = 'cs_test_aaaaaaaa11112222'").get();
