@@ -51,6 +51,7 @@ a.btnlink{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;
 .detail h2{margin:0 0 4px;font-size:24px}.dl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}.dl div{font-size:14px;line-height:1.5}.dl b{display:block;color:#999;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
 button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
 @media(max-width:800px){.tiles{grid-template-columns:1fr 1fr}.two,.dl{grid-template-columns:1fr}}
+.linkish{background:none;border:0;padding:0;margin-bottom:10px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
 .policy{color:#aaa;font-size:13px;line-height:1.5;white-space:pre-wrap}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}h1{font-size:32px}}
 </style>
@@ -61,6 +62,7 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <nav role="tablist">
 <button role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
 <button role="tab" data-tab="orders" aria-selected="false">Orders</button>
+<button role="tab" data-tab="stock" aria-selected="false">Stock</button>
 <button role="tab" data-tab="customers" aria-selected="false">Customers</button>
 <button role="tab" data-tab="prices" aria-selected="false">Prices</button>
 </nav>
@@ -72,10 +74,10 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <div class="tiles" id="dash-sales"></div>
 <div class="two">
 <div class="card"><div class="kicker">Next event</div><div id="dash-event"></div></div>
-<div class="card"><div class="kicker">Customers</div><div id="dash-cust"></div></div>
+<div class="card"><div class="row"><div class="kicker">Customers</div><button class="linkish right" type="button" data-go="customers">Open customers →</button></div><div id="dash-cust"></div></div>
 </div>
 <div class="two">
-<div class="card"><div class="kicker">Stock to watch</div><div id="dash-stock"></div></div>
+<div class="card"><div class="row"><div class="kicker">Stock to watch</div><button class="linkish right" type="button" data-go="stock">Open stock →</button></div><div id="dash-stock"></div></div>
 <div class="card"><div class="kicker">Top sellers · last 30 days</div><div id="dash-top"></div></div>
 </div>
 </section>
@@ -121,8 +123,8 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <div class="scroll"><table><thead><tr><th>Event</th><th>Dates</th><th>Order by</th><th>Orders</th><th>Status</th><th></th></tr></thead><tbody id="events"></tbody></table></div>
 </section>
 
-<section data-panel="orders" class="sub">
-<div class="kicker">Paddock Store</div><h2 class="h2">Stock</h2>
+<section data-panel="stock" hidden>
+<div class="kicker">Paddock Store</div><h1>Stock</h1>
 <p class="help">What's on hand, by SKU. Online orders take stock off by themselves. Change counts after a restock, or after a cash or Tap to Pay sale, then save. Anyone waiting for an item gets one "It's back" email when you bring it above 0.</p>
 <div class="row savebar"><button class="go" id="stock-save" disabled>Save changes</button><button class="alt" id="stock-reset" disabled>Undo</button><span class="muted" id="stock-note"></span></div>
 <div id="stock"></div>
@@ -146,8 +148,9 @@ function api(path,opt){opt=opt||{};return fetch('/api'+path,{method:opt.method||
  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j})})}
 function fail(e){msg(e.message||'Something went wrong.',true)}
 // Tabs
-var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvents();loadStock()},customers:loadCustomers,prices:loadPrices};
+var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvents()},stock:loadStock,customers:loadCustomers,prices:loadPrices};
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
+document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){show(b.dataset.go);scrollTo(0,0)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
  document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
 api('/me').then(function(me){$('who').textContent=me.email;if(/test/i.test(me.store))$('store').className='badge test'}).catch(function(){});
