@@ -184,3 +184,15 @@ test('setPrice and setPolicy edit only their own product or brand', () => {
   assert.throws(() => setPrice(CATALOG, 'nope', { price: 1 }));
   assert.equal(JSON.parse(setPolicy(CATALOG, 'New Brand', 'Hi')).brands['New Brand'].mapPolicy, 'Hi');
 });
+
+test('settings: order copies default to Mike, take several addresses, refuse bad ones, record who changed them', async t => {
+  const s = setup(t);
+  assert.deepEqual((await s.call('/api/settings')).body.orderCopies, ['mike@scirocco799.com']);
+  const r = await s.call('/api/settings', { method: 'PUT', data: { orderCopies: [' Mike@Scirocco799.com ', 'crew@799motorsport.com', 'mike@scirocco799.com', ''] } });
+  assert.equal(r.status, 200); assert.deepEqual(r.body.orderCopies, ['mike@scirocco799.com', 'crew@799motorsport.com']);
+  const got = (await s.call('/api/settings')).body;
+  assert.deepEqual(got.orderCopies, ['mike@scirocco799.com', 'crew@799motorsport.com']); assert.equal(got.by, 'mike@scirocco799.com');
+  assert.equal((await s.call('/api/settings', { method: 'PUT', data: { orderCopies: ['nope'] } })).status, 400);
+  assert.equal((await s.call('/api/settings', { method: 'PUT', data: { orderCopies: Array.from({ length: 11 }, (_, i) => i + '@x.co') } })).status, 400);
+  assert.deepEqual((await s.call('/api/settings', { method: 'PUT', data: { orderCopies: [] } })).body.orderCopies, []);
+});

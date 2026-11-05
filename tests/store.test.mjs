@@ -322,3 +322,14 @@ test('notify me: saves one request per SKU and email, refuses bad input, ignores
   assert.equal(s.sqlite.prepare("SELECT notified_at FROM restock_requests").get().notified_at, null);
   assert.equal((await s.call('/api/notify', { method: 'POST', data: { sku: 'LTP', email: 'x@y.co' }, origin: 'https://evil.example' })).status, 403);
 });
+
+test('order copies: the list set in Pitwall gets the blind copy; empty list means none; buyer never copied to self', async t => {
+  const s = service(t); s.env.RESEND_API_KEY = 're_test';
+  const set = v => s.sqlite.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('order_copies', ?, 0) ON CONFLICT (key) DO UPDATE SET value = excluded.value").run(JSON.stringify(v));
+  set(['mike@scirocco799.com', 'Crew@799motorsport.com', 'a@b.c']);
+  await s.webhook(paid('cs_test_cp1', [{ s: 'LTP', q: 1 }]));
+  assert.deepEqual(s.mail[0].body.bcc, ['mike@scirocco799.com', 'crew@799motorsport.com']);
+  set([]);
+  await s.webhook(paid('cs_test_cp2', [{ s: 'LTP', q: 1 }]));
+  assert.equal(s.mail[1].body.bcc, undefined);
+});

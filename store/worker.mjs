@@ -255,12 +255,20 @@ export function orderEmail(session, event = null) {
   return { to: who.email || null, subject: 'Your 799 Motorsport order ' + number, html, text };
 }
 
-async function sendOrderEmail(env, session, emailFetch, event = null) {
+// Who gets a blind copy of every order confirmation: set in Pitwall (settings.order_copies), Mike by default.
+export async function orderCopies(db) {
+  const row = await db.prepare("SELECT value FROM settings WHERE key = 'order_copies'").first().catch(() => null);
+  if (!row) return [OWNER_EMAIL];
+  try { const list = JSON.parse(row.value); return Array.isArray(list) ? list.filter(e => typeof e === 'string' && e) : [OWNER_EMAIL]; } catch { return [OWNER_EMAIL]; }
+}
+
+async function sendOrderEmail(env, session, emailFetch, event = null, copies = [OWNER_EMAIL]) {
   if (!env.RESEND_API_KEY) return 'off';
   const mail = orderEmail(session, event);
   if (!mail.to) return 'no-address';
   const body = { from: env.ORDER_FROM || ORDER_FROM, to: [mail.to], reply_to: OWNER_EMAIL, subject: mail.subject, html: mail.html, text: mail.text };
-  if (env.ORDER_COPY !== 'off' && mail.to.toLowerCase() !== OWNER_EMAIL) body.bcc = [OWNER_EMAIL];
+  const bcc = env.ORDER_COPY === 'off' ? [] : [...new Set(copies.map(e => e.toLowerCase()))].filter(e => e !== mail.to.toLowerCase());
+  if (bcc.length) body.bcc = bcc;
   try {
     const res = await emailFetch('https://api.resend.com/emails', { method: 'POST',
       headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'order-' + session.id },
@@ -388,7 +396,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           if (!paid) return json({ received: true, ignored: event.type });
           const result = await recordOrder(db, session, now());
           const pickupEvent = session.metadata?.event_id ? await eventRow(db, session.metadata.event_id).catch(() => null) : null;
-          const email = result === 'recorded' ? await sendOrderEmail(env, session, emailFetch, pickupEvent) : 'skipped';
+          const email = result === 'recorded' ? await sendOrderEmail(env, session, emailFetch, pickupEvent, await orderCopies(db)) : 'skipped';
           return json({ received: true, result, email });
         }
 

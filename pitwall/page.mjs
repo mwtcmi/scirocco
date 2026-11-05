@@ -63,6 +63,13 @@ td input.num{width:110px}
 </section>
 
 <section data-panel="orders" class="sub">
+<div class="kicker">Order emails</div><h2 class="h2">Copies</h2>
+<p class="help">Everyone listed gets a blind copy of every order confirmation (customers never see these addresses). Leave the list empty for no copies.</p>
+<div class="card"><div id="copies"></div>
+<div class="row" style="margin-top:12px"><button class="alt" type="button" id="copy-add">+ Add address</button><button class="go" type="button" id="copy-save">Save</button><span class="muted" id="copy-note"></span></div></div>
+</section>
+
+<section data-panel="orders" class="sub">
 <div class="kicker">Paddock pickup</div><h2 class="h2">Events</h2>
 <p class="help">Events that are on and not over yet show "Order ahead, pick up in the 799 paddock" on the store, and buyers can choose paddock pickup until the order-by date. "Where to find 799" goes only in the buyer's order email.</p>
 <form class="card" id="event-form">
@@ -105,7 +112,7 @@ function api(path,opt){opt=opt||{};return fetch('/api'+path,{method:opt.method||
  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j})})}
 function fail(e){msg(e.message||'Something went wrong.',true)}
 // Tabs
-var loaders={orders:function(){loadOrders();loadEvents();loadStock()},prices:loadPrices};
+var loaders={orders:function(){loadOrders();loadCopies();loadEvents();loadStock()},prices:loadPrices};
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
  document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
@@ -127,6 +134,15 @@ function drawOrders(){var all=$('show-done').checked,list=orders.filter(function
   '<div class="row"><button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button></div></div>'}).join('');
  document.querySelectorAll('[data-order]').forEach(function(b){b.onclick=function(){b.disabled=true;api('/orders/'+encodeURIComponent(b.dataset.order),{method:'PUT',body:{status:b.dataset.status}})
   .then(function(){var o=orders.find(function(x){return x.id===b.dataset.order});o.status=b.dataset.status;drawOrders();msg(o.number+(o.status==='done'?' marked done.':' reopened.'))}).catch(function(e){b.disabled=false;fail(e)})}})}
+
+// Order email copies
+function copyRow(v){var d=document.createElement('div');d.className='row';d.style.marginBottom='8px';d.innerHTML='<input type="email" maxlength="254" placeholder="name@example.com" aria-label="Copy to" style="flex:1;max-width:460px"><button class="alt" type="button" aria-label="Remove">Remove</button>';
+ d.querySelector('input').value=v||'';d.querySelector('button').onclick=function(){d.remove()};return d}
+function loadCopies(){api('/settings').then(function(j){var box=$('copies');box.innerHTML='';j.orderCopies.forEach(function(e){box.appendChild(copyRow(e))});
+ if(!j.orderCopies.length)box.innerHTML='<p class="muted" id="copy-none">No copies are sent.</p>';$('copy-note').textContent=j.by?'Last changed '+when(j.updated)+' by '+j.by:''}).catch(fail)}
+$('copy-add').onclick=function(){var n=$('copy-none');if(n)n.remove();var r=copyRow('');$('copies').appendChild(r);r.querySelector('input').focus()};
+$('copy-save').onclick=function(){var list=[].slice.call(document.querySelectorAll('#copies input')).map(function(i){return i.value.trim()}).filter(Boolean),b=this;b.disabled=true;
+ api('/settings',{method:'PUT',body:{orderCopies:list}}).then(function(j){msg(j.orderCopies.length?'Order copies go to '+j.orderCopies.join(', ')+'.':'Order copies are off.');loadCopies()}).catch(fail).then(function(){b.disabled=false})};
 
 // Events
 var events=[],editing=null;

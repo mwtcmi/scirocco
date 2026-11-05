@@ -249,6 +249,24 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           return json({ saved: changes.length, notified: sent, failed, held });
         }
 
+        // Settings: who gets a copy of every order confirmation
+        if (path === '/api/settings' && request.method === 'GET') {
+          const row = await db.prepare("SELECT value, updated_at, updated_by FROM settings WHERE key = 'order_copies'").first();
+          let list = [REPLY_TO]; if (row) { try { list = JSON.parse(row.value); } catch {} }
+          return json({ orderCopies: list, updated: row?.updated_at || 0, by: row?.updated_by || '' });
+        }
+        if (path === '/api/settings' && request.method === 'PUT') {
+          const raw = Array.isArray(body.orderCopies) ? body.orderCopies : null;
+          if (!raw) throw new APIError(400, 'Send a list of emails.');
+          const list = [...new Set(raw.map(e => String(e || '').trim().toLowerCase()).filter(Boolean))];
+          if (list.length > 10) throw new APIError(400, 'Up to 10 addresses.');
+          const bad = list.find(e => e.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e));
+          if (bad) throw new APIError(400, 'Not a valid email: ' + bad);
+          await db.prepare("INSERT INTO settings (key, value, updated_at, updated_by) VALUES ('order_copies', ?, ?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, updated_by = excluded.updated_by")
+            .bind(JSON.stringify(list), t, user.email).run();
+          return json({ orderCopies: list });
+        }
+
         // Orders
         if (path === '/api/orders' && request.method === 'GET') {
           const names = lineNames(catalogData);
