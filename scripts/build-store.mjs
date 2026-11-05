@@ -2,7 +2,7 @@
 // Builds The Paddock store pages from store/catalog.json:
 //   paddock/<category>/index.html            category pages (24 products a page; more add /page/2/ ...)
 //   paddock/<category>/<product>/index.html  product pages for products sold through the 799 cart
-//   paddock.html                             the parts between <!-- store:... --> markers
+//   paddock.html                             the parts between <!-- store:... --> markers (category tiles, structured data, cart)
 // Head styles, menus and the footer are copied from paddock.html and scripts/site-footer.html,
 // so the store pages always match the rest of the site. Run after any catalog change, then
 // node scripts/wrap-up.mjs before committing.
@@ -170,10 +170,19 @@ function card(p, lazy = true) {
 function extCard(p) {
   return `<a class="ext" href="${p.external}" target="_blank" rel="noopener"><img src="${p.image}-750.webp" srcset="${p.image}-400.webp 400w, ${p.image}-750.webp 750w" sizes="(max-width:800px) 50vw, 280px" width="750" height="750" loading="lazy" alt="${esc(p.alt)}"><div class="ext-body"><h3>${esc(p.name)}</h3><span class="price">${esc(p.priceLabel)}</span><span class="ext-buy">Buy Now →</span></div></a>`;
 }
+// Products sold through the 799 cart, as a tile on a category page (same layout as the apparel tiles).
+// The tile links to the product page, which has the options and the Add to cart button.
+function tile(p) {
+  const url = prodUrl(p);
+  const img = p.colors
+    ? (c => ({ src: `/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp`, srcset: `/images/optimized/tuffjug-5gal-${c.img}-spout-480.webp 480w, /images/optimized/tuffjug-5gal-${c.img}-spout-900.webp 900w`, alt: `${p.name} in ${c.name} with Auto-Stop Spout` }))(p.colors.find(x => x.name === p.defaultColor))
+    : (i => ({ src: i.src, srcset: i.src480 ? `${i.src480} 480w, ${i.src} ${i.w}w` : '', alt: i.alt }))(p.images[0]);
+  return `<a class="ext" href="${url}"><img src="${img.src}"${img.srcset ? ` srcset="${img.srcset}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(img.alt)}"><div class="ext-body"><h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span></div></a>`;
+}
 function grid(list) {
   const cartList = list.filter(p => p.cart), ext = list.filter(p => p.external);
   let html = '';
-  if (cartList.length) html += `<div class="store-grid">\n${cartList.map(p => card(p)).join('\n')}\n</div>`;
+  if (cartList.length) html += `<div class="ext-grid">${cartList.map(tile).join('')}</div>`;
   if (ext.length) {
     const groups = [...new Set(ext.map(p => p.group || ''))];
     html += groups.map(g => `${g ? `<div class="group-label">${esc(g)}</div>` : ''}<div class="ext-grid">${ext.filter(p => (p.group || '') === g).map(extCard).join('')}</div>`).join('\n');
@@ -265,10 +274,9 @@ fill('categories', live.map((c, i) => {
   return n ? `<a class="cat" href="${catUrl(c)}"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Shop ${n} ${n === 1 ? 'item' : 'items'} →</span></a>`
     : `<div class="cat soon"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Coming soon</span></div>`;
 }).join('\n'));
-const featured = cartProducts.filter(p => p.featured);
-fill('featured', `<div class="store-grid">\n${featured.map((p, i) => card(p, i > 1)).join('\n')}\n</div>`);
-fill('jsonld', ldScript({ '@context': 'https://schema.org', '@type': 'ItemList', name: 'Paddock Store: featured gear',
-  itemListElement: featured.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(prodUrl(p)), name: p.name })) }));
+// Structured data for the store front: the category pages it links to.
+fill('jsonld', ldScript({ '@context': 'https://schema.org', '@type': 'ItemList', name: 'Paddock Store categories',
+  itemListElement: live.map((c, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(catUrl(c)), name: c.name })) }));
 fill('cart', cartBlock);
 fs.writeFileSync(path.join(ROOT, 'paddock.html'), home);
 written.push('paddock.html');

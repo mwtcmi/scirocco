@@ -208,8 +208,8 @@ test('track-table checkout: free, no phone or address, table wording, and a tabl
 
 test('cancelled checkout returns to the store page the buyer came from, and only under /paddock', async t => {
   const s = service(t);
-  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: '/paddock/fuel-fluids/tuff-spout/', items: [{ product: 'tuffspout', qty: 1 }] } });
-  assert.equal(s.sent[0].params.get('cancel_url'), 'https://799motorsport.com/paddock/fuel-fluids/tuff-spout/?order=cancelled');
+  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: '/paddock/tuff-jug/tuff-spout/', items: [{ product: 'tuffspout', qty: 1 }] } });
+  assert.equal(s.sent[0].params.get('cancel_url'), 'https://799motorsport.com/paddock/tuff-jug/tuff-spout/?order=cancelled');
   assert.match(s.sent[0].params.get('success_url'), /^https:\/\/799motorsport\.com\/paddock\?order=success/);
   for (const bad of ['https://evil.example/', '//evil.example', '/returns', '/paddock/../x', '/paddock/a?b=1']) {
     await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: bad, items: [{ product: 'tuffspout', qty: 1 }] } });

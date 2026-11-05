@@ -1,0 +1,3 @@
+/paddock/fuel-fluids /paddock/tuff-jug/ 301
+/paddock/fuel-fluids/ /paddock/tuff-jug/ 301
+/paddock/fuel-fluids/* /paddock/tuff-jug/:splat 301
