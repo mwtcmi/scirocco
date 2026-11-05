@@ -1211,10 +1211,12 @@ footer{
 @media(max-width:800px){.hero{--hero-photo:url("images/optimized/799-hillclimb-1280.webp")}}
 
 /* Results: five cards, newest first. Desktop one row; tablet two columns with the last card spanning both. */
-.results-grid{grid-template-columns:repeat(5,1fr)}
+.results-grid{grid-template-columns:repeat(3,1fr)}
+.results-all{display:inline-block;margin-left:6px;color:var(--green);font-weight:700;text-decoration:none;white-space:nowrap}
+.intro-copy .button{margin-top:10px}
 .results-grid .result p{min-height:3em}
-@media(max-width:1100px){.results-grid{grid-template-columns:1fr 1fr}.results-grid .result:last-child{grid-column:1/-1}.results-grid .result p{min-height:0}}
-@media(max-width:600px){.results-grid .result:last-child{grid-column:auto}}
+@media(max-width:1100px){.results-grid .result p{min-height:0}}
+@media(max-width:800px){.results-grid{grid-template-columns:1fr}}
 .result-event-link{color:inherit;text-decoration:none;text-underline-offset:5px;text-decoration-thickness:2px;transition:color .18s ease}.result-event-link:hover,.result-event-link:focus-visible{color:var(--green);text-decoration:underline}.result-event-link:focus-visible{outline:2px solid var(--green);outline-offset:4px}
 
 /* ============================================================
@@ -1322,8 +1324,8 @@ footer{
     </p>
 
     <div class="hero-actions">
-      <a class="button button-green" href="https://scirocco799.com/mountain-run">Play the Game</a>
-      <a class="button" href="partners.html">Work With 799</a>
+      <a class="button button-green" href="partners.html">Work With 799</a>
+      <a class="button" href="car.html">See The Car</a>
     </div>
 
   </div>
@@ -1394,17 +1396,11 @@ footer{
       </p>
 
       <p>
-        At its heart is a naturally aspirated OBD1 ABA
-        2.0-liter 8-valve breathing through dual 40mm Weber
-        DCOE carburetors and driving the front wheels through
-        a Quaife ATB limited-slip differential.
+        Naturally aspirated, front-wheel drive and about 1,600 lb.
+        Race it, learn from it, improve it and go faster.
       </p>
 
-      <p>
-        The car competes in Hill Climb, Time Trial and Track
-        Sprint events. The development philosophy is simple:
-        race it, learn from it, improve it and go faster.
-      </p>
+      <a class="button" href="car.html">Full Build Specs</a>
 
     </div>
 
@@ -1508,9 +1504,9 @@ footer{
       </div>
 
       <p>
-        799 competes across multiple forms of motorsport,
-        with podium finishes in hill climb and track sprint
-        competition and an FTD at Waumandee.
+        Podium finishes in hill climb and track sprint,
+        and the fastest time of the day at Waumandee.
+        <a class="results-all" href="racing.html">All results &rarr;</a>
       </p>
 
     </div>
@@ -1582,48 +1578,6 @@ footer{
       </article>
 
 
-      <article class="result dark">
-
-        <div class="result-place">
-          P<span>2</span>
-        </div>
-
-        <div class="result-year">
-          2025
-        </div>
-
-        <h3>
-          Grattan Fall Track Sprints
-        </h3>
-
-        <p>
-          SMF Category | 94.817
-        </p>
-
-      </article>
-
-
-      <article class="result">
-
-        <div class="result-place">
-          F<span>TD</span>
-        </div>
-
-        <div class="result-year">
-          2025
-        </div>
-
-        <h3>
-          Waumandee Time Trials
-        </h3>
-
-        <p>
-          Personal Best | 2:42.69
-        </p>
-
-      </article>
-
-
     </div>
 
   </div>
@@ -1631,310 +1585,13 @@ footer{
 </section>
 
 
-<!-- ============================================================
-     COMPETITION
-     ============================================================ -->
 
-<section class="competition">
 
-  <div class="wrap">
 
-    <div class="competition-head">
 
-      <div class="kicker">
-        Competition
-      </div>
 
-      <h2>
-        Three Disciplines.<br>
-        One Car.
-      </h2>
 
-    </div>
 
-
-    <div class="disciplines">
-
-
-      <div class="discipline">
-
-        <div class="discipline-number">
-          01
-        </div>
-
-        <h3>Hill Climb</h3>
-
-        <p>
-          Closed-road competition against the clock.
-          One run, one road and no room to waste time.
-        </p>
-
-      </div>
-
-
-      <div class="discipline">
-
-        <div class="discipline-number">
-          02
-        </div>
-
-        <h3>Time Trial</h3>
-
-        <p>
-          Competition built around finding the fastest
-          possible time from driver and machine.
-        </p>
-
-      </div>
-
-
-      <div class="discipline">
-
-        <div class="discipline-number">
-          03
-        </div>
-
-        <h3>Track Sprint</h3>
-
-        <p>
-          Point-to-point track competition rewarding
-          pace, precision and clean execution.
-        </p>
-
-      </div>
-
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- ============================================================
-     BUILD
-     ============================================================ -->
-
-<section class="build" id="build">
-
-  <div class="wrap">
-
-    <div class="build-head">
-
-      <div>
-
-        <div class="kicker">
-          The Build
-        </div>
-
-        <h2>
-          Simple.<br>
-          Light.<br>
-          Fast.
-        </h2>
-
-      </div>
-
-      <p class="build-lead">
-        Naturally aspirated. Front-wheel drive. Mechanical.
-        A competition package focused on response, grip and
-        making the most of a lightweight Mk1 chassis.
-      </p>
-
-    </div>
-
-
-    <div class="build-grid">
-
-
-      <div class="build-card">
-
-        <span class="label">
-          Power
-        </span>
-
-        <h3>Engine</h3>
-
-        <ul class="spec-list">
-
-          <li>
-            <strong>Engine</strong>
-            <span>OBD1 ABA 2.0L 8V</span>
-          </li>
-
-          <li>
-            <strong>Head</strong>
-            <span>1.8L 8V</span>
-          </li>
-
-          <li>
-            <strong>Induction</strong>
-            <span>Dual 40mm Weber DCOE carburetors</span>
-          </li>
-
-          <li>
-            <strong>Valvetrain</strong>
-            <span>Dbilas Dynamic performance camshaft and valve springs</span>
-          </li>
-
-          <li>
-            <strong>Bottom End</strong>
-            <span>Techtonics/Supertech forged pistons</span>
-          </li>
-
-          <li>
-            <strong>Exhaust</strong>
-            <span>Techtonics Stainless Race Header - Muffled</span>
-          </li>
-
-        </ul>
-
-      </div>
-
-
-      <div class="build-card">
-
-        <span class="label">
-          Putting It Down
-        </span>
-
-        <h3>Drivetrain</h3>
-
-        <ul class="spec-list">
-
-          <li>
-            <strong>Layout</strong>
-            <span>Front-engine / Front-wheel drive</span>
-          </li>
-
-          <li>
-            <strong>Transmission</strong>
-            <span>Volkswagen 020 manual</span>
-          </li>
-
-          <li>
-            <strong>Differential</strong>
-            <span>Quaife ATB limited-slip differential</span>
-          </li>
-
-          <li>
-            <strong>Focus</strong>
-            <span>Mechanical grip and corner-exit traction</span>
-          </li>
-
-        </ul>
-
-      </div>
-
-
-      <div class="build-card">
-
-        <span class="label">
-          Chassis
-        </span>
-
-        <h3>Suspension</h3>
-
-        <ul class="spec-list">
-
-          <li>
-            <strong>Coilovers</strong>
-            <span>Ground Control / Koni</span>
-          </li>
-
-          <li>
-            <strong>Front</strong>
-            <span>Ground Control camber/caster plates</span>
-          </li>
-
-          <li>
-            <strong>Control Arms</strong>
-            <span>Tech-53 tubular control arms</span>
-          </li>
-
-          <li>
-            <strong>Setup</strong>
-            <span>Fully adjustable competition suspension</span>
-          </li>
-
-        </ul>
-
-      </div>
-
-
-      <div class="build-card">
-
-        <span class="label">
-          Grip + Control
-        </span>
-
-        <h3>Brakes &amp; Tires</h3>
-
-        <ul class="spec-list">
-
-          <li>
-            <strong>Brakes</strong>
-            <span>Girling 60 front (Corrado G60)</span>
-          </li>
-
-          <li>
-            <strong>Bias</strong>
-            <span>Proportioning by Tilton</span>
-          </li>
-
-          <li>
-            <strong>Tires</strong>
-            <span>Hoosier A7</span>
-          </li>
-
-          <li>
-            <strong>Wheels</strong>
-            <span>15" - Vintage ATS Mesh and Ronal R8</span>
-          </li>
-
-        </ul>
-
-      </div>
-
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- ============================================================
-     NUMBERS
-     ============================================================ -->
-
-<section class="numbers">
-
-  <div class="wrap numbers-grid">
-
-    <div class="number">
-      <strong>1976</strong>
-      <span>Model Year</span>
-    </div>
-
-    <div class="number">
-      <strong>2.0L</strong>
-      <span>Naturally Aspirated</span>
-    </div>
-
-    <div class="number">
-      <strong>~1,600</strong>
-      <span>Race Weight</span>
-    </div>
-
-    <div class="number">
-      <strong>799</strong>
-      <span>Competition Number</span>
-    </div>
-
-  </div>
-
-</section>
 
 
 <!-- ============================================================
@@ -1992,13 +1649,6 @@ footer{
             FreePBX.org
           </a>
 
-          <a
-            href="https://groundcontrolstore.com/"
-            target="_blank"
-            rel="noopener">
-            Ground Control
-          </a>
-
         </div>
 
       </div>
@@ -2036,15 +1686,7 @@ footer{
       </div>
 
       <p>
-        Partnerships can include product integration, installation and development content, competition updates, social media, vehicle branding and event exposure.
-      </p>
-
-      <p>
-        The audience is bigger than spectators. The paddock is full of competitors who buy parts, tools, tires, safety equipment, cameras, data systems and everything else it takes to go racing. 799 gives partners a credible way to put useful products in front of that community.
-      </p>
-
-      <p>
-        The goal is long-term relationships built around products we actually use, stories worth telling and activation that goes well beyond a sticker on the car.
+        Your logo on the car, your product used at every event, and posts about it all season. The paddock is full of racers who buy parts, tools and gear, and 799 puts your brand in front of them.
       </p>
 
       <a class="button button-green" href="partners.html">Explore Partnerships</a>
@@ -2088,19 +1730,7 @@ footer{
         Tools, fuel equipment, tire gear, trailer equipment and the small things that make race weekends work. If it is here, it earns its place in the 799 paddock.
       </p>
 
-      <div class="merch-items">
-
-        <span>Tools</span>
-        <span>Fuel &amp; Fluids</span>
-        <span>Tire &amp; Wheel</span>
-        <span>Trailer</span>
-        <span>Trackside</span>
-        <span>Cameras &amp; Data</span>
-
-      </div>
-
       <a class="button button-green" href="paddock.html">Explore The Paddock Store</a>
-      <a class="button" href="/paddock/apparel/">Shop 799 Apparel</a>
 
     </div>
 
@@ -2110,7 +1740,7 @@ footer{
 
 
 <!-- ============================================================
-     CTA
+     799 APPAREL
      ============================================================ -->
 
 <section class="feature-product" id="shop">
@@ -2130,40 +1760,7 @@ footer{
   </div>
 </section>
 
-<section class="cta" id="work-with-799">
 
-  <div class="wrap">
-
-    <div class="kicker">
-      Partnerships
-    </div>
-
-    <h2>
-      Put Your Brand<br>
-      In The <span>Paddock.</span>
-    </h2>
-
-    <p>
-      Put your product where it can be used, tested, talked about and seen. 799 is building a focused group of partners around real competition, paddock engagement and content throughout the season.
-    </p>
-
-    <div class="cta-buttons">
-
-      <a
-        class="button"
-        href="https://www.instagram.com/scirocco.799/"
-        target="_blank"
-        rel="noopener">
-        Follow @scirocco.799
-      </a>
-
-      <a class="button button-green" href="partners.html">Work With 799</a>
-
-    </div>
-
-  </div>
-
-</section>
 
 
 <!-- ============================================================
