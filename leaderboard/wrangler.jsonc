@@ -1,0 +1,14 @@
+// Cloudflare config for the Mountain Run leaderboard Worker. GitHub Actions deploys it on push to main
+// (.github/workflows/workers.yml). Database changes go in migrations/ as numbered files.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "scirocco799-leaderboard",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-15",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true } },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "scirocco799-leaderboard", "database_id": "21b29a2b-c27b-4e01-953c-e64804bae12d", "migrations_dir": "migrations" }
+  ]
+}

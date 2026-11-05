@@ -2,7 +2,8 @@
 // Product facts come from window.PADDOCK (written by scripts/build-store.mjs from store/catalog.json);
 // prices and stock come live from the store Worker, which is also what checkout charges.
 (function(){
-var API='https://scirocco799-store.mr-mikewhite.workers.dev';
+// Live site uses the live store; preview links (*.pages.dev) and local copies use the test store (Stripe test mode).
+var API=/(^|\.)(799motorsport|scirocco799)\.com$/.test(location.hostname)?'https://scirocco799-store.mr-mikewhite.workers.dev':'https://scirocco799-store-test.mr-mikewhite.workers.dev';
 var P=window.PADDOCK||{jug:null,names:{},addons:[]};
 var J=P.jug,HEX={},IDS={},IMG={};
 if(J)J.colors.forEach(function(c){HEX[c.name]=c.hex;IDS[c.name]=[c.sku,c.upc];IMG[c.name]=c.img});

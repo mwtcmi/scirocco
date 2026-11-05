@@ -1,0 +1,31 @@
+// Cloudflare config for the Paddock Store Worker. GitHub Actions deploys it (.github/workflows/workers.yml):
+//   push to main    -> live store  "scirocco799-store"      (Stripe live keys, database scirocco799-store)
+//   push to preview -> test store  "scirocco799-store-test" (Stripe test keys, database scirocco799-store-test)
+// Secrets (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY) are set in Cloudflare, never here;
+// deploys keep them. Database changes go in migrations/ as numbered files and are applied before each deploy.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "scirocco799-store",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-03",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true } },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "scirocco799-store", "database_id": "acffdb53-41aa-4a51-a4fc-7a4c50711baa", "migrations_dir": "migrations" }
+  ],
+  "vars": { "STRIPE_TAX": "on" },
+  "env": {
+    "test": {
+      "name": "scirocco799-store-test",
+      "workers_dev": true,
+      "preview_urls": false,
+      "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true } },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "scirocco799-store-test", "database_id": "33c6396a-1344-4c34-825f-a1e57732f29f", "migrations_dir": "migrations" }
+      ],
+      // Stripe Tax is off in the test store (test mode has no tax registrations). Preview links may call it.
+      "vars": { "STRIPE_TAX": "off", "ALLOWED_ORIGINS": "https://preview.scirocco-4s4.pages.dev,http://127.0.0.1:8799,http://localhost:8788" }
+    }
+  }
+}

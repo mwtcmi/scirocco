@@ -3,10 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Exercise the Worker's real parameterized SQL against SQLite, including atomic batches.
-function database(schemaFile = '../../leaderboard/schema.sql') {
+// schemaDir holds the numbered D1 migrations (0001_*.sql, 0002_*.sql, ...), applied in order.
+function database(schemaDir = '../../leaderboard/migrations') {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys = ON');
-  const schema = fs.readFileSync(path.join(__dirname, schemaFile), 'utf8');
+  const dir = path.join(__dirname, schemaDir);
+  const schema = fs.readdirSync(dir).filter(f => /^\d+_.*\.sql$/.test(f)).sort().map(f => fs.readFileSync(path.join(dir, f), "utf8")).join("\n");
   sqlite.exec(schema);
   const db = {
     prepare(sql) {

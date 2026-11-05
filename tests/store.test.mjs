@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import * as worker from '../store/worker.mjs';
 import { createWorker, priceWarnings, verifySignature, orderEmail } from '../store/worker.mjs';
 
 const require = createRequire(import.meta.url);
@@ -9,7 +11,7 @@ const { database } = require('./helpers/d1.cjs');
 const SECRET = 'whsec_test123';
 
 function service(t, { key = 'rk_test_abc', stripeStatus = 200, emailStatus = 200 } = {}) {
-  const storage = database('../../store/schema.sql'); t.after(storage.close);
+  const storage = database('../../store/migrations'); t.after(storage.close);
   let time = 1800000000000; const sent = [];
   const stripeFetch = async (url, init) => { sent.push({ url, init, params: new URLSearchParams(init.body.toString()) });
     return new Response(JSON.stringify(stripeStatus === 200 ? { id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' } : { error: { message: 'nope' } }), { status: stripeStatus }); };
@@ -215,4 +217,17 @@ test('cancelled checkout returns to the store page the buyer came from, and only
     await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: bad, items: [{ product: 'tuffspout', qty: 1 }] } });
     assert.equal(s.sent.at(-1).params.get('cancel_url'), 'https://799motorsport.com/paddock?order=cancelled', bad);
   }
+});
+
+test('checkout catalog comes from store/catalog.json: every cart product priced, at or above MAP', async () => {
+  const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url), 'utf8'));
+  const cart = file.products.filter(p => p.cart);
+  assert.deepEqual(Object.keys(worker.CATALOG).sort(), cart.map(p => p.cart).sort());
+  for (const p of cart) {
+    const c = worker.CATALOG[p.cart];
+    assert.equal(c.cents, Math.round(Number(p.price) * 100), p.cart + ' price');
+    assert.ok(typeof p.map === 'number' && c.map <= c.cents, p.cart + ' needs a map at or below price');
+    assert.ok(p.checkoutNote, p.cart + ' needs a checkoutNote');
+  }
+  assert.deepEqual(worker.priceWarnings(), []);
 });

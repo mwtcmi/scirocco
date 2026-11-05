@@ -65,7 +65,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=3"></script>`;
+<script src="/paddock-store.js?v=4"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };

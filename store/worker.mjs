@@ -1,29 +1,32 @@
-// Paste this entire file into Cloudflare's Worker editor for scirocco799-store.
+// Store Worker for scirocco799-store. Deployed by GitHub Actions from store/wrangler.jsonc (see store/README.md).
 // Bindings: D1 database as DB. Secrets: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET.
 // Optional secret: RESEND_API_KEY (branded order confirmation emails through Resend).
 // Optional variables: STRIPE_TAX=on (Stripe Tax), ALLOWED_ORIGINS (extra comma-separated origins),
 // ORDER_FROM (sender, default orders@scirocco799.com), ORDER_COPY=off (stop the copy to Mike),
 // SAMPLE_EMAILS=on (temporarily lets /api/sample-emails send three sample confirmations to Mike only).
 
-// ---- Catalog: prices in cents, MSRP from the Tuff Jug price list. MAP = MSRP - 15%. ----
+// ---- Catalog: built from store/catalog.json, the one product list for the site and checkout. ----
+// Prices in cents. map = minimum advertised price (Tuff Jug policy: MSRP - 15%).
+import catalogFile from './catalog.json' with { type: 'json' };
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
   table: { cents: 0, label: 'At the 799 table: paid and collected in person' }
 });
-export const CATALOG = Object.freeze({
-  jug: {
-    name: 'Tuff Jug 5 Gallon Utility Jug', description: 'Auto-Stop Spout, view strip', cents: 4599, map: 3909,
-    colors: ['Red', 'White', 'Yellow', 'Kawi Green', 'Orange', 'Black'],
-    skus: { 'Red': 'RUASVS20', 'White': 'WUASVS20', 'Yellow': 'YUASVS20', 'Kawi Green': 'KUASVS20', 'Orange': 'OUAS20VS', 'Black': 'BLKUASVS20' }
-  },
-  pump: { name: 'Tuff Jug Electric Transfer Pump', description: 'Includes Tuff Jug adapter', cents: 7499, map: 6374, sku: 'LTP' },
-  ripper: { name: 'Tuff Jug Black Ripper Cap, 5 Gallon', description: 'Fits 5 gallon Tuff Jugs', cents: 2745, map: 2333, sku: 'BLKR20' },
-  tuffspout: { name: 'Tuff Jug Tuff Spout with Auto Stop, 5 Gallon', description: 'Stays flexible from -22°F to 200°F', cents: 2499, map: 2124, sku: 'TUFFSPOUT' },
-  // Tuff Jug gave MSRP only; MAP is held at MSRP until they confirm one.
-  spoutbender: { name: 'Tuff Jug Spout Bender', description: 'Holds the Tuff Spout in a bend', cents: 799, map: 799, sku: 'SpoutBender' }
-});
-export const ADDONS = ['pump', 'ripper', 'tuffspout', 'spoutbender'];
+const cents = v => Math.round(Number(v) * 100);
+export function buildCatalog(file) {
+  const out = {};
+  for (const p of file.products) {
+    if (!p.cart) continue;
+    const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price) };
+    if (p.colors) { item.colors = p.colors.map(c => c.name); item.skus = Object.fromEntries(p.colors.map(c => [c.name, c.sku])); }
+    else if (p.sku) item.sku = p.sku;
+    out[p.cart] = item;
+  }
+  return out;
+}
+export const CATALOG = Object.freeze(buildCatalog(catalogFile));
+export const ADDONS = Object.keys(CATALOG).filter(k => k !== 'jug');
 
 const ORIGINS = ['https://799motorsport.com', 'https://www.799motorsport.com', 'https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const SITE = 'https://799motorsport.com';

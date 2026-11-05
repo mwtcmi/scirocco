@@ -42,7 +42,7 @@ function service(t) {
 
 test('schema creates all tables when the D1 console collapses pasted SQL onto one line', t => {
   const sqlite = new DatabaseSync(':memory:'); t.after(() => sqlite.close());
-  const schema = fs.readFileSync(new URL('../leaderboard/schema.sql', import.meta.url), 'utf8');
+  const schema = fs.readFileSync(new URL('../leaderboard/migrations/0001_initial.sql', import.meta.url), 'utf8');
   sqlite.exec(schema.replace(/\s+/g, ' '));
   assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table'").get().n, 5);
   assert.equal(sqlite.prepare('SELECT version FROM leaderboard_meta WHERE id = 1').get().version, 1);

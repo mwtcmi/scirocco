@@ -1,5 +1,5 @@
 {
-  "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the category tiles on paddock.html. Prices shown here are display prices; checkout charges the prices in store/worker.mjs (CATALOG), so a new or changed cart product also needs the Worker updated. External products link out and never enter the cart.",
+  "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the category tiles on paddock.html. Prices here are what checkout charges: the store Worker builds its catalog from this file (price, map = minimum advertised price, checkoutNote = the line under the item in Stripe). A price change deploys automatically when pushed to main. External products link out and never enter the cart.",
   "seller": "799 Motorsport LLC",
   "categories": [
     { "slug": "tools", "name": "Tools", "blurb": "Hand tools, cordless tools, storage and the things that get repairs done." },
@@ -17,7 +17,7 @@
   ],
   "products": [
     {
-      "slug": "tuff-jug-5-gallon", "category": "tuff-jug", "cart": "jug", "featured": true,
+      "slug": "tuff-jug-5-gallon", "category": "tuff-jug", "cart": "jug", "map": 39.09, "checkoutNote": "Auto-Stop Spout, view strip", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug 5 Gallon Utility Jug", "short": "Tuff Jug 5 Gallon", "price": "45.99",
       "desc": "Five gallons with the Auto-Stop Spout, internal venting and a clear view strip for fast, controlled pours.",
       "about": "The 5 gallon Tuff Jug is the jug in the 799 trailer: multi-layer HDPE, a 1 in NPT spout thread and a clear view strip so you can see the level without opening it. It comes with the Auto-Stop Spout, which vents internally and stops the pour when the tank is full. Swap in the Black Ripper Cap for maximum flow, or the flexible Tuff Spout for awkward fillers.",
@@ -35,7 +35,7 @@
       "idNote": "5 gallon jugs are the view-strip (VS) models."
     },
     {
-      "slug": "electric-transfer-pump", "category": "tuff-jug", "cart": "pump", "featured": true,
+      "slug": "electric-transfer-pump", "category": "tuff-jug", "cart": "pump", "map": 63.74, "checkoutNote": "Includes Tuff Jug adapter", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug Electric Transfer Pump", "short": "Electric Transfer Pump", "price": "74.99",
       "desc": "Hands-free transfer with one button and automatic shutoff. Includes the Tuff Jug adapter. Fits current Tuff Jugs.",
       "about": "Battery electric transfer pump with automatic shutoff, so you can fill without lifting a full jug over the car. One button to run, and it stops itself when the tank is full. Includes the Tuff Jug adapter and fits current Tuff Jugs.",
@@ -47,7 +47,7 @@
       "color": "Red", "sku": "LTP", "upc": "790019889672"
     },
     {
-      "slug": "black-ripper-cap", "category": "tuff-jug", "cart": "ripper", "featured": true,
+      "slug": "black-ripper-cap", "category": "tuff-jug", "cart": "ripper", "map": 23.33, "checkoutNote": "Fits 5 gallon Tuff Jugs", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug Black Ripper Cap, 5 Gallon", "short": "Black Ripper Cap", "price": "27.45",
       "desc": "Tuff Jug's maximum-flow pour cap. Swaps onto any 5 gallon Tuff Jug in place of the Auto-Stop Spout.",
       "about": "The Ripper Cap is Tuff Jug's maximum-flow pour cap. It threads onto any 5 gallon Tuff Jug in place of the Auto-Stop Spout when you want the jug empty fast.",
@@ -58,7 +58,7 @@
       "color": "Black", "sku": "BLKR20", "upc": "735345298644"
     },
     {
-      "slug": "tuff-spout", "category": "tuff-jug", "cart": "tuffspout", "featured": true,
+      "slug": "tuff-spout", "category": "tuff-jug", "cart": "tuffspout", "map": 21.24, "checkoutNote": "Stays flexible from -22°F to 200°F", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug Tuff Spout with Auto Stop, 5 Gallon", "short": "Tuff Spout", "price": "24.99",
       "desc": "Flexible hose spout with Auto Stop. Stays flexible from −22°F to 200°F and won't yellow, harden or crack.",
       "about": "A flexible hose spout with Auto Stop for 5 gallon Tuff Jugs, for fillers the stock spout can't reach. It stays flexible from −22°F to 200°F, with a nitrile inner layer, a UV and weather resistant outer layer, internal venting and a multi O-ring seal.",
@@ -70,7 +70,7 @@
       "color": "Black", "sku": "TUFFSPOUT", "upc": "790019889733"
     },
     {
-      "slug": "spout-bender", "category": "tuff-jug", "cart": "spoutbender",
+      "slug": "spout-bender", "category": "tuff-jug", "cart": "spoutbender", "map": 7.99, "checkoutNote": "Holds the Tuff Spout in a bend",
       "brand": "Tuff Jug", "name": "Tuff Jug Spout Bender", "short": "Spout Bender", "price": "7.99",
       "desc": "A curved clip that holds the flexible Tuff Spout in a bend, so the pour lands where the filler is.",
       "about": "The Spout Bender is a rigid curved clip from Tuff Jug. Press the flexible Tuff Spout into its open channel and it holds the hose in a set bend, for fillers that sit at an awkward angle.",

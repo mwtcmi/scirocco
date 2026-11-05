@@ -1,5 +1,7 @@
 # Shared Mountain Run podiums
 
+**Deploys:** GitHub Actions deploys this Worker on every push to `main` that changes `leaderboard/` ([.github/workflows/workers.yml](../.github/workflows/workers.yml), config in [wrangler.jsonc](wrangler.jsonc)). Database changes go in [migrations/](migrations/) as new numbered files. The dashboard steps below are the original manual setup, kept for reference. Don't paste code into the Cloudflare editor anymore, because the next deploy overwrites it.
+
 The game uses `https://scirocco799-leaderboard.mr-mikewhite.workers.dev`. The Worker uses the existing D1 binding named **DB**. Website hosting and the main website pages stay unchanged.
 
 ## Update an existing installation to V6
@@ -11,7 +13,7 @@ Until the Worker is updated, V6 still races and saves device bests, while shared
 ## Publish through the Cloudflare dashboard
 
 1. Open **D1 SQLite Database → scirocco799-leaderboard → Console**.
-2. Copy the entire contents of [schema.sql](schema.sql), paste into the SQL console, and run it. It creates the tables without deleting existing records; rerunning it is safe.
+2. Copy the entire contents of [migrations/0001_initial.sql](migrations/0001_initial.sql), paste into the SQL console, and run it. It creates the tables without deleting existing records; rerunning it is safe.
 3. Open **Workers & Pages → scirocco799-leaderboard → Edit code**.
 4. Replace the connection-test code with the entire contents of [worker.mjs](worker.mjs). This is a self-contained JavaScript module; it needs no package installation or other files in the Worker editor.
 5. Click **Deploy**, then **Visit**. Expect:
