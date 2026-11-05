@@ -11,7 +11,8 @@ import catalogFile from './catalog.json' with { type: 'json' };
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
-  table: { cents: 0, label: 'At the 799 table: paid and collected in person' }
+  table: { cents: 0, label: 'At the 799 table: paid and collected in person' },
+  event: { cents: 0, label: 'Paddock pickup at the event' }
 });
 const cents = v => Math.round(Number(v) * 100);
 export function buildCatalog(file) {
@@ -32,6 +33,28 @@ const ORIGINS = ['https://799motorsport.com', 'https://www.799motorsport.com', '
 const SITE = 'https://799motorsport.com';
 const RETURN_PATH = '/paddock';
 const MAX_LINES = 10, MAX_QTY = 10, MAX_BODY = 8192, SIG_TOLERANCE = 300;
+
+// ---- Events (managed in Pitwall): paddock pickup and the "We'll be at..." line ----
+// Event dates are local calendar dates in Michigan time, YYYY-MM-DD.
+export function localDate(ms) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Detroit', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export function eventDates(e) {
+  const [y1, m1, d1] = e.starts.split('-').map(Number), [y2, m2, d2] = e.ends.split('-').map(Number);
+  if (e.starts === e.ends) return MONTHS[m1 - 1] + ' ' + d1 + ', ' + y1;
+  if (y1 === y2 && m1 === m2) return MONTHS[m1 - 1] + ' ' + d1 + '–' + d2 + ', ' + y1;
+  return MONTHS[m1 - 1] + ' ' + d1 + (y1 === y2 ? '' : ', ' + y1) + ' – ' + MONTHS[m2 - 1] + ' ' + d2 + ', ' + y2;
+}
+// Upcoming events (not over yet). open = still taking order-ahead pickups.
+export async function upcomingEvents(db, today) {
+  const { results } = await db.prepare('SELECT id, name, starts, ends, place, order_by FROM events WHERE active = 1 AND ends >= ? ORDER BY starts, name LIMIT 12').bind(today).all();
+  return results.map(e => ({ id: e.id, name: e.name, starts: e.starts, ends: e.ends, place: e.place, orderBy: e.order_by, dates: eventDates(e), open: today <= e.order_by }));
+}
+async function eventRow(db, id) {
+  if (typeof id !== 'string' || !/^[a-z0-9-]{1,64}$/.test(id)) return null;
+  return db.prepare('SELECT * FROM events WHERE id = ?').bind(id).first();
+}
 
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
@@ -79,8 +102,9 @@ function form(params) {
   return body;
 }
 
-export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelBase = returnBase) {
+export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelBase = returnBase, event = null) {
   const ship = fulfillment === 'ship', rate = SHIPPING[fulfillment];
+  const rateLabel = fulfillment === 'event' && event ? 'Paddock pickup: ' + event.name + ', ' + eventDates(event) : rate.label;
   const items = lines.map(l => l.product === 'jug' ? { p: 'jug', c: l.color, q: l.qty } : { p: l.product, q: l.qty });
   const p = {
     mode: 'payment',
@@ -90,15 +114,18 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     excluded_payment_method_types: ['affirm', 'klarna'], // no pay-later: they cost about 6% a sale
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
       product_data: { name: l.name, description: l.description } } })),
-    shipping_options: [{ shipping_rate_data: { type: 'fixed_amount', display_name: rate.label,
+    shipping_options: [{ shipping_rate_data: { type: 'fixed_amount', display_name: rateLabel,
       fixed_amount: { amount: rate.cents, currency: 'usd' } } }],
-    metadata: { items: JSON.stringify(items), fulfillment },
-    payment_intent_data: { description: '799 Motorsport store order', metadata: { fulfillment } }
+    metadata: { items: JSON.stringify(items), fulfillment, ...(event ? { event_id: event.id, event: event.name } : {}) },
+    payment_intent_data: { description: '799 Motorsport store order', metadata: { fulfillment, ...(event ? { event: event.name } : {}) } }
   };
   const policy = 'All sales final. Wrong or damaged items and warranty help: 799motorsport.com/returns';
   if (ship) {
     p.shipping_address_collection = { allowed_countries: ['US'] };
     p.custom_text = { submit: { message: policy } };
+  } else if (fulfillment === 'event' && event) {
+    p.phone_number_collection = { enabled: 'true' };
+    p.custom_text = { submit: { message: 'Pick up in the 799 paddock at ' + event.name + ' (' + eventDates(event) + (event.place ? ', ' + event.place : '') + "). We'll email you where to find us. " + policy } };
   } else if (fulfillment === 'table') {
     p.custom_text = { submit: { message: 'Paying at the 799 table. Show the confirmation screen to collect your gear. ' + policy } };
   } else {
@@ -137,8 +164,10 @@ async function recordOrder(db, session, now) {
   try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
   const lines = items.map(i => priceLine(i.p === 'jug' ? { product: 'jug', color: i.c, qty: i.q } : { product: i.p, qty: i.q }));
   const need = needs(lines);
-  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .bind(session.id, now, session.livemode ? 1 : 0, session.metadata?.fulfillment || 'unknown', session.customer_details?.email || null, session.amount_total ?? null, JSON.stringify(items))];
+  const who = session.customer_details || {}, shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
+  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(session.id, now, session.livemode ? 1 : 0, session.metadata?.fulfillment || 'unknown', who.email || null, session.amount_total ?? null, JSON.stringify(items),
+      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null)];
   for (const [k, q] of Object.entries(need)) statements.push(db.prepare('UPDATE stock SET qty = MAX(qty - ?, 0), updated_at = ? WHERE key = ?').bind(q, now, k));
   try { await db.batch(statements); return 'recorded'; }
   catch (e) { if (/UNIQUE|PRIMARY KEY|constraint/i.test(String(e?.message))) return 'duplicate'; throw e; }
@@ -158,10 +187,10 @@ function sessionLines(session) {
 
 export function orderNumber(session) { return '799-' + String(session.id || '').slice(-8).toUpperCase(); }
 
-export function orderEmail(session) {
+export function orderEmail(session, event = null) {
   const lines = sessionLines(session);
   const who = session.customer_details || {};
-  const how = session.metadata?.fulfillment, table = how === 'table', pickup = how !== 'ship' && !table;
+  const how = session.metadata?.fulfillment, table = how === 'table', atEvent = how === 'event', pickup = how !== 'ship' && !table;
   const shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
   const td = session.total_details || {};
   const subtotal = session.amount_subtotal ?? lines.reduce((t, l) => t + l.cents * l.qty, 0);
@@ -170,13 +199,17 @@ export function orderEmail(session) {
   const number = orderNumber(session), first = String(who.name || '').trim().split(/\s+/)[0];
   const a = shipTo?.address || {};
   const address = shipTo ? [shipTo.name, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', ') + ' ' + (a.postal_code || '')].filter(v => v && v.trim()) : [];
+  const eventName = event?.name || session.metadata?.event || 'the event';
   const next = table
     ? 'Paid at the 799 table. Show this email or your confirmation screen to collect your gear.'
+    : atEvent
+    ? 'Your order will be waiting in the 799 paddock at ' + eventName + (event ? ' (' + eventDates(event) + (event.place ? ', ' + event.place : '') + ')' : '') + '. ' +
+      (event?.where_to_find ? 'Find us: ' + event.where_to_find + '. ' : "We'll email you where to find us before the event. ") + 'Show this email to collect your gear.'
     : pickup
     ? 'Your order is set for free local pickup in Downtown Traverse City, MI. Reply to this email with a few days and times that work, and Mike will confirm a pickup time and the address.'
     : 'Orders ship within 2 business days. You will get an email from Mike when it is on the way.';
   const totals = [['Subtotal', money(subtotal)], ...(discount ? [['Discount', '-' + money(discount)]] : []),
-    ...(table ? [] : [[pickup ? 'Local pickup' : 'Shipping', shipping ? money(shipping) : 'Free']]), ...(tax ? [['Sales tax', money(tax)]] : [])];
+    ...(table ? [] : [[atEvent ? 'Paddock pickup' : pickup ? 'Local pickup' : 'Shipping', shipping ? money(shipping) : 'Free']]), ...(tax ? [['Sales tax', money(tax)]] : [])];
 
   const row = (l, r, strong) => '<tr><td style="padding:6px 0;color:' + (strong ? '#050505' : '#555') + ';font-weight:' + (strong ? '700' : '400') + '">' + l +
     '</td><td align="right" style="padding:6px 0;color:#050505;font-weight:' + (strong ? '700' : '400') + '">' + r + '</td></tr>';
@@ -209,9 +242,9 @@ export function orderEmail(session) {
   return { to: who.email || null, subject: 'Your Scirocco 799 order ' + number, html, text };
 }
 
-async function sendOrderEmail(env, session, emailFetch) {
+async function sendOrderEmail(env, session, emailFetch, event = null) {
   if (!env.RESEND_API_KEY) return 'off';
-  const mail = orderEmail(session);
+  const mail = orderEmail(session, event);
   if (!mail.to) return 'no-address';
   const body = { from: env.ORDER_FROM || ORDER_FROM, to: [mail.to], reply_to: OWNER_EMAIL, subject: mail.subject, html: mail.html, text: mail.text };
   if (env.ORDER_COPY !== 'off' && mail.to.toLowerCase() !== OWNER_EMAIL) body.bcc = [OWNER_EMAIL];
@@ -284,7 +317,8 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
 
         if (request.method === 'GET' && url.pathname === '/api/catalog') {
           const stock = await stockMap(db);
-          return json({ catalog: CATALOG, shipping: SHIPPING, stock, mode: /_test_/.test(key) ? 'test' : 'live' });
+          const events = await upcomingEvents(db, localDate(now())).catch(() => []);
+          return json({ catalog: CATALOG, shipping: SHIPPING, stock, events, mode: /_test_/.test(key) ? 'test' : 'live' });
         }
 
         if (request.method === 'POST' && url.pathname === '/api/checkout') {
@@ -293,7 +327,13 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           if (text.length > MAX_BODY) throw new APIError(413, 'Request too large.');
           let data; try { data = JSON.parse(text); } catch { throw new APIError(400, 'Invalid request.'); }
           if (!Array.isArray(data.items) || !data.items.length || data.items.length > MAX_LINES) throw new APIError(400, 'Your cart is empty.');
-          if (!['ship', 'pickup', 'table'].includes(data.fulfillment)) throw new APIError(400, 'Choose pickup or shipping.');
+          if (!['ship', 'pickup', 'table', 'event'].includes(data.fulfillment)) throw new APIError(400, 'Choose pickup or shipping.');
+          let event = null;
+          if (data.fulfillment === 'event') {
+            event = await eventRow(db, data.eventId);
+            const today = localDate(now());
+            if (!event || !event.active || today > event.order_by) throw new APIError(400, 'Paddock pickup for that event is closed. Please choose another option.');
+          }
           const lines = data.items.map(priceLine);
           const stock = await stockMap(db), short = [];
           for (const [k, q] of Object.entries(needs(lines))) if ((stock[k] ?? 0) < q) short.push(k);
@@ -303,7 +343,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const back = typeof data.returnPath === 'string' && /^\/paddock(\/[a-z0-9-]+){0,4}\/?$/.test(data.returnPath) ? site + data.returnPath : base;
           const res = await stripeFetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST',
             headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: form(checkoutParams(lines, data.fulfillment, base, env, back)) });
+            body: form(checkoutParams(lines, data.fulfillment, base, env, back, event)) });
           const session = await res.json().catch(() => ({}));
           if (!res.ok || !session.url) { console.log('Stripe error', res.status, JSON.stringify(session.error || session)); throw new APIError(502, 'Checkout is unavailable right now. Please try again.'); }
           return json({ url: session.url });
@@ -317,7 +357,8 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const paid = (event.type === 'checkout.session.completed' && session?.payment_status === 'paid') || event.type === 'checkout.session.async_payment_succeeded';
           if (!paid) return json({ received: true, ignored: event.type });
           const result = await recordOrder(db, session, now());
-          const email = result === 'recorded' ? await sendOrderEmail(env, session, emailFetch) : 'skipped';
+          const pickupEvent = session.metadata?.event_id ? await eventRow(db, session.metadata.event_id).catch(() => null) : null;
+          const email = result === 'recorded' ? await sendOrderEmail(env, session, emailFetch, pickupEvent) : 'skipped';
           return json({ received: true, result, email });
         }
 

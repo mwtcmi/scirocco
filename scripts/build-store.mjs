@@ -56,6 +56,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <div class="upsell" id="upsell" hidden><span>Add to your jug</span><div class="upsell-btns" id="upsell-btns"></div></div>
   <fieldset class="opt get"><legend>How do you want it?</legend>
     <label id="get-table" style="display:none"><input type="radio" name="get" value="table"> <span><strong>Take it now, free</strong><small>Paying here at the 799 table. Show your confirmation screen to collect.</small></span></label>
+    <div id="get-events"></div>
     <label><input type="radio" name="get" value="pickup" checked> <span><strong>Local pickup, free</strong><small>Downtown Traverse City, MI, by appointment. We'll email you to set a time.</small></span></label>
     <label><input type="radio" name="get" value="ship"> <span><strong id="ship-label">Ship to me</strong><small>Lower 48. Address on the next screen.</small></span></label>
   </fieldset>
@@ -65,7 +66,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=4"></script>`;
+<script src="/paddock-store.js?v=5"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };

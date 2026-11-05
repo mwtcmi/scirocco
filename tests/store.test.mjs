@@ -231,3 +231,56 @@ test('checkout catalog comes from store/catalog.json: every cart product priced,
   }
   assert.deepEqual(worker.priceWarnings(), []);
 });
+
+// Clock in these tests: 1800000000000 = 2027-01-15 in Michigan.
+function addEvent(s, e) {
+  s.sqlite.prepare('INSERT INTO events (id, name, starts, ends, place, where_to_find, order_by, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)')
+    .run(e.id, e.name, e.starts, e.ends, e.place || '', e.where || '', e.orderBy, e.active ?? 1);
+}
+
+test('catalog lists upcoming events and which still take paddock pickup orders', async t => {
+  const s = service(t);
+  addEvent(s, { id: 'empire-2027', name: 'Empire Hill Climb', starts: '2027-09-18', ends: '2027-09-19', place: 'Empire, MI', orderBy: '2027-09-15' });
+  addEvent(s, { id: 'pine-2027', name: 'Pine Mountain', starts: '2027-01-16', ends: '2027-01-17', place: 'Kentucky', orderBy: '2027-01-14' });
+  addEvent(s, { id: 'past', name: 'Old', starts: '2026-10-01', ends: '2026-10-02', orderBy: '2026-09-28' });
+  addEvent(s, { id: 'off', name: 'Hidden', starts: '2027-05-01', ends: '2027-05-01', orderBy: '2027-04-28', active: 0 });
+  const r = await s.call('/api/catalog');
+  assert.deepEqual(r.body.events.map(e => [e.id, e.open, e.dates]), [['pine-2027', false, 'Jan 16–17, 2027'], ['empire-2027', true, 'Sep 18–19, 2027']]);
+  assert.equal('where_to_find' in r.body.events[0], false);
+});
+
+test('paddock pickup checkout: open event only, free, phone collected, event in Stripe', async t => {
+  const s = service(t);
+  addEvent(s, { id: 'empire-2027', name: 'Empire Hill Climb', starts: '2027-09-18', ends: '2027-09-19', place: 'Empire, MI', orderBy: '2027-09-15' });
+  addEvent(s, { id: 'closed', name: 'Closed One', starts: '2027-01-20', ends: '2027-01-20', orderBy: '2027-01-10' });
+  const items = [{ product: 'pump', qty: 1 }];
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'event', eventId: 'closed', items } })).status, 400);
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'event', eventId: 'nope', items } })).status, 400);
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'event', items } })).status, 400);
+  const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'event', eventId: 'empire-2027', items } });
+  assert.equal(r.status, 200);
+  const p = s.sent[0].params;
+  assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
+  assert.equal(p.get('shipping_options[0][shipping_rate_data][display_name]'), 'Paddock pickup: Empire Hill Climb, Sep 18–19, 2027');
+  assert.equal(p.get('phone_number_collection[enabled]'), 'true');
+  assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
+  assert.equal(p.get('metadata[event_id]'), 'empire-2027');
+  assert.match(p.get('success_url'), /via=event/);
+  assert.match(p.get('custom_text[submit][message]'), /799 paddock at Empire Hill Climb/);
+});
+
+test('paddock pickup order: saved with the event, buyer details, and an email that says where to find 799', async t => {
+  const s = service(t); s.env.RESEND_API_KEY = 're_test';
+  addEvent(s, { id: 'empire-2027', name: 'Empire Hill Climb', starts: '2027-09-18', ends: '2027-09-19', place: 'Empire, MI', where: 'Paddock row B, green Scirocco', orderBy: '2027-09-15' });
+  const ev = paid('cs_test_evt12345', [{ p: 'pump', q: 1 }], 'event');
+  Object.assign(ev.data.object.metadata, { event_id: 'empire-2027', event: 'Empire Hill Climb' });
+  Object.assign(ev.data.object.customer_details, { name: 'Pat Buyer', phone: '+12315550100' });
+  const r = await s.webhook(ev);
+  assert.equal(r.body.result, 'recorded'); assert.equal(r.body.email, 'sent');
+  const row = s.sqlite.prepare('SELECT event_id, name, phone, status FROM orders WHERE session_id = ?').get('cs_test_evt12345');
+  assert.deepEqual({ ...row }, { event_id: 'empire-2027', name: 'Pat Buyer', phone: '+12315550100', status: 'new' });
+  const m = s.mail[0].body;
+  assert.match(m.text, /waiting in the 799 paddock at Empire Hill Climb \(Sep 18–19, 2027, Empire, MI\)/);
+  assert.match(m.text, /Find us: Paddock row B, green Scirocco/);
+  assert.match(m.text, /Paddock pickup: Free/);
+});

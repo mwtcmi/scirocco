@@ -9,7 +9,7 @@ var J=P.jug,HEX={},IDS={},IMG={};
 if(J)J.colors.forEach(function(c){HEX[c.name]=c.hex;IDS[c.name]=[c.sku,c.upc];IMG[c.name]=c.img});
 var ADDONS=P.addons,SHORT=P.names;
 // Used only until the store service answers, so the page never shows empty cards.
-var FALLBACK={catalog:P.fallback||{},shipping:{ship:{cents:2500},pickup:{cents:0},table:{cents:0}},stock:{}};
+var FALLBACK={catalog:P.fallback||{},shipping:{ship:{cents:2500},pickup:{cents:0},table:{cents:0},event:{cents:0}},stock:{},events:[]};
 var data=FALLBACK,online=false,KEY='scirocco799-cart-v2',TRACK='scirocco799-track';
 var q=new URLSearchParams(location.search),via=q.get('via');
 var sel={color:J&&J.colors.some(function(c){return c.name===q.get('color')})?q.get('color'):(J&&J.defaultColor)},cart=[];
@@ -24,6 +24,19 @@ function used(f){return cart.reduce(function(s,l){return s+(f(l)?l.qty:0)},0)}
 function leftColor(c){return have('jug/color/'+c)-used(function(l){return l.product==='jug'&&l.color===c})}
 function left(p){return have(p)-used(function(l){return l.product===p})}
 function sellable(p){return online&&!!data.catalog[p]}
+// The chosen way to get the order: 'ship', 'pickup', 'table', or 'event:<id>' (paddock pickup at an event).
+function getChoice(){var v=(document.querySelector('input[name=get]:checked')||{}).value||'pickup',m=/^event:(.+)$/.exec(v);return m?{fulfillment:'event',eventId:m[1]}:{fulfillment:v}}
+function openEvents(){return (data.events||[]).filter(function(e){return e.open})}
+function shortDate(d){var p=d.split('-'),M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return M[+p[1]-1]+' '+(+p[2])}
+// Paddock pickup choices in the cart, one per event still taking orders.
+function drawEvents(){var box=$('get-events');if(!box)return;var was=getChoice(),evs=openEvents();box.innerHTML='';
+ evs.forEach(function(e){var l=document.createElement('label');l.innerHTML='<input type="radio" name="get"> <span><strong></strong><small></small></span>';var i=l.querySelector('input');i.value='event:'+e.id;i.onchange=draw;
+  l.querySelector('strong').textContent='Pick up in the paddock, free';l.querySelector('small').textContent=e.name+', '+e.dates+(e.place?' · '+e.place:'')+'. Order by '+shortDate(e.orderBy)+'.';
+  if(was.fulfillment==='event'&&was.eventId===e.id)i.checked=true;box.appendChild(l)});
+ if(was.fulfillment==='event'&&!document.querySelector('input[name=get]:checked'))document.querySelector('input[name=get][value=pickup]').checked=true;
+ // "Order ahead" line above the store, for the next event taking orders.
+ var line=$('event-line'),n=$('store-note');if(!line&&n&&evs.length){line=document.createElement('p');line.id='event-line';line.className='store-note event-line';n.parentNode.insertBefore(line,n)}
+ if(line){line.hidden=!evs.length;if(evs.length)line.textContent='Order ahead, pick up in the 799 paddock: '+evs[0].name+', '+evs[0].dates+(evs[0].place?' ('+evs[0].place+')':'')+'.'}}
 function label(l){return l.product==='jug'?(J?J.short:'Jug'):(SHORT[l.product]||l.product)}
 function drawJug(){
  if(!J)return;
@@ -41,7 +54,7 @@ function draw(){
   all('.add[data-add='+p+']').forEach(function(b){b.disabled=!av||left(p)<1;b.textContent=!online?'Store offline':!av?'Coming soon':left(p)<1?'Sold out':'Add to cart'});
   all('[data-price='+p+']').forEach(function(e){if(price(p))e.textContent=money(price(p))});
   all('[data-stock='+p+']').forEach(function(e){e.textContent=av?Math.max(left(p),0)+' in stock':''})});
- var n=used(function(){return true}),sub=cart.reduce(function(s,l){return s+l.qty*(price(l.product)||0)},0),get=document.querySelector('input[name=get]:checked').value,shipC=(data.shipping[get]||{cents:0}).cents;
+ var n=used(function(){return true}),sub=cart.reduce(function(s,l){return s+l.qty*(price(l.product)||0)},0),get=getChoice().fulfillment,shipC=(data.shipping[get]||{cents:0}).cents;
  $('ship-label').textContent='Ship to me, '+money((data.shipping.ship||{cents:2500}).cents)+' flat';
  $('cart-count').textContent=n;$('cart-total').textContent=money(sub);$('cart-sub').textContent=money(sub+(n?shipC:0));$('sum-label').textContent=get==='ship'&&n?'Total with shipping':'Total';
  var ul=$('cart-lines');ul.innerHTML='';if(!cart.length)ul.innerHTML='<li class="empty-cart">Your cart is empty.</li>';
@@ -66,19 +79,19 @@ document.addEventListener('click',function(e){var a=e.target.closest('[data-add]
 all('input[name=get]').forEach(function(r){r.onchange=draw});
 $('cart-btn').onclick=open;$('cart-close').onclick=close;$('cart-shade').onclick=close;document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('cart').hidden)close()});
 $('checkout').onclick=function(){var b=this;b.disabled=true;b.textContent='Opening secure checkout…';$('cart-error').hidden=true;
- fetch(API+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fulfillment:document.querySelector('input[name=get]:checked').value,items:cart,returnPath:location.pathname})})
+ fetch(API+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign(getChoice(),{items:cart,returnPath:location.pathname}))})
  .then(function(r){return r.json().then(function(j){return{r:r,j:j}})}).then(function(x){if(x.j.url){location.href=x.j.url;return}if(x.j.stock)data.stock=x.j.stock;throw new Error(x.j.error||'Checkout is unavailable.')})
  .catch(function(e){$('cart-error').textContent=e.message||'Checkout is unavailable. Please try again.';$('cart-error').hidden=false;b.textContent='Checkout';draw()})};
 // Track mode (QR code at the 799 table): offer "take it now" and preselect it, on every store page this visit.
 var track=q.get('at')==='track'||via==='table';try{if(track)sessionStorage.setItem(TRACK,'1');else track=sessionStorage.getItem(TRACK)==='1'}catch(e){}
 if(track){$('get-table').style.display='';document.querySelector('input[name=get][value=table]').checked=true}
 if(q.get('order')==='success'){cart=[];save();var ref=q.get('ref')||'',num=/^cs_[A-Za-z0-9_]{8,}$/.test(ref)?' Order 799-'+ref.slice(-8).toUpperCase()+'.':'';
- note(via==='table'?'Paid! Show this screen at the 799 table to collect your gear.'+num:(via==='pickup'?"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email you to set a pickup time.":"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email tracking when it ships.")+num);
+ note(via==='table'?'Paid! Show this screen at the 799 table to collect your gear.'+num:via==='event'?"Thanks! Your order is in. Stripe has emailed your receipt. Your gear will be waiting in the 799 paddock at the event, and we'll email you where to find us."+num:(via==='pickup'?"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email you to set a pickup time.":"Thanks! Your order is in. Stripe has emailed your receipt, and we'll email tracking when it ships.")+num);
  setTimeout(function(){var n=$('store-note');if(n)n.scrollIntoView({block:'center'})},50)}
 else if(q.get('order')==='cancelled')note('Checkout was cancelled. Your cart is saved.');
 draw();
 fetch(API+'/api/catalog').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){if(!j.catalog||!j.catalog.jug||typeof j.catalog.jug.cents!=='number')throw 0;data=j;online=true;
- cart=cart.filter(function(l){return l.product==='jug'?data.catalog.jug.colors.indexOf(l.color)>-1:!!data.catalog[l.product]});save();draw()})
+ cart=cart.filter(function(l){return l.product==='jug'?data.catalog.jug.colors.indexOf(l.color)>-1:!!data.catalog[l.product]});save();drawEvents();draw()})
  .catch(function(){note('The store is offline right now. Please check back soon.');draw()});
 // Product page photo thumbnails.
 all('[data-thumb]').forEach(function(t){t.onclick=function(){var m=$('main-photo');if(!m)return;m.src=t.dataset.thumb;m.removeAttribute('srcset');m.alt=t.dataset.alt||m.alt;all('[data-thumb]').forEach(function(x){x.setAttribute('aria-pressed',x===t)})}});

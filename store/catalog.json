@@ -1,6 +1,9 @@
 {
   "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the category tiles on paddock.html. Prices here are what checkout charges: the store Worker builds its catalog from this file (price, map = minimum advertised price, checkoutNote = the line under the item in Stripe). A price change deploys automatically when pushed to main. External products link out and never enter the cart.",
   "seller": "799 Motorsport LLC",
+  "brands": {
+    "Tuff Jug": { "mapPolicy": "MAP is 15% below MSRP. It covers the website, social, email, Google Shopping, flyers, event signage and published promo codes. It does not cover prices shown only in a cart or checkout, private in-person prices, or free shipping." }
+  },
   "categories": [
     { "slug": "tools", "name": "Tools", "blurb": "Hand tools, cordless tools, storage and the things that get repairs done." },
     { "slug": "fuel-fluids", "name": "Fuel & Fluids", "blurb": "Fuel jugs, funnels, transfer gear, fluids and trackside cleanup.",

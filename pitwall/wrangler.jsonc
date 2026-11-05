@@ -1,0 +1,31 @@
+// Cloudflare config for Pitwall, the private 799 back office. GitHub Actions deploys it (.github/workflows/workers.yml):
+//   push to main    -> "scirocco799-pitwall"      on pitwall.799motorsport.com      (live store database)
+//   push to staging -> "scirocco799-pitwall-test" on pitwall-test.799motorsport.com (test store database)
+// The hostnames are attached as Worker custom domains in Cloudflare, and Cloudflare Access protects them.
+// The worker checks the Access sign-in itself as well, so it refuses everything until ACCESS_TEAM and
+// ACCESS_AUD are set. No workers.dev address. Secret (set in Cloudflare): GITHUB_TOKEN, for saving prices.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "scirocco799-pitwall",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-05",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true } },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "scirocco799-store", "database_id": "acffdb53-41aa-4a51-a4fc-7a4c50711baa" }
+  ],
+  "vars": { "STORE_LABEL": "Live store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "main", "ACCESS_TEAM": "", "ACCESS_AUD": "", "ALLOWED_EMAILS": "" },
+  "env": {
+    "test": {
+      "name": "scirocco799-pitwall-test",
+      "workers_dev": false,
+      "preview_urls": false,
+      "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true } },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "scirocco799-store-test", "database_id": "33c6396a-1344-4c34-825f-a1e57732f29f" }
+      ],
+      "vars": { "STORE_LABEL": "Test store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "staging", "ACCESS_TEAM": "", "ACCESS_AUD": "", "ALLOWED_EMAILS": "" }
+    }
+  }
+}
