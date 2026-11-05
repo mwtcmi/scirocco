@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://scirocco799.com/sitemap.xml
+Sitemap: https://799motorsport.com/sitemap.xml

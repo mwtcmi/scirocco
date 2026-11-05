@@ -81,4 +81,4 @@ Categories with no products show "Coming soon" on the front page and get no page
 | POST | `/api/checkout` | `{fulfillment: "pickup"\|"ship", items: [...]}` → Stripe Checkout URL |
 | POST | `/api/stripe-webhook` | Stripe "paid" notices (signature checked); records the order, takes stock off, sends the confirmation email |
 
-Browser requests are accepted from scirocco799.com, www.scirocco799.com and mwtcmi.github.io. Tests: `node --test tests/store.test.mjs`.
+Browser requests are accepted from 799motorsport.com, www.799motorsport.com, scirocco799.com, www.scirocco799.com and mwtcmi.github.io. Tests: `node --test tests/store.test.mjs`.

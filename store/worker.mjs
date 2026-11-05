@@ -25,8 +25,8 @@ export const CATALOG = Object.freeze({
 });
 export const ADDONS = ['pump', 'ripper', 'tuffspout', 'spoutbender'];
 
-const ORIGINS = ['https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
-const SITE = 'https://scirocco799.com';
+const ORIGINS = ['https://799motorsport.com', 'https://www.799motorsport.com', 'https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
+const SITE = 'https://799motorsport.com';
 const RETURN_PATH = '/paddock';
 const MAX_LINES = 10, MAX_QTY = 10, MAX_BODY = 8192, SIG_TOLERANCE = 300;
 
@@ -92,7 +92,7 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     metadata: { items: JSON.stringify(items), fulfillment },
     payment_intent_data: { description: '799 Motorsport store order', metadata: { fulfillment } }
   };
-  const policy = 'All sales final. Wrong or damaged items and warranty help: scirocco799.com/returns';
+  const policy = 'All sales final. Wrong or damaged items and warranty help: 799motorsport.com/returns';
   if (ship) {
     p.shipping_address_collection = { allowed_countries: ['US'] };
     p.custom_text = { submit: { message: policy } };
@@ -194,15 +194,15 @@ export function orderEmail(session) {
     totals.map(([l, r]) => row(l, r)).join('') + row('Total paid', money(total), true) + '</table>' +
     (address.length ? '<p style="margin:22px 0 0;color:#555;font-size:14px;line-height:1.5"><strong style="color:#050505">Shipping to</strong><br>' + address.map(esc).join('<br>') + '</p>' : '') +
     '<p style="margin:26px 0 0;color:#777;font-size:13px;line-height:1.6">Questions? Reply to this email.<br>All sales final. Wrong or damaged item? See ' +
-    '<a href="https://scirocco799.com/returns" style="color:#050505">scirocco799.com/returns</a>.</p>' +
+    '<a href="https://799motorsport.com/returns" style="color:#050505">799motorsport.com/returns</a>.</p>' +
     '</td></tr><tr><td style="background:#050505;padding:16px 28px;color:#aaa;font-size:12px">799 Motorsport &middot; Traverse City, MI &middot; ' +
-    '<a href="https://scirocco799.com/paddock" style="color:#20C933;text-decoration:none">scirocco799.com</a></td></tr>' +
+    '<a href="https://799motorsport.com/paddock" style="color:#20C933;text-decoration:none">799motorsport.com</a></td></tr>' +
     '</table></td></tr></table></body></html>';
   const text = [(first ? 'Thanks, ' + first + '.' : 'Thanks for your order.'), 'Order ' + number + ' is confirmed and paid.', '', next, '',
     ...lines.map(l => l.qty + ' x ' + l.name + ' (' + l.description + ')  ' + money(l.cents * l.qty)), '',
     ...totals.map(([l, r]) => l + ': ' + r), 'Total paid: ' + money(total),
     ...(address.length ? ['', 'Shipping to:', ...address] : []), '',
-    'Questions? Reply to this email.', 'All sales final. Wrong or damaged item? See https://scirocco799.com/returns'].join('\n');
+    'Questions? Reply to this email.', 'All sales final. Wrong or damaged item? See https://799motorsport.com/returns'].join('\n');
   return { to: who.email || null, subject: 'Your Scirocco 799 order ' + number, html, text };
 }
 

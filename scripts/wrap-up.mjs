@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Wrap-up check for scirocco799.com.
+// Wrap-up check for 799motorsport.com.
 // Rebuilds sitemap.xml (and robots.txt's Sitemap line), then checks every page for issues.
 // Usage: node scripts/wrap-up.mjs            rebuild sitemap + check
 //        node scripts/wrap-up.mjs --check    check only, fail if sitemap.xml is out of date
@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SITE = 'https://scirocco799.com';
+const SITE = 'https://799motorsport.com';
 const CHECK_ONLY = process.argv.includes('--check');
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'tests', 'scripts', 'leaderboard', '.github', '.claude']);
 const BIG_ASSET = 600 * 1024;        // referenced images/media above this get a warning

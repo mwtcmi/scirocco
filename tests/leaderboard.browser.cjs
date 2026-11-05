@@ -96,7 +96,7 @@ const wait = (page, predicate, argument) => page.waitForFunction(predicate, argu
   await a.locator('#podiumClose').click();
   await a.locator('#eventSelect').selectOption('0');
   await wait(a, () => document.getElementById('hillLeader').textContent === 'Silver Fox');
-  assert.equal(await a.locator('.logo').getAttribute('href'), 'https://scirocco799.com/');
+  assert.equal(await a.locator('.logo').getAttribute('href'), 'https://799motorsport.com/');
   assert.equal(await a.locator('#welcomeDriverInput').isVisible(), true);
   await a.locator('#podiumOpen').focus(); await a.keyboard.press('Space');
   await wait(a, () => document.getElementById('podiumRows').children.length === 2);

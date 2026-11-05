@@ -14,7 +14,7 @@ export const EVENTS = Object.freeze({
 });
 // END COURSE MANIFEST
 const EVENT_COUNT = Object.keys(EVENTS).length;
-const ORIGINS = ['https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
+const ORIGINS = ['https://799motorsport.com', 'https://www.799motorsport.com', 'https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const HOUR = 3600000;
 // BEGIN SHARED NAME POLICY

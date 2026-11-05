@@ -11,7 +11,7 @@ function service(t) {
   let time = 1800000000000;
   const worker = createWorker({ now: () => time });
   const env = { DB: storage.db };
-  async function call(path, { method = 'GET', data, player, origin = 'https://scirocco799.com', headers = {} } = {}) {
+  async function call(path, { method = 'GET', data, player, origin = 'https://799motorsport.com', headers = {} } = {}) {
     const h = { ...headers };
     if (origin) h.origin = origin;
     if (data !== undefined) h['content-type'] = 'application/json';
@@ -52,7 +52,7 @@ test('schema is repeatable; health validates DB/schema; site origins and preflig
   const s = service(t); s.sqlite.exec(s.schema);
   const health = await s.call('/api/health');
   assert.equal(health.body.ok, true); assert.equal(health.body.ruleset, RULESET);
-  assert.equal(health.response.headers.get('access-control-allow-origin'), 'https://scirocco799.com');
+  assert.equal(health.response.headers.get('access-control-allow-origin'), 'https://799motorsport.com');
   assert.equal((await s.call('/api/health', { origin: 'https://mwtcmi.github.io' })).status, 200);
   const blocked = await s.call('/api/players', { method: 'POST', data: {}, origin: 'https://other.example' });
   assert.equal(blocked.status, 403); assert.equal(blocked.response.headers.has('access-control-allow-origin'), false);

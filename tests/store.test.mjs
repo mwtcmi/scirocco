@@ -17,7 +17,7 @@ function service(t, { key = 'rk_test_abc', stripeStatus = 200, emailStatus = 200
   const emailFetch = async (url, init) => { mail.push({ url, init, body: JSON.parse(init.body) }); return new Response('{"id":"em_1"}', { status: emailStatus }); };
   const worker = createWorker({ now: () => time, stripeFetch, emailFetch });
   const env = { DB: storage.db, STRIPE_SECRET_KEY: key, STRIPE_WEBHOOK_SECRET: SECRET };
-  async function call(path, { method = 'GET', data, origin = 'https://scirocco799.com', raw, headers = {} } = {}) {
+  async function call(path, { method = 'GET', data, origin = 'https://799motorsport.com', raw, headers = {} } = {}) {
     const h = { ...headers }; if (origin) h.origin = origin;
     const body = raw ?? (data === undefined ? undefined : JSON.stringify(data));
     const res = await worker.fetch(new Request('https://store.example' + path, { method, headers: h, body }), env);
@@ -50,7 +50,7 @@ test('catalog returns stock and options', async t => {
   assert.equal(r.status, 200); assert.equal(r.body.stock['jug/color/Red'], 2); assert.equal(r.body.stock.pump, 2);
   assert.equal(r.body.catalog.jug.cents, 4599); assert.equal(r.body.catalog.ripper.cents, 2745); assert.equal(r.body.stock.tuffspout, 2);
   assert.equal(r.body.catalog.spoutbender.cents, 799); assert.equal(r.body.stock.spoutbender, 2);
-  assert.equal(r.res.headers.get('access-control-allow-origin'), 'https://scirocco799.com');
+  assert.equal(r.res.headers.get('access-control-allow-origin'), 'https://799motorsport.com');
 });
 
 test('other origins are refused', async t => {
@@ -72,7 +72,7 @@ test('pickup checkout prices on the server and skips shipping address', async t 
   assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
   assert.equal(p.get('allow_promotion_codes'), 'true');
   assert.equal(p.get('excluded_payment_method_types[0]'), 'affirm'); assert.equal(p.get('excluded_payment_method_types[1]'), 'klarna');
-  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock?order=success&via=pickup&ref={CHECKOUT_SESSION_ID}');
+  assert.equal(p.get('success_url'), 'https://799motorsport.com/paddock?order=success&via=pickup&ref={CHECKOUT_SESSION_ID}');
   assert.equal(s.sent[0].init.headers.Authorization, 'Bearer rk_test_abc');
 });
 
@@ -201,7 +201,7 @@ test('track-table checkout: free, no phone or address, table wording, and a tabl
   assert.equal(p.get('phone_number_collection[enabled]'), null); assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
   assert.equal(p.get('billing_address_collection'), 'required');
   assert.match(p.get('custom_text[submit][message]'), /799 table/);
-  assert.equal(p.get('success_url'), 'https://scirocco799.com/paddock?order=success&via=table&ref={CHECKOUT_SESSION_ID}');
+  assert.equal(p.get('success_url'), 'https://799motorsport.com/paddock?order=success&via=table&ref={CHECKOUT_SESSION_ID}');
   const m = orderEmail({ id: 'cs_live_tbl00001', metadata: { fulfillment: 'table', items: JSON.stringify([{ p: 'jug', c: 'Red', q: 1 }]) }, amount_subtotal: 4599, amount_total: 4875, total_details: { amount_tax: 276 } });
   assert.match(m.text, /Paid at the 799 table/); assert.doesNotMatch(m.text, /Local pickup|Shipping:/); assert.match(m.text, /Total paid: \$48\.75/);
 });
@@ -209,10 +209,10 @@ test('track-table checkout: free, no phone or address, table wording, and a tabl
 test('cancelled checkout returns to the store page the buyer came from, and only under /paddock', async t => {
   const s = service(t);
   await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: '/paddock/fuel-fluids/tuff-spout/', items: [{ product: 'tuffspout', qty: 1 }] } });
-  assert.equal(s.sent[0].params.get('cancel_url'), 'https://scirocco799.com/paddock/fuel-fluids/tuff-spout/?order=cancelled');
-  assert.match(s.sent[0].params.get('success_url'), /^https:\/\/scirocco799\.com\/paddock\?order=success/);
+  assert.equal(s.sent[0].params.get('cancel_url'), 'https://799motorsport.com/paddock/fuel-fluids/tuff-spout/?order=cancelled');
+  assert.match(s.sent[0].params.get('success_url'), /^https:\/\/799motorsport\.com\/paddock\?order=success/);
   for (const bad of ['https://evil.example/', '//evil.example', '/returns', '/paddock/../x', '/paddock/a?b=1']) {
     await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', returnPath: bad, items: [{ product: 'tuffspout', qty: 1 }] } });
-    assert.equal(s.sent.at(-1).params.get('cancel_url'), 'https://scirocco799.com/paddock?order=cancelled', bad);
+    assert.equal(s.sent.at(-1).params.get('cancel_url'), 'https://799motorsport.com/paddock?order=cancelled', bad);
   }
 });

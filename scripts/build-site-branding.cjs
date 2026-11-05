@@ -7,7 +7,7 @@ const { execFileSync } = require('node:child_process');
 const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
-const origin = 'https://scirocco799.com';
+const origin = 'https://799motorsport.com';
 const pages = [
   { file: 'index.html', slug: 'home', route: '/', title: 'Scirocco 799 | 1976 Volkswagen Scirocco Competition', description: 'Vintage Volkswagen. Modern competition. Follow Scirocco 799 through the build, the paddock, and the 2027 race program.', heading: ['SCIROCCO', '799.'], kicker: '1976 VOLKSWAGEN SCIROCCO', caption: 'Vintage Volkswagen. Modern competition.', tag: 'THE 799 RACE PROGRAM', photo: '799-hillclimb-2400.webp', position: '60% 52%' },
   { file: 'racing.html', slug: 'racing', route: '/racing', title: 'Racing | Scirocco 799', description: 'Follow Scirocco 799 through hill climbs, time trial events and track sprints, with selected results and the ongoing competition program.', heading: ['BUILT TO', 'COMPETE.'], kicker: 'THE RACE PROGRAM', caption: 'Hill Climb. Time Trial. Track Sprint.', tag: 'RESULTS · DEVELOPMENT · COMPETITION', photo: '799-course-1600.webp', position: '50% 68%' },

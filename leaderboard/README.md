@@ -58,7 +58,7 @@ The SQL file starts directly with `CREATE TABLE` so it also works when the conso
 
 Leaderboard reads accept an optional public `player` ID to include that driver's rank and season progress. Authenticated requests use `Authorization: Bearer <private credential>`. Credentials are never returned by the public standings API.
 
-The Worker allows browser requests from `https://scirocco799.com`, `https://www.scirocco799.com`, and `https://mwtcmi.github.io`. Other site origins are rejected. Optional Worker variable `ALLOWED_ORIGINS` can add comma-separated development origins; production needs no extra variable. CORS is a browser access policy, not proof that a result is legitimate.
+The Worker allows browser requests from `https://799motorsport.com`, `https://www.799motorsport.com`, `https://scirocco799.com`, `https://www.scirocco799.com`, and `https://mwtcmi.github.io`. Other site origins are rejected. Optional Worker variable `ALLOWED_ORIGINS` can add comma-separated development origins; production needs no extra variable. CORS is a browser access policy, not proof that a result is legitimate.
 
 ## Validation and limits
 
