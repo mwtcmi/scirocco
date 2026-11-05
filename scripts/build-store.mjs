@@ -120,7 +120,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=2">
+<link rel="stylesheet" href="/paddock-store.css?v=3">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -177,7 +177,12 @@ function tile(p) {
   const img = p.colors
     ? (c => ({ src: `/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp`, srcset: `/images/optimized/tuffjug-5gal-${c.img}-spout-480.webp 480w, /images/optimized/tuffjug-5gal-${c.img}-spout-900.webp 900w`, alt: `${p.name} in ${c.name} with Auto-Stop Spout` }))(p.colors.find(x => x.name === p.defaultColor))
     : (i => ({ src: i.src, srcset: i.src480 ? `${i.src480} 480w, ${i.src} ${i.w}w` : '', alt: i.alt }))(p.images[0]);
-  return `<a class="ext" href="${url}"><img src="${img.src}"${img.srcset ? ` srcset="${img.srcset}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(img.alt)}"><div class="ext-body"><h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span></div></a>`;
+  const pic = `<img${p.colors ? ' data-jug-img' : ''} src="${img.src}"${img.srcset ? ` srcset="${img.srcset}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(img.alt)}">`;
+  const body = `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`;
+  if (!p.colors) return `<a class="ext" href="${url}">${pic}<div class="ext-body">${body}</div></a>`;
+  // Jug: color swatches sit over the bottom of the photo, so the tile keeps the same size as its neighbours.
+  // paddock-store.js fills [data-colors], swaps [data-jug-img] and adds ?color= to [data-jug-link].
+  return `<div class="ext ext-pick"><div class="ext-photo"><a href="${url}" data-jug-link="${url}" tabindex="-1" aria-hidden="true">${pic}</a><div class="ext-colors" data-colors role="group" aria-label="Jug color"></div></div><a class="ext-body" href="${url}" data-jug-link="${url}">${body}</a></div>`;
 }
 function grid(list) {
   const cartList = list.filter(p => p.cart), ext = list.filter(p => p.external);
