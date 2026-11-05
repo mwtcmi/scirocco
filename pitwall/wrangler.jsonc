@@ -2,8 +2,9 @@
 //   push to main    -> "scirocco799-pitwall"      on pitwall.799motorsport.com      (live store database)
 //   push to staging -> "scirocco799-pitwall-test" on pitwall-test.799motorsport.com (test store database)
 // The hostnames are attached as Worker custom domains in Cloudflare, and Cloudflare Access protects them.
-// The worker checks the Access sign-in itself as well, so it refuses everything until ACCESS_TEAM and
-// ACCESS_AUD are set. No workers.dev address. Secret (set in Cloudflare): GITHUB_TOKEN, for saving prices.
+// The worker checks the Access sign-in itself as well (team misty-bread-ce22; each hostname has its own
+// Access application, whose audience tag is ACCESS_AUD). To let someone else in, add their email to the
+// Access policy AND to ALLOWED_EMAILS. No workers.dev address. Secret (set in Cloudflare): GITHUB_TOKEN, for saving prices.
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "scirocco799-pitwall",
@@ -15,7 +16,7 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "scirocco799-store", "database_id": "acffdb53-41aa-4a51-a4fc-7a4c50711baa" }
   ],
-  "vars": { "STORE_LABEL": "Live store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "main", "ACCESS_TEAM": "", "ACCESS_AUD": "", "ALLOWED_EMAILS": "" },
+  "vars": { "STORE_LABEL": "Live store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "main", "ACCESS_TEAM": "misty-bread-ce22.cloudflareaccess.com", "ACCESS_AUD": "250d8aaf591a27af1666b31a402faa93d3c3cb7886720c8a5817326217c2f23f", "ALLOWED_EMAILS": "mr.mikewhite@me.com" },
   "env": {
     "test": {
       "name": "scirocco799-pitwall-test",
@@ -25,7 +26,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "scirocco799-store-test", "database_id": "33c6396a-1344-4c34-825f-a1e57732f29f" }
       ],
-      "vars": { "STORE_LABEL": "Test store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "staging", "ACCESS_TEAM": "", "ACCESS_AUD": "", "ALLOWED_EMAILS": "" }
+      "vars": { "STORE_LABEL": "Test store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "staging", "ACCESS_TEAM": "misty-bread-ce22.cloudflareaccess.com", "ACCESS_AUD": "76d2245c28495f86cf55bc6f0b55aeadeaab4de3c07047d3a30f5d484db67b38", "ALLOWED_EMAILS": "mr.mikewhite@me.com" }
     }
   }
 }
