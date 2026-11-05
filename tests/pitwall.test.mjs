@@ -196,3 +196,57 @@ test('settings: order copies default to Mike, take several addresses, refuse bad
   assert.equal((await s.call('/api/settings', { method: 'PUT', data: { orderCopies: Array.from({ length: 11 }, (_, i) => i + '@x.co') } })).status, 400);
   assert.deepEqual((await s.call('/api/settings', { method: 'PUT', data: { orderCopies: [] } })).body.orderCopies, []);
 });
+
+test('dashboard: sales by Michigan day/week/month, open orders, next event, stock to watch, customers, top sellers', async t => {
+  const s = setup(t);
+  const now = 1800000000000; // 2027-01-15 03:00 EST (Friday)
+  const ins = (id, at, total, items, how = 'ship', status = 'new', ev = null) => s.sqlite.prepare("INSERT INTO orders (session_id, created_at, livemode, fulfillment, amount_total, items, status, event_id) VALUES (?, ?, 0, ?, ?, ?, ?, ?)").run(id, at, how, total, JSON.stringify(items), status, ev);
+  ins('a', now - 3600e3, 1000, [{ s: 'LTP', q: 2 }]);                       // today
+  ins('b', now - 3 * 864e5, 2000, [{ s: 'RUASVS20', q: 1 }], 'pickup', 'done'); // this week (Tue)
+  ins('c', now - 10 * 864e5, 4000, [{ p: 'pump', q: 1 }], 'event', 'new', 'empire-2027'); // this month, older order format
+  ins('d', now - 40 * 864e5, 8000, [{ s: 'LTP', q: 1 }], 'ship', 'done');        // last year
+  s.sqlite.prepare("INSERT INTO events (id, name, starts, ends, order_by, created_at, updated_at) VALUES ('empire-2027', 'Empire Hill Climb', '2027-01-20', '2027-01-21', '2027-01-18', 0, 0)").run();
+  s.sqlite.prepare("UPDATE stock SET qty = 0 WHERE key = 'SpoutBender'").run();
+  s.sqlite.prepare("INSERT INTO restock_requests (sku, email, created_at) VALUES ('SpoutBender', 'a@b.co', 1)").run();
+  s.sqlite.prepare("INSERT INTO customers (email, marketing, orders_count, created_at, updated_at) VALUES ('x@y.co', 'opt_in', 1, ?, ?), ('z@y.co', 'unknown', 0, 1, 1)").run(now - 864e5, now);
+  const d = (await s.call('/api/dashboard')).body;
+  assert.deepEqual(d.sales.today, { orders: 1, cents: 1000 });
+  assert.deepEqual(d.sales.week, { orders: 2, cents: 3000 });
+  assert.deepEqual(d.sales.month, { orders: 3, cents: 7000 });
+  assert.equal(d.open.total, 2); assert.deepEqual(d.open.by, { ship: 1, event: 1 });
+  assert.equal(d.nextEvent.name, 'Empire Hill Climb'); assert.equal(d.nextEvent.orders, 1); assert.equal(d.nextEvent.daysToCutoff, 3); assert.equal(d.nextEvent.open, true);
+  const sb = d.stock.find(i => i.sku === 'SpoutBender'); assert.equal(sb.qty, 0); assert.equal(sb.waiting, 1);
+  assert.deepEqual(d.customers, { total: 2, month: 1, optIn: 1, buyers: 1 });
+  assert.deepEqual(d.top, [{ name: 'Tuff Jug Electric Transfer Pump', units: 3 }, { name: 'Tuff Jug 5 Gallon Utility Jug', units: 1 }]);
+});
+
+test('customers: search, detail with orders, notes and email setting, CSV export, delete keeps orders without personal data', async t => {
+  const s = setup(t);
+  s.sqlite.prepare("INSERT INTO customers (email, name, phone, shipping, marketing, orders_count, total_spent, created_at, updated_at) VALUES ('pat@example.com', 'Pat Buyer', '+1231', ?, 'opt_in', 1, 4599, 1, 1), ('sam@example.com', 'Sam \"Quote\", Jr', NULL, NULL, 'unknown', 0, 0, 2, 2)")
+    .run(JSON.stringify({ name: 'Pat Buyer', address: { line1: '1 Main', city: 'TC', state: 'MI', postal_code: '49684' } }));
+  const pat = s.sqlite.prepare("SELECT id FROM customers WHERE email = 'pat@example.com'").get().id;
+  s.sqlite.prepare("INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, name, items, customer_id, amount_total) VALUES ('cs_test_pat00001', 5, 0, 'ship', 'pat@example.com', 'Pat Buyer', ?, ?, 4599)").run(JSON.stringify([{ s: 'RUASVS20', q: 1 }]), pat);
+  s.sqlite.prepare("INSERT INTO restock_requests (sku, email, created_at) VALUES ('SpoutBender', 'pat@example.com', 1)").run();
+  assert.equal((await s.call('/api/customers')).body.customers.length, 2);
+  assert.deepEqual((await s.call('/api/customers?q=pat')).body.customers.map(c => c.email), ['pat@example.com']);
+  assert.deepEqual((await s.call('/api/customers?q=%25')).body.customers.length, 2);
+  const det = (await s.call('/api/customers/' + pat)).body;
+  assert.equal(det.customer.shipping.address.line1, '1 Main'); assert.deepEqual(det.orders[0].lines, ['1 × Tuff Jug 5 Gallon Utility Jug, Red']);
+  assert.deepEqual(det.waiting, ['Tuff Jug Spout Bender']);
+  const put = await s.call('/api/customers/' + pat, { method: 'PUT', data: { notes: 'Prefers pickup', marketing: 'opt_out' } });
+  assert.equal(put.status, 200);
+  const row = s.sqlite.prepare('SELECT notes, marketing, marketing_source FROM customers WHERE id = ?').get(pat);
+  assert.equal(row.notes, 'Prefers pickup'); assert.equal(row.marketing, 'opt_out'); assert.equal(row.marketing_source, 'pitwall: mike@scirocco799.com');
+  assert.equal((await s.call('/api/customers/' + pat, { method: 'PUT', data: { marketing: 'spam' } })).status, 400);
+  const csv = await s.call('/api/customers.csv');
+  assert.match(csv.res.headers.get('content-type'), /text\/csv/);
+  const lines = csv.body.trim().split('\r\n');
+  assert.equal(lines.length, 3); assert.match(lines[0], /^email,name,phone,marketing/);
+  assert.match(csv.body, /"Sam ""Quote"", Jr"/); assert.match(csv.body, /Pat Buyer, 1 Main, TC, MI 49684/);
+  assert.equal((await s.call('/api/customers/' + pat, { method: 'DELETE' })).status, 200);
+  assert.equal(s.sqlite.prepare('SELECT COUNT(*) AS n FROM customers WHERE id = ?').get(pat).n, 0);
+  const o = s.sqlite.prepare("SELECT email, name, amount_total, customer_id FROM orders WHERE session_id = 'cs_test_pat00001'").get();
+  assert.deepEqual({ ...o }, { email: null, name: null, amount_total: 4599, customer_id: null });
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM restock_requests WHERE email = 'pat@example.com'").get().n, 0);
+  assert.equal((await s.call('/api/customers/999')).status, 404);
+});

@@ -333,3 +333,34 @@ test('order copies: the list set in Pitwall gets the blind copy; empty list mean
   await s.webhook(paid('cs_test_cp2', [{ s: 'LTP', q: 1 }]));
   assert.equal(s.mail[1].body.bcc, undefined);
 });
+
+test('customers: one record per email with details, addresses, totals and opt-in; retries never double count', async t => {
+  const s = service(t);
+  const addr = (line1) => ({ name: 'Pat Buyer', address: { line1, city: 'Traverse City', state: 'MI', postal_code: '49684', country: 'US' } });
+  const order = (id, extra) => { const ev = paid(id, [{ s: 'LTP', q: 1 }], 'ship'); Object.assign(ev.data.object, { amount_total: 9999, customer: 'cus_123',
+    customer_details: { email: 'Pat@Example.com', name: 'Pat Buyer', phone: '+12315550100', address: { line1: '1 Bill St', city: 'TC', state: 'MI', postal_code: '49684', country: 'US' } } }, extra); return ev; };
+  await s.webhook(order('cs_test_c1', { collected_information: { shipping_details: addr('1 Main St') }, consent: { promotions: 'opt_in' } }));
+  await s.webhook(order('cs_test_c1', {})); // Stripe retry
+  await s.webhook(order('cs_test_c2', { collected_information: { shipping_details: addr('9 Lake Rd') }, consent: { promotions: 'opt_out' } }));
+  const c = s.sqlite.prepare('SELECT * FROM customers').all();
+  assert.equal(c.length, 1);
+  assert.equal(c[0].email, 'pat@example.com'); assert.equal(c[0].name, 'Pat Buyer'); assert.equal(c[0].phone, '+12315550100');
+  assert.equal(c[0].orders_count, 2); assert.equal(c[0].total_spent, 19998); assert.equal(c[0].stripe_customer, 'cus_123');
+  assert.equal(c[0].marketing, 'opt_in', 'an unticked box later does not undo an opt-in'); assert.equal(c[0].marketing_source, 'checkout');
+  assert.deepEqual(JSON.parse(c[0].addresses).map(a => a.address.line1), ['9 Lake Rd', '1 Main St']);
+  assert.equal(JSON.parse(c[0].shipping).address.line1, '9 Lake Rd'); assert.equal(JSON.parse(c[0].billing).address.line1, '1 Bill St');
+  assert.deepEqual(s.sqlite.prepare('SELECT DISTINCT customer_id FROM orders').all().map(r => r.customer_id), [c[0].id]);
+});
+
+test('customers: checkout creates a Stripe customer and shows the opt-in box; notify requests add a "not asked" customer', async t => {
+  const s = service(t);
+  await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: 'LTP', qty: 1 }] } });
+  assert.equal(s.sent[0].params.get('customer_creation'), 'always');
+  assert.equal(s.sent[0].params.get('consent_collection[promotions]'), 'auto');
+  await s.call('/api/notify', { method: 'POST', data: { sku: 'SpoutBender', email: 'New@Person.co' } });
+  const c = s.sqlite.prepare("SELECT email, source, marketing, orders_count FROM customers").get();
+  assert.deepEqual({ ...c }, { email: 'new@person.co', source: 'notify', marketing: 'unknown', orders_count: 0 });
+  const ev = paid('cs_test_n1', [{ s: 'LTP', q: 1 }], 'event'); ev.data.object.customer_details.email = 'new@person.co';
+  await s.webhook(ev);
+  assert.equal(s.sqlite.prepare("SELECT source FROM customers").get().source, 'event', 'first order replaces the notify source');
+});

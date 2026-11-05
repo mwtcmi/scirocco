@@ -133,6 +133,8 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     success_url: returnBase + '?order=success&via=' + fulfillment + '&ref={CHECKOUT_SESSION_ID}',
     cancel_url: cancelBase + '?order=cancelled',
     allow_promotion_codes: 'true',
+    customer_creation: 'always', // a Stripe customer per buyer, linked to the 799 customer record
+    consent_collection: { promotions: 'auto' }, // Stripe's unticked "keep me updated by email" checkbox
     excluded_payment_method_types: ['affirm', 'klarna'], // no pay-later: they cost about 6% a sale
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
       product_data: { name: l.name, description: l.description } } })),
@@ -181,16 +183,49 @@ export async function verifySignature(payload, header, secret, nowSec) {
   });
 }
 
+// The customer record for an order: one per email. Keeps the latest contact details and addresses, a short
+// history of shipping addresses, totals, and email marketing consent (only the checkout checkbox opts in;
+// an unticked box never changes an earlier choice).
+const sameAddress = (a, b) => JSON.stringify(a?.address || a) === JSON.stringify(b?.address || b);
+async function customerStatements(db, { email, who, shipTo, billing, how, session, now }) {
+  const prior = await db.prepare('SELECT addresses FROM customers WHERE email = ?').bind(email).first().catch(() => null);
+  let addresses = []; try { addresses = JSON.parse(prior?.addresses || '[]'); } catch {}
+  if (shipTo && !addresses.some(a => sameAddress(a, shipTo))) addresses = [shipTo, ...addresses].slice(0, 5);
+  const optIn = session.consent?.promotions === 'opt_in';
+  const source = how === 'event' ? 'event' : how === 'table' ? 'table' : 'online';
+  const stripeCustomer = typeof session.customer === 'string' ? session.customer : session.customer?.id || null;
+  return [
+    db.prepare(`INSERT INTO customers (email, name, phone, billing, shipping, addresses, marketing, marketing_at, marketing_source, source, stripe_customer,
+        orders_count, total_spent, first_order_at, last_order_at, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
+      ON CONFLICT (email) DO UPDATE SET name = COALESCE(excluded.name, name), phone = COALESCE(excluded.phone, phone),
+        billing = COALESCE(excluded.billing, billing), shipping = COALESCE(excluded.shipping, shipping), addresses = excluded.addresses,
+        marketing = CASE WHEN excluded.marketing = 'opt_in' THEN 'opt_in' ELSE marketing END,
+        marketing_at = CASE WHEN excluded.marketing = 'opt_in' THEN excluded.marketing_at ELSE marketing_at END,
+        marketing_source = CASE WHEN excluded.marketing = 'opt_in' THEN excluded.marketing_source ELSE marketing_source END,
+        source = CASE WHEN source = 'notify' AND orders_count = 0 THEN excluded.source ELSE source END,
+        stripe_customer = COALESCE(excluded.stripe_customer, stripe_customer),
+        orders_count = orders_count + 1, total_spent = total_spent + excluded.total_spent,
+        first_order_at = COALESCE(first_order_at, excluded.first_order_at), last_order_at = excluded.last_order_at, updated_at = excluded.updated_at`)
+      .bind(email, who.name || null, who.phone || null, billing ? JSON.stringify(billing) : null, shipTo ? JSON.stringify(shipTo) : null, JSON.stringify(addresses),
+        optIn ? 'opt_in' : 'unknown', optIn ? now : null, optIn ? 'checkout' : null, source, stripeCustomer, session.amount_total ?? 0, now, now, now, now),
+    db.prepare('UPDATE orders SET customer_id = (SELECT id FROM customers WHERE email = ?) WHERE session_id = ?').bind(email, session.id)
+  ];
+}
+
 async function recordOrder(db, session, now) {
   let items;
   try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
   const lines = items.map(itemLine);
   const need = needs(lines);
   const who = session.customer_details || {}, shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
-  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(session.id, now, session.livemode ? 1 : 0, session.metadata?.fulfillment || 'unknown', who.email || null, session.amount_total ?? null, JSON.stringify(items),
-      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null)];
+  const billing = who.address ? { name: who.name || null, address: who.address } : null;
+  const how = session.metadata?.fulfillment || 'unknown', email = who.email ? String(who.email).trim().toLowerCase() : null;
+  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to, billing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(session.id, now, session.livemode ? 1 : 0, how, email, session.amount_total ?? null, JSON.stringify(items),
+      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null, billing ? JSON.stringify(billing) : null)];
   for (const [k, q] of Object.entries(need)) statements.push(db.prepare('UPDATE stock SET qty = MAX(qty - ?, 0), updated_at = ? WHERE key = ?').bind(q, now, k));
+  if (email) statements.push(...await customerStatements(db, { email, who, shipTo, billing, how, session, now }));
   try { await db.batch(statements); return 'recorded'; }
   catch (e) { if (/UNIQUE|PRIMARY KEY|constraint/i.test(String(e?.message))) return 'duplicate'; throw e; }
 }
@@ -382,8 +417,9 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new APIError(400, 'Please enter a valid email address.');
           const waiting = await db.prepare('SELECT COUNT(*) AS n FROM restock_requests WHERE email = ? AND notified_at IS NULL').bind(email).first();
           if ((waiting?.n || 0) >= 20) throw new APIError(429, 'That email already has a lot of requests waiting.');
-          await db.prepare('INSERT INTO restock_requests (sku, email, created_at) VALUES (?, ?, ?) ON CONFLICT (sku, email) DO UPDATE SET created_at = excluded.created_at, notified_at = NULL')
-            .bind(sku, email, now()).run();
+          await db.batch([
+            db.prepare('INSERT INTO restock_requests (sku, email, created_at) VALUES (?, ?, ?) ON CONFLICT (sku, email) DO UPDATE SET created_at = excluded.created_at, notified_at = NULL').bind(sku, email, now()),
+            db.prepare("INSERT OR IGNORE INTO customers (email, source, created_at, updated_at) VALUES (?, 'notify', ?, ?)").bind(email, now(), now())]);
           return json({ ok: true });
         }
 

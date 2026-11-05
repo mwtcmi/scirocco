@@ -42,6 +42,15 @@ td input.num{width:110px}
 .flag.out{border:1px solid var(--red);color:var(--red)}.flag.low{border:1px solid #f2d600;color:#f2d600}.flag.ok{border:1px solid #444;color:#777}.wait{color:var(--green);font-weight:700}
 .stock table{table-layout:fixed;min-width:640px}.stock col.c1{width:26%}.stock col.c2{width:20%}.stock col.c3{width:16%}.stock col.c4{width:10%}.stock col.c5{width:10%}.stock col.c6{width:18%}.stock th.n,.stock td.n{padding-right:24px}
 .stock h3{margin:0 0 10px;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}.tile{border:1px solid var(--line);background:var(--panel);padding:18px}
+.tile .big{display:block;margin:8px 0 4px;font-size:34px;font-weight:900;letter-spacing:-.02em}.tile .sub2{color:#999;font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.two .card{margin:0 0 12px;min-height:170px}
+.stat{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.stat:first-of-type{border-top:0}.stat b{font-size:16px}
+.clist tbody tr{cursor:pointer}.clist tbody tr:hover td{background:#161616}.clist td.n,.clist th.n{text-align:right;padding-right:18px}
+a.btnlink{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border:1px solid #555;color:#fff;font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;text-decoration:none}
+.detail h2{margin:0 0 4px;font-size:24px}.dl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}.dl div{font-size:14px;line-height:1.5}.dl b{display:block;color:#999;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
+@media(max-width:800px){.tiles{grid-template-columns:1fr 1fr}.two,.dl{grid-template-columns:1fr}}
 .policy{color:#aaa;font-size:13px;line-height:1.5;white-space:pre-wrap}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}h1{font-size:32px}}
 </style>
@@ -50,12 +59,37 @@ td input.num{width:110px}
 <header><div class="wrap top"><div class="brand">799 <span>Pitwall</span><span class="badge" id="store">{{STORE}}</span></div><div class="who" id="who"></div></div></header>
 <main class="wrap">
 <nav role="tablist">
-<button role="tab" data-tab="orders" aria-selected="true">Orders</button>
+<button role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
+<button role="tab" data-tab="orders" aria-selected="false">Orders</button>
+<button role="tab" data-tab="customers" aria-selected="false">Customers</button>
 <button role="tab" data-tab="prices" aria-selected="false">Prices</button>
 </nav>
 <p class="msg" id="msg" role="status"></p>
 
-<section data-panel="orders">
+<section data-panel="dash">
+<div class="kicker">Paddock Store</div><h1>Dashboard</h1>
+<p class="help" id="dash-when"></p>
+<div class="tiles" id="dash-sales"></div>
+<div class="two">
+<div class="card"><div class="kicker">Next event</div><div id="dash-event"></div></div>
+<div class="card"><div class="kicker">Customers</div><div id="dash-cust"></div></div>
+</div>
+<div class="two">
+<div class="card"><div class="kicker">Stock to watch</div><div id="dash-stock"></div></div>
+<div class="card"><div class="kicker">Top sellers · last 30 days</div><div id="dash-top"></div></div>
+</div>
+</section>
+
+<section data-panel="customers" hidden>
+<div class="kicker">Paddock Store</div><h1>Customers</h1>
+<p class="help">Everyone who has ordered or asked to be told when something is back, one record per email. "Email OK" means they ticked the box to get news by email.</p>
+<div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, email or phone" aria-label="Search customers" style="max-width:420px"><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
+<div id="cust-detail"></div>
+<div class="scroll"><table class="clist"><colgroup><col style="width:22%"><col style="width:26%"><col style="width:14%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:10%"></colgroup>
+<thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="n">Orders</th><th class="n">Spent</th><th>Email OK</th><th>Last order</th></tr></thead><tbody id="customers"></tbody></table></div>
+</section>
+
+<section data-panel="orders" hidden>
 <div class="kicker">Paddock Store</div><h1>Orders</h1>
 <p class="help">Newest first. Mark an order done once it's handed over or shipped. Full payment details are in Stripe.</p>
 <div class="row" style="margin-bottom:14px"><label class="row muted"><input type="checkbox" id="show-done"> Show done orders</label></div>
@@ -112,7 +146,7 @@ function api(path,opt){opt=opt||{};return fetch('/api'+path,{method:opt.method||
  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j})})}
 function fail(e){msg(e.message||'Something went wrong.',true)}
 // Tabs
-var loaders={orders:function(){loadOrders();loadCopies();loadEvents();loadStock()},prices:loadPrices};
+var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvents();loadStock()},customers:loadCustomers,prices:loadPrices};
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
  document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
@@ -134,6 +168,45 @@ function drawOrders(){var all=$('show-done').checked,list=orders.filter(function
   '<div class="row"><button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button></div></div>'}).join('');
  document.querySelectorAll('[data-order]').forEach(function(b){b.onclick=function(){b.disabled=true;api('/orders/'+encodeURIComponent(b.dataset.order),{method:'PUT',body:{status:b.dataset.status}})
   .then(function(){var o=orders.find(function(x){return x.id===b.dataset.order});o.status=b.dataset.status;drawOrders();msg(o.number+(o.status==='done'?' marked done.':' reopened.'))}).catch(function(e){b.disabled=false;fail(e)})}})}
+
+// Dashboard
+var HOW={ship:'Ship',pickup:'Traverse City pickup',event:'Paddock pickup',table:'Table sale'};
+var HOWN={ship:['to ship','to ship'],pickup:['Traverse City pickup','Traverse City pickups'],event:['paddock pickup','paddock pickups'],table:['table sale','table sales']};
+function howCount(k,n){var w=HOWN[k];return n+' '+(w?w[n===1?0:1]:k)}
+function loadDash(){$('dash-when').textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'. Sales include tax and shipping.';
+ api('/dashboard').then(function(d){var tile=function(k,big,sub){return '<div class="tile"><div class="kicker">'+k+'</div><span class="big">'+big+'</span><span class="sub2">'+sub+'</span></div>'};
+  var o=function(n){return n+(n===1?' order':' orders')};
+  $('dash-sales').innerHTML=tile('Today',money(d.sales.today.cents),o(d.sales.today.orders))+tile('This week',money(d.sales.week.cents),o(d.sales.week.orders))+tile('This month',money(d.sales.month.cents),o(d.sales.month.orders))+
+   tile('To hand over or ship',String(d.open.total),Object.keys(d.open.by).map(function(k){return howCount(k,d.open.by[k])}).join(' · ')||'All caught up');
+  var e=d.nextEvent;$('dash-event').innerHTML=e?'<h2 style="margin:6px 0 4px;font-size:22px">'+esc(e.name)+'</h2><p class="muted" style="margin:0 0 12px">'+day(e.starts)+(e.ends!==e.starts?' – '+day(e.ends):'')+(e.place?' · '+esc(e.place):'')+'</p>'+
+   '<div class="stat"><span>Paddock pickup orders</span><b>'+e.orders+'</b></div><div class="stat"><span>Order-ahead cutoff</span><b>'+(e.open?(e.daysToCutoff===0?'Today':e.daysToCutoff+(e.daysToCutoff===1?' day':' days')):'Closed')+'</b></div>':'<p class="muted">No upcoming events. Add one under Orders → Events.</p>';
+  var c=d.customers;$('dash-cust').innerHTML='<div class="stat"><span>Customers</span><b>'+c.total+'</b></div><div class="stat"><span>New this month</span><b>'+c.month+'</b></div><div class="stat"><span>Have ordered</span><b>'+c.buyers+'</b></div><div class="stat"><span>Email OK</span><b>'+c.optIn+'</b></div>';
+  $('dash-stock').innerHTML=d.stock.length?d.stock.map(function(i){return '<div class="stat"><span>'+esc(i.label)+(i.waiting?' <span class="wait">· '+i.waiting+' waiting</span>':'')+'</span>'+flag(i.qty).replace('>Out<','>Out<').replace('<span class="flag','<span style="margin-left:10px" class="flag')+'</div>'}).join(''):'<p class="muted">Everything is stocked.</p>';
+  $('dash-top').innerHTML=d.top.length?d.top.map(function(t){return '<div class="stat"><span>'+esc(t.name)+'</span><b>'+t.units+'</b></div>'}).join(''):'<p class="muted">No sales in the last 30 days yet.</p>'}).catch(fail)}
+
+// Customers
+var custTimer=null,custOpen=null;
+$('cust-q').oninput=function(){clearTimeout(custTimer);custTimer=setTimeout(loadCustomers,250)};
+var MK={opt_in:'<span class="pill on">Yes</span>',opt_out:'<span class="pill">No</span>',unknown:'<span class="muted">Not asked</span>'};
+function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').value.trim())).then(function(j){
+ $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(esc(c.phone)||'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
+ document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
+function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x=a.address;return [a.name,x.line1,x.line2,[x.city,x.state].filter(Boolean).join(', ')+' '+(x.postal_code||'')].filter(function(v){return v&&String(v).trim()}).map(esc).join('<br>')}
+function openCustomer(id){custOpen=id;api('/customers/'+id).then(function(j){var c=j.customer;
+ $('cust-detail').innerHTML='<div class="card detail"><div class="row"><h2>'+(esc(c.name)||esc(c.email))+'</h2><button class="alt right" type="button" id="cust-close">Close</button></div>'+
+  '<p class="muted" style="margin:0">Customer since '+when(c.created_at)+' · first came via '+esc({online:'an online order',event:'paddock pickup',table:'the 799 table',notify:'a back-in-stock request'}[c.source]||c.source)+'</p>'+
+  '<div class="dl"><div><b>Contact</b><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a>':'')+'</div><div><b>Shipping</b>'+addr(c.shipping)+'</div><div><b>Billing</b>'+addr(c.billing)+'</div></div>'+
+  '<div class="dl"><div><b>Orders</b>'+c.orders_count+' · '+money(c.total_spent)+'</div><div><b>Waiting for</b>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div>'+
+  '<div><b>Email news</b><select id="cust-mk" style="max-width:220px"><option value="opt_in">Yes, opted in</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<br><span class="muted">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</span>':'')+'</div></div>'+
+  '<label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea>'+
+  '<div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save</button><button class="danger right" type="button" id="cust-del">Delete customer data</button></div>'+
+  (j.orders.length?'<div class="scroll" style="margin-top:18px"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+money(o.total)+'</td><td>'+(o.status==='done'?'Done':'Open')+'</td></tr>'}).join('')+'</tbody></table></div>':'')+'</div>';
+ $('cust-mk').value=c.marketing;$('cust-notes').value=c.notes||'';
+ $('cust-close').onclick=function(){$('cust-detail').innerHTML='';custOpen=null};
+ $('cust-save').onclick=function(){api('/customers/'+id,{method:'PUT',body:{notes:$('cust-notes').value,marketing:$('cust-mk').value}}).then(function(){msg('Customer saved.');openCustomer(id);loadCustomers()}).catch(fail)};
+ $('cust-del').onclick=function(){if(!confirm('Delete this customer\u2019s personal details? Orders stay for your records, without name, email, phone or address. This cannot be undone.'))return;
+  api('/customers/'+id,{method:'DELETE'}).then(function(){msg('Customer data deleted.');$('cust-detail').innerHTML='';loadCustomers()}).catch(fail)};
+ $('cust-detail').scrollIntoView({block:'start'})}).catch(fail)}
 
 // Order email copies
 function copyRow(v){var d=document.createElement('div');d.className='row';d.style.marginBottom='8px';d.innerHTML='<input type="email" maxlength="254" placeholder="name@example.com" aria-label="Copy to" style="flex:1;max-width:460px"><button class="alt" type="button" aria-label="Remove">Remove</button>';
@@ -197,7 +270,7 @@ function loadPrices(){$('prices').innerHTML='<p class="muted">Loading…</p>';ap
   api('/brands/'+encodeURIComponent(b.dataset.polsave),{method:'PUT',body:{policy:t}}).then(function(r){msg(r.unchanged?'No change.':'Policy saved.')}).catch(fail).then(function(){b.disabled=false})}})
 }).catch(function(e){$('prices').innerHTML='';fail(e)})}
 
-var start=(location.hash||'').slice(1);show(loaders[start]?start:'orders');
+var start=(location.hash||'').slice(1);show(loaders[start]?start:'dash');
 })();
 </script>
 </body>

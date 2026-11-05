@@ -164,6 +164,49 @@ async function sendRestockNotices(env, db, data, sku, mailFetch, now) {
   return { sent, failed };
 }
 
+// ---- Dashboard ----
+// Start of today / this week (Monday) / this month in Michigan time, as UTC milliseconds.
+function tzOffset(ms, tz = 'America/Detroit') {
+  const d = new Date(ms), f = z => new Date(d.toLocaleString('en-US', { timeZone: z }));
+  return f(tz) - f('UTC');
+}
+export function periodStarts(now, tz = 'America/Detroit') {
+  const local = new Date(now + tzOffset(now, tz));
+  const y = local.getUTCFullYear(), m = local.getUTCMonth(), day = local.getUTCDate(), dow = (local.getUTCDay() + 6) % 7;
+  const at = (yy, mm, dd) => { const guess = Date.UTC(yy, mm, dd); return guess - tzOffset(guess, tz); };
+  return { today: at(y, m, day), week: at(y, m, day - dow), month: at(y, m, 1), last30: now - 30 * 864e5 };
+}
+export async function dashboard(db, data, now) {
+  const p = periodStarts(now), idx = skuIndex(data), byCart = Object.fromEntries(data.products.filter(x => x.cart).map(x => [x.cart, x]));
+  const sales = {};
+  for (const k of ['today', 'week', 'month']) {
+    const r = await db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(amount_total), 0) AS cents FROM orders WHERE created_at >= ?').bind(p[k]).first();
+    sales[k] = { orders: r.n, cents: r.cents };
+  }
+  const open = (await db.prepare("SELECT fulfillment, COUNT(*) AS n FROM orders WHERE COALESCE(status, 'new') <> 'done' GROUP BY fulfillment").all()).results;
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Detroit' }).format(new Date(now));
+  const ev = await db.prepare('SELECT e.*, (SELECT COUNT(*) FROM orders o WHERE o.event_id = e.id) AS orders FROM events e WHERE e.active = 1 AND e.ends >= ? ORDER BY e.starts LIMIT 1').bind(today).first();
+  const stockRows = Object.fromEntries((await db.prepare('SELECT key, qty FROM stock').all()).results.map(r => [r.key, r.qty]));
+  const wait = Object.fromEntries((await db.prepare('SELECT sku, COUNT(*) AS n FROM restock_requests WHERE notified_at IS NULL GROUP BY sku').all()).results.map(r => [r.sku, r.n]));
+  const attention = stockGroups(data).filter(g => g.status === 'live').flatMap(g => g.items).map(i => ({ label: i.label, sku: i.sku, qty: stockRows[i.sku] ?? 0, waiting: wait[i.sku] || 0 }))
+    .filter(i => i.qty < 2 || i.waiting);
+  const cust = await db.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS month, SUM(CASE WHEN marketing = 'opt_in' THEN 1 ELSE 0 END) AS optin, SUM(CASE WHEN orders_count > 0 THEN 1 ELSE 0 END) AS buyers FROM customers").bind(p.month).first();
+  const recent = (await db.prepare('SELECT items, amount_total FROM orders WHERE created_at >= ?').bind(p.last30).all()).results;
+  const sold = {};
+  for (const o of recent) { let items = []; try { items = JSON.parse(o.items || '[]'); } catch {}
+    for (const i of items) { const prod = i.s ? idx[i.s]?.p : byCart[i.p], key = prod ? prod.name : (i.s || i.p); sold[key] = (sold[key] || 0) + (i.q || 1); } }
+  const top = Object.entries(sold).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, units]) => ({ name, units }));
+  return { sales, open: { total: open.reduce((n, r) => n + r.n, 0), by: Object.fromEntries(open.map(r => [r.fulfillment, r.n])) },
+    nextEvent: ev ? { name: ev.name, starts: ev.starts, ends: ev.ends, place: ev.place, orderBy: ev.order_by, orders: ev.orders, open: today <= ev.order_by,
+      daysToCutoff: Math.round((Date.parse(ev.order_by) - Date.parse(today)) / 864e5) } : null,
+    stock: attention, customers: { total: cust.total || 0, month: cust.month || 0, optIn: cust.optin || 0, buyers: cust.buyers || 0 }, top };
+}
+
+// ---- Customers ----
+const parseJSON = (v, d) => { try { return v ? JSON.parse(v) : d; } catch { return d; } };
+const csvCell = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+const addrText = a => a?.address ? [a.name, a.address.line1, a.address.line2, [a.address.city, a.address.state].filter(Boolean).join(', ') + ' ' + (a.address.postal_code || ''), a.address.country].filter(x => x && String(x).trim()).join(', ') : '';
+
 export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), mailFetch = (...a) => fetch(...a), catalogData = bundledCatalog } = {}) {
   return {
     async fetch(request, env) {
@@ -247,6 +290,57 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           const sent = Object.values(notices).reduce((n, x) => n + x.sent, 0), failed = Object.values(notices).reduce((n, x) => n + x.failed, 0);
           const held = Object.values(notices).reduce((n, x) => n + (x.off ? x.waiting : 0), 0);
           return json({ saved: changes.length, notified: sent, failed, held });
+        }
+
+        // Dashboard
+        if (path === '/api/dashboard' && request.method === 'GET') return json(await dashboard(db, catalogData, t));
+
+        // Customers
+        if (path === '/api/customers' && request.method === 'GET') {
+          const q = clean(url.searchParams.get('q'), 80).toLowerCase(), like = '%' + q.replace(/[%_]/g, '') + '%';
+          const { results } = await db.prepare(`SELECT id, email, name, phone, marketing, source, orders_count, total_spent, last_order_at, created_at FROM customers
+            WHERE ? = '' OR lower(email) LIKE ? OR lower(COALESCE(name, '')) LIKE ? OR COALESCE(phone, '') LIKE ? ORDER BY COALESCE(last_order_at, created_at) DESC LIMIT 300`).bind(q, like, like, like).all();
+          return json({ customers: results });
+        }
+        if (path === '/api/customers.csv' && request.method === 'GET') {
+          const { results } = await db.prepare('SELECT * FROM customers ORDER BY created_at').all();
+          const head = ['email', 'name', 'phone', 'marketing', 'marketing_source', 'marketing_at', 'source', 'orders', 'total_spent', 'first_order', 'last_order', 'billing_address', 'shipping_address', 'notes', 'stripe_customer', 'created'];
+          const iso = ms => ms ? new Date(ms).toISOString() : '';
+          const rows = results.map(c => [c.email, c.name, c.phone, c.marketing, c.marketing_source, iso(c.marketing_at), c.source, c.orders_count, (c.total_spent / 100).toFixed(2),
+            iso(c.first_order_at), iso(c.last_order_at), addrText(parseJSON(c.billing)), addrText(parseJSON(c.shipping)), c.notes, c.stripe_customer, iso(c.created_at)]);
+          return new Response([head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n', { headers: { ...headers, 'Content-Type': 'text/csv;charset=utf-8',
+            'Content-Disposition': 'attachment; filename="799-customers-' + new Date(t).toISOString().slice(0, 10) + '.csv"' } });
+        }
+        if (seg[2] === 'customers' && /^\d+$/.test(seg[3] || '') && seg.length === 4) {
+          const id = Number(seg[3]);
+          const c = await db.prepare('SELECT * FROM customers WHERE id = ?').bind(id).first();
+          if (!c) throw new APIError(404, 'Customer not found.');
+          if (request.method === 'GET') {
+            const names = lineNames(catalogData);
+            const { results } = await db.prepare('SELECT o.*, e.name AS event_name FROM orders o LEFT JOIN events e ON e.id = o.event_id WHERE o.customer_id = ? ORDER BY o.created_at DESC').bind(id).all();
+            const waiting = (await db.prepare('SELECT sku FROM restock_requests WHERE email = ? AND notified_at IS NULL').bind(c.email).all()).results.map(r => skuIndex(catalogData)[r.sku] ? stockGroups(catalogData).flatMap(g => g.items).find(i => i.sku === r.sku).label : r.sku);
+            return json({ customer: { ...c, billing: parseJSON(c.billing, null), shipping: parseJSON(c.shipping, null), addresses: parseJSON(c.addresses, []) }, waiting,
+              orders: results.map(o => ({ id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, how: o.fulfillment, event: o.event_name,
+                total: o.amount_total, lines: names(parseJSON(o.items, [])), status: o.status || 'new' })) });
+          }
+          if (request.method === 'PUT') {
+            const notes = body.notes === undefined ? c.notes : clean(body.notes, 2000);
+            let { marketing, marketing_at, marketing_source } = c;
+            if (body.marketing !== undefined && body.marketing !== c.marketing) {
+              if (!['opt_in', 'opt_out', 'unknown'].includes(body.marketing)) throw new APIError(400, 'Unknown email setting.');
+              marketing = body.marketing; marketing_at = t; marketing_source = 'pitwall: ' + user.email;
+            }
+            await db.prepare('UPDATE customers SET notes = ?, marketing = ?, marketing_at = ?, marketing_source = ?, updated_at = ? WHERE id = ?').bind(notes, marketing, marketing_at, marketing_source, t, id).run();
+            return json({ id, notes, marketing });
+          }
+          if (request.method === 'DELETE') {
+            // A deletion request: remove the customer and their notify requests; keep orders for the books, without personal details.
+            await db.batch([
+              db.prepare('UPDATE orders SET email = NULL, name = NULL, phone = NULL, ship_to = NULL, billing = NULL, customer_id = NULL WHERE customer_id = ?').bind(id),
+              db.prepare('DELETE FROM restock_requests WHERE email = ?').bind(c.email),
+              db.prepare('DELETE FROM customers WHERE id = ?').bind(id)]);
+            return json({ deleted: id });
+          }
         }
 
         // Settings: who gets a copy of every order confirmation
