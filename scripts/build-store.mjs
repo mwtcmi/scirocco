@@ -22,8 +22,16 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const cats = catalog.categories;
 const catBySlug = Object.fromEntries(cats.map(c => [c.slug, c]));
 const products = catalog.products;
-const inCat = slug => products.filter(p => p.category === slug);
+// Product lifecycle: "status" is "live" (default: shown and sold), "coming-soon" (shown, not sold yet) or
+// "retired" (hidden from the store; its page stays up as "no longer available", pointing to "replacedBy" or
+// its category, so old links and search results keep working). Nothing is ever deleted.
+const STATUSES = ['live', 'coming-soon', 'retired'];
+const status = p => p.status || 'live';
+for (const p of products) if (!STATUSES.includes(status(p))) throw new Error(`${p.slug}: status must be ${STATUSES.join(', ')}`);
+const isLive = p => status(p) === 'live', isRetired = p => status(p) === 'retired';
+const inCat = slug => products.filter(p => p.category === slug && !isRetired(p));
 const cartProducts = products.filter(p => p.cart);
+const sellable = cartProducts.filter(isLive);
 const catUrl = c => `/paddock/${c.slug}/`;
 const prodUrl = p => p.external || `/paddock/${p.category}/${p.slug}/`;
 const abs = u => u.startsWith('http') ? u : SITE + u;
@@ -38,12 +46,12 @@ const menu = home.match(/<nav>[\s\S]*?<\/nav>/)[0]
   .replace(/href="([a-z0-9-]+\.html)"/g, 'href="/$1"');
 
 // The data the shared cart script needs on every store page.
-const jug = cartProducts.find(p => p.cart === 'jug');
+const jug = sellable.find(p => p.cart === 'jug');
 const clientData = {
   jug: jug ? { name: jug.name, short: jug.short, defaultColor: jug.defaultColor, colors: jug.colors.map(c => ({ name: c.name, hex: c.hex, img: c.img, sku: c.sku, upc: c.upc })) } : null,
-  addons: cartProducts.filter(p => p.cart !== 'jug').map(p => p.cart),
-  names: Object.fromEntries(cartProducts.filter(p => p.cart !== 'jug').map(p => [p.cart, p.short])),
-  fallback: Object.fromEntries(cartProducts.map(p => [p.cart, p.cart === 'jug'
+  addons: sellable.filter(p => p.cart !== 'jug').map(p => p.cart),
+  names: Object.fromEntries(sellable.filter(p => p.cart !== 'jug').map(p => [p.cart, p.short])),
+  fallback: Object.fromEntries(sellable.map(p => [p.cart, p.cart === 'jug'
     ? { name: p.name, colors: p.colors.map(c => c.name), cents: Math.round(p.price * 100) }
     : { cents: Math.round(p.price * 100) }]))
 };
@@ -88,7 +96,7 @@ const crumbsLd = items => ({ '@context': 'https://schema.org', '@type': 'Breadcr
 const ldScript = data => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
 
 // ---- HTML pieces ----
-function head({ title, desc, url, image, imageAlt, ld }) {
+function head({ title, desc, url, image, imageAlt, ld, robots }) {
   const t = esc(title), d = esc(desc), img = image || `${SITE}/images/social/799-paddock-v1.jpg`;
   const alt = esc(imageAlt || 'PADDOCK TESTED. — Tools, equipment, and lessons from race weekends.');
   return `<!DOCTYPE html>
@@ -96,7 +104,7 @@ function head({ title, desc, url, image, imageAlt, ld }) {
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${t}</title>
-<meta name="description" content="${d}">
+<meta name="description" content="${d}">${robots ? `\n<meta name="robots" content="${robots}">` : ''}
 ${baseStyle}
 <link rel="stylesheet" href="/mobile-nav.css?v=1"><script src="/mobile-nav.js?v=1" defer></script><!-- Site icons and link previews -->
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -121,7 +129,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=3">
+<link rel="stylesheet" href="/paddock-store.css?v=4">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -179,7 +187,8 @@ function tile(p) {
     ? (c => ({ src: `/images/optimized/tuffjug-5gal-${c.img}-spout-900.webp`, srcset: `/images/optimized/tuffjug-5gal-${c.img}-spout-480.webp 480w, /images/optimized/tuffjug-5gal-${c.img}-spout-900.webp 900w`, alt: `${p.name} in ${c.name} with Auto-Stop Spout` }))(p.colors.find(x => x.name === p.defaultColor))
     : (i => ({ src: i.src, srcset: i.src480 ? `${i.src480} 480w, ${i.src} ${i.w}w` : '', alt: i.alt }))(p.images[0]);
   const pic = `<img${p.colors ? ' data-jug-img' : ''} src="${img.src}"${img.srcset ? ` srcset="${img.srcset}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(img.alt)}">`;
-  const body = `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`;
+  const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
+    : `<h3>${esc(p.name)}</h3><span class="price">Coming soon</span><span class="ext-buy">See details →</span>`;
   if (!p.colors) return `<a class="ext" href="${url}">${pic}<div class="ext-body">${body}</div></a>`;
   // Jug: color swatches sit over the bottom of the photo, so the tile keeps the same size as its neighbours.
   // paddock-store.js fills [data-colors], swaps [data-jug-img] and adds ?color= to [data-jug-link].
@@ -216,7 +225,7 @@ for (const c of live) {
     const title = `${c.name}${n > 1 ? ` (page ${n})` : ''} | Paddock Store | Scirocco 799`;
     const desc = c.intro || c.blurb;
     const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)]];
-    const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: slice.map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
+    const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: slice.filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
     const pager = pages > 1 ? `<nav class="pager" aria-label="Pages">${n > 1 ? `<a href="${catUrl(c) + (n > 2 ? `page/${n - 1}/` : '')}" rel="prev">‹ Prev</a>` : ''}${Array.from({ length: pages }, (_, i) => i + 1).map(k => k === n ? `<span aria-current="page">${k}</span>` : `<a href="${catUrl(c) + (k > 1 ? `page/${k}/` : '')}">${k}</a>`).join('')}${n < pages ? `<a href="${catUrl(c)}page/${n + 1}/" rel="next">Next ›</a>` : ''}</nav>` : '';
     write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
       head({ title, desc, url: SITE + url, ld: [crumbsLd(trail), itemList] }) + `
@@ -237,11 +246,18 @@ for (const p of cartProducts) {
   const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
   const rows = p.colors ? p.colors.map(x => [x.name, x.sku, x.upc]) : [[p.color || '', p.sku || 'To come', p.upc || 'To come']];
   const thumbs = !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
-  const related = inCat(p.category).filter(x => x.cart && x !== p);
+  const related = inCat(p.category).filter(x => x.cart && x !== p && isLive(x));
+  const gone = isRetired(p), soon = status(p) === 'coming-soon';
+  const instead = gone && p.replacedBy ? products.find(x => x.slug === p.replacedBy && !isRetired(x)) : null;
+  const buy = gone
+    ? `<div class="retired-note"><strong>No longer available.</strong> ${instead ? `See the <a href="${prodUrl(instead)}">${esc(instead.name)}</a>, or browse` : 'Browse'} <a href="${catUrl(c)}">${esc(c.name)}</a>.</div>`
+    : soon ? `<button class="add" type="button" disabled>Coming soon</button>`
+    : `${options(p)}${fine(p)}${stockLine(p)}
+  <button class="add" data-add="${p.cart}">Add to cart</button>`;
   const image = p.colors ? abs(`/images/optimized/tuffjug-5gal-${p.colors.find(x => x.name === p.defaultColor).img}-spout-900.webp`) : abs(p.images[0].src);
   write(`paddock/${p.category}/${p.slug}/index.html`,
     head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
-      url: abs(url), image, imageAlt: p.name, ld: [productLd(p), crumbsLd(trail)] }) + `
+      url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
 ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
@@ -250,12 +266,11 @@ ${crumbs(trail)}
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>
-  <div class="price" data-price="${p.cart}">${money(p.price)}</div>
+  ${isLive(p) ? `<div class="price" data-price="${p.cart}">${money(p.price)}</div>` : `<div class="price">${gone ? 'No longer available' : 'Coming soon'}</div>`}
   ${idLine(p)}
   <p class="desc">${esc(p.desc)}</p>
   <ul class="facts">${p.facts.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
-  ${options(p)}${fine(p)}${stockLine(p)}
-  <button class="add" data-add="${p.cart}">Add to cart</button>
+  ${buy}
   <p class="policy-link">All sales final. <a href="/returns">Returns, warranty &amp; shipping</a></p>
 </div>
 </div>

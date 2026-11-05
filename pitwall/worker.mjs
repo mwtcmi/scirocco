@@ -92,7 +92,7 @@ async function readCatalog(env, ghFetch) {
 }
 function productList(data) {
   const brands = data.brands || {};
-  return data.products.filter(p => p.cart).map(p => ({ cart: p.cart, name: p.name, brand: p.brand, price: Number(p.price), map: p.map ?? null,
+  return data.products.filter(p => p.cart && (p.status || 'live') !== 'retired').map(p => ({ cart: p.cart, status: p.status || 'live', name: p.name, brand: p.brand, price: Number(p.price), map: p.map ?? null,
     category: p.category }))
     .map(p => ({ ...p, policy: brands[p.brand]?.mapPolicy || "" }));
 }

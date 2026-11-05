@@ -35,6 +35,7 @@ button.alt{background:none;border:1px solid #555;color:#fff}button:disabled{opac
 .pill{display:inline-block;padding:3px 8px;border:1px solid #555;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#ccc}
 .pill.on{border-color:var(--green);color:var(--green)}.pill.done{border-color:#555;color:#777}
 td input.num{width:110px}
+.sub{margin-top:56px;padding-top:40px;border-top:1px solid #292929}.h2{margin:0 0 6px;font-size:30px;line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
 .policy{color:#aaa;font-size:13px;line-height:1.5;white-space:pre-wrap}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}h1{font-size:32px}}
 </style>
@@ -44,8 +45,6 @@ td input.num{width:110px}
 <main class="wrap">
 <nav role="tablist">
 <button role="tab" data-tab="orders" aria-selected="true">Orders</button>
-<button role="tab" data-tab="events" aria-selected="false">Events</button>
-<button role="tab" data-tab="stock" aria-selected="false">Stock</button>
 <button role="tab" data-tab="prices" aria-selected="false">Prices</button>
 </nav>
 <p class="msg" id="msg" role="status"></p>
@@ -57,8 +56,8 @@ td input.num{width:110px}
 <div id="orders"></div>
 </section>
 
-<section data-panel="events" hidden>
-<div class="kicker">Paddock pickup</div><h1>Events</h1>
+<section data-panel="orders" class="sub">
+<div class="kicker">Paddock pickup</div><h2 class="h2">Events</h2>
 <p class="help">Events that are on and not over yet show "Order ahead, pick up in the 799 paddock" on the store, and buyers can choose paddock pickup until the order-by date. "Where to find 799" goes only in the buyer's order email.</p>
 <form class="card" id="event-form">
 <div class="grid">
@@ -75,8 +74,8 @@ td input.num{width:110px}
 <div class="scroll"><table><thead><tr><th>Event</th><th>Dates</th><th>Order by</th><th>Orders</th><th>Status</th><th></th></tr></thead><tbody id="events"></tbody></table></div>
 </section>
 
-<section data-panel="stock" hidden>
-<div class="kicker">Paddock Store</div><h1>Stock</h1>
+<section data-panel="orders" class="sub">
+<div class="kicker">Paddock Store</div><h2 class="h2">Stock</h2>
 <p class="help">What's on hand. Online orders take stock off by themselves. Set a count after a restock, or after a cash or Tap to Pay sale.</p>
 <div class="scroll"><table><thead><tr><th>Item</th><th>On hand</th><th></th><th>Last changed</th></tr></thead><tbody id="stock"></tbody></table></div>
 </section>
@@ -99,7 +98,7 @@ function api(path,opt){opt=opt||{};return fetch('/api'+path,{method:opt.method||
  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j})})}
 function fail(e){msg(e.message||'Something went wrong.',true)}
 // Tabs
-var loaders={orders:loadOrders,events:loadEvents,stock:loadStock,prices:loadPrices};
+var loaders={orders:function(){loadOrders();loadEvents();loadStock()},prices:loadPrices};
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
  document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}

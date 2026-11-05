@@ -18,7 +18,7 @@ const cents = v => Math.round(Number(v) * 100);
 export function buildCatalog(file) {
   const out = {};
   for (const p of file.products) {
-    if (!p.cart) continue;
+    if (!p.cart || (p.status || 'live') !== 'live') continue; // only live products can be bought
     const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price) };
     if (p.colors) { item.colors = p.colors.map(c => c.name); item.skus = Object.fromEntries(p.colors.map(c => [c.name, c.sku])); }
     else if (p.sku) item.sku = p.sku;
