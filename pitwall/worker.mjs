@@ -419,7 +419,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
             return { name: p ? p.name : (i.s || i.p), variant: v?.name || i.c || '', sku: v?.sku || i.s || '', qty: i.q || 1, unit, line: unit === null ? null : unit * (i.q || 1) };
           });
           const pi = o.payment_intent, test = !o.livemode;
-          const stripe = 'https://dashboard.stripe.com/' + (test ? 'test/' : '') + (pi ? 'payments/' + encodeURIComponent(pi) : 'search?query=' + encodeURIComponent(o.session_id));
+          const stripe = pi ? 'https://dashboard.stripe.com/' + (test ? 'test/' : '') + 'payments/' + encodeURIComponent(pi) : null; // no payment (older or free orders): no link
           return json({ order: { id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, live: !!o.livemode, how: o.fulfillment,
             event: o.event_id ? { name: o.event_name || o.event_id, starts: o.event_starts, ends: o.event_ends, place: o.event_place } : null,
             customer: { id: o.cust_id || null, name: o.name, business: o.business, email: o.email, phone: o.phone }, shipTo: parseJSON(o.ship_to, null), billing: parseJSON(o.billing, null),

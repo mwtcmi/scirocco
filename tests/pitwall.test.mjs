@@ -301,7 +301,7 @@ test('order page: one order with buyer, delivery, items at their sold price, mon
   assert.deepEqual(o.totals, { subtotal: 4599, shipping: 2500, tax: 426, discount: 0, total: 7525, refunded: 1000 });
   assert.equal(o.stripe, 'https://dashboard.stripe.com/payments/pi_123');
   const old = (await s.call('/api/orders/cs_test_old00001')).body.order;
-  assert.equal(old.items[0].variant, 'Black'); assert.equal(old.items[0].unit, null); assert.match(old.stripe, /^https:\/\/dashboard\.stripe\.com\/test\/search\?query=cs_test_old00001$/);
+  assert.equal(old.items[0].variant, 'Black'); assert.equal(old.items[0].unit, null); assert.equal(old.stripe, null);
   assert.equal((await s.call('/api/orders/cs_nope')).status, 404);
 });
 
