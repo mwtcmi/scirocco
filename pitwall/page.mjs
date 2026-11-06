@@ -113,7 +113,7 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <section data-panel="orders" hidden>
 <div id="ord-list">
 <div class="kicker">Paddock Store</div><h1>Orders</h1>
-<p class="help">Newest first. Mark an order done once it's handed over or shipped. Open an order for its full details.</p>
+<p class="help">Newest first. Click an order for its details, and mark it done there once it's handed over or shipped.</p>
 <div class="row" style="margin-bottom:14px"><label class="row muted"><input type="checkbox" id="show-done"> Show done orders</label></div>
 <div id="orders"></div>
 </div>
@@ -181,17 +181,13 @@ function loadOrders(){api('/orders').then(function(j){orders=j.orders;drawOrders
 $('show-done').onchange=drawOrders;
 function drawOrders(){var all=$('show-done').checked,list=orders.filter(function(o){return all||(o.status!=='done'&&!fullRefund(o))});
  if(!list.length){$('orders').innerHTML='<p class="muted">No '+(all?'':'open ')+'orders.</p>';return}
- $('orders').innerHTML=list.map(function(o){var how=o.how==='event'?'Paddock pickup: '+esc(o.event||'event'):o.how==='ship'?'Ship':o.how==='table'?'Paid at the table':o.how==='pickup'?'Traverse City pickup':esc(o.how);
-  var a=o.shipTo&&o.shipTo.address,addr=a?[o.shipTo.name,a.line1,a.line2,[a.city,a.state].filter(Boolean).join(', ')+' '+(a.postal_code||'')].filter(Boolean).map(esc).join('<br>'):'';
-  return '<div class="card"><div class="row"><a class="olink" href="#orders/'+encodeURIComponent(o.id)+'" data-open-order="'+esc(o.id)+'"><strong>'+o.number+'</strong></a>'+(fullRefund(o)?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>')+refundPill(o)+(o.live?'':'<span class="pill">Test</span>')+
-  '<span class="muted">'+when(o.created)+'</span><span class="right"><strong>'+totalCell(o)+'</strong></span></div>'+
-  '<p style="margin:10px 0 4px">'+o.lines.map(esc).join('<br>')+'</p><p class="muted" style="margin:8px 0">'+how+'</p>'+
-  '<p style="margin:0 0 10px;font-size:14px">'+[esc(o.name),o.email?'<a style="color:#20C933" href="mailto:'+esc(o.email)+'">'+esc(o.email)+'</a>':'',o.phone?'<a style="color:#20C933" href="tel:'+esc(o.phone)+'">'+esc(o.phone)+'</a>':''].filter(Boolean).join(' · ')+'</p>'+
-  (addr?'<p class="muted" style="margin:0 0 10px">'+addr+'</p>':'')+
-  '<div class="row">'+(fullRefund(o)?'':'<button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button>')+'<button class="alt" type="button" data-open-order="'+esc(o.id)+'">View order</button></div></div>'}).join('');
- document.querySelectorAll('#orders [data-open-order]').forEach(function(a){a.onclick=function(e){e.preventDefault();openOrder(a.dataset.openOrder)}});
- document.querySelectorAll('[data-order]').forEach(function(b){b.onclick=function(){b.disabled=true;api('/orders/'+encodeURIComponent(b.dataset.order),{method:'PUT',body:{status:b.dataset.status}})
-  .then(function(){var o=orders.find(function(x){return x.id===b.dataset.order});o.status=b.dataset.status;drawOrders();msg(o.number+(o.status==='done'?' marked done.':' reopened.'))}).catch(function(e){b.disabled=false;fail(e)})}})}
+ var units=function(o){var n=0;o.lines.forEach(function(l){n+=parseInt(l,10)||1});return n};
+ $('orders').innerHTML='<div class="scroll"><table class="clist"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:20%"><col style="width:23%"><col style="width:8%"><col style="width:10%"><col style="width:10%"></colgroup>'+
+  '<thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Delivery</th><th class="n">Items</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+
+  list.map(function(o){var how=o.how==='event'?'Paddock pickup · '+esc(o.event||'event'):esc(DELIVERY[o.how]||o.how),n=units(o);
+   return '<tr data-open-order="'+esc(o.id)+'"><td><strong>'+o.number+'</strong>'+(o.live?'':' <span class="pill">Test</span>')+'</td><td class="muted">'+when(o.created)+'</td><td>'+(esc(o.name)||esc(o.email)||'<span class="muted">—</span>')+'</td>'+
+    '<td>'+how+'</td><td class="n">'+n+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>'+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>';
+ document.querySelectorAll('#orders [data-open-order]').forEach(function(r){r.onclick=function(){openOrder(r.dataset.openOrder)}})}
 
 // Dashboard
 var HOW={ship:'Ship',pickup:'Traverse City pickup',event:'Paddock pickup',table:'Table sale'};
@@ -260,7 +256,7 @@ function day(ms){return ms?new Date(ms).toLocaleDateString('en-US',{month:'short
 function newsWhy(src){src=String(src||'');if(src==='checkout')return 'Chose at checkout';if(src==='site sign-up (confirmed)')return 'Signed up on the site and confirmed';
  if(src==='notify request (default)')return 'Joined with a back-in-stock request';if(src.indexOf('unsubscribed')===0)return 'Unsubscribed from a 799 News email';
  if(src.indexOf('in person')===0)return 'Asked in person';if(src.indexOf('pitwall')===0)return 'Changed in Pitwall';return src}
-var DELIVERY={ship:'Shipped',pickup:'Traverse City pickup',table:'Paid at the 799 table'};
+var DELIVERY={ship:'Shipping',pickup:'Traverse City pickup',table:'Paid at the 799 table'};
 function openCustomer(id,push){custOpen=id;if($('cust-list').closest('[data-panel]').hidden)panelOnly('customers');if(push!==false){try{history.pushState(null,'','#customers/'+id)}catch(e){}}
  api('/customers/'+id).then(function(j){var c=j.customer;
  $('cust-list').hidden=true;$('cust-page').hidden=false;
