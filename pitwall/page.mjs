@@ -209,7 +209,7 @@ $('cust-cancel').onclick=function(){$('cust-form').reset();$('cust-form').hidden
 $('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').checked;api('/customers',{method:'POST',body:{email:$('n-email').value,firstName:$('n-first').value,lastName:$('n-last').value,phone:$('n-phone').value,notes:$('n-notes').value,news:news}})
  .then(function(r){msg('Customer added.'+(news?(r.synced?' Added to 799 News in Resend.':' They will be added to 799 News in Resend within the hour.'):''));$('cust-form').reset();$('cust-form').hidden=true;loadCustomers();openCustomer(r.id)})
  .catch(fail)};
-var MK={opt_in:'<span class="pill on">Yes</span>',opt_out:'<span class="pill">No</span>',unknown:'<span class="muted">Not asked</span>'};
+var MK={opt_in:'<span class="pill on">Subscribed</span>',opt_out:'<span class="pill">Unsubscribed</span>',unknown:'<span class="muted">Not asked yet</span>'};
 function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').value.trim())).then(function(j){
  $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(phoneText(c.phone)):'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
  document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
@@ -218,24 +218,34 @@ function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x
 function phoneText(p){var d=String(p||'').replace(/[^0-9]/g,'');if(d.length===11&&d.charAt(0)==='1')d=d.slice(1);return d.length===10?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):p}
 function custList(){$('cust-page').hidden=true;$('cust-page').innerHTML='';$('cust-list').hidden=false;custOpen=null}
 function custBack(){custList();try{history.pushState(null,'','#customers')}catch(e){}loadCustomers()}
-var VIA={online:'an online order',event:'paddock pickup',table:'the 799 table',notify:'a back-in-stock request',signup:'a 799 News sign-up',pitwall:'being added in Pitwall'};
+var JOINED={online:'Joined through an online order',event:'Joined through a paddock pickup order',table:'Joined through a sale at the 799 table',notify:'Joined through a back-in-stock request',signup:'Joined through a 799 News sign-up',pitwall:'Added in Pitwall'};
+function day(ms){return ms?new Date(ms).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}
+// Where the current 799 News setting came from, in plain words.
+function newsWhy(src){src=String(src||'');if(src==='checkout')return 'Chose at checkout';if(src==='site sign-up (confirmed)')return 'Signed up on the site and confirmed';
+ if(src==='notify request (default)')return 'Joined with a back-in-stock request';if(src.indexOf('unsubscribed')===0)return 'Unsubscribed from a 799 News email';
+ if(src.indexOf('in person')===0)return 'Asked in person';if(src.indexOf('pitwall')===0)return 'Changed in Pitwall';return src}
+var DELIVERY={ship:'Shipped',pickup:'Traverse City pickup',table:'Paid at the 799 table'};
 function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushState(null,'','#customers/'+id)}catch(e){}}
  api('/customers/'+id).then(function(j){var c=j.customer;
  $('cust-list').hidden=true;$('cust-page').hidden=false;
  $('cust-page').innerHTML='<button class="linkish" type="button" id="cust-back">← Customers</button>'+
   '<div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1>'+
-  '<p class="help">Customer since '+when(c.created_at)+' · first came via '+esc(VIA[c.source]||c.source)+'</p>'+
+  '<p class="help">Customer since '+day(c.created_at)+' · '+esc(JOINED[c.source]||c.source)+'</p>'+
   '<div class="cgrid"><div class="card"><b>Contact</b><div>'+(c.name?esc(c.name)+'<br>':'')+'<a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(phoneText(c.phone))+'</a>':'')+'</div></div>'+
   '<div class="card"><b>Shipping</b><div>'+addr(c.shipping)+'</div></div><div class="card"><b>Billing</b><div>'+addr(c.billing)+'</div></div></div>'+
-  '<div class="cgrid"><div class="card"><b>Orders</b><div><span class="big2">'+c.orders_count+'</span> · '+money(c.total_spent)+' spent</div></div>'+
-  '<div class="card"><b>Waiting for</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div></div>'+
-  '<div class="card"><b>799 News</b><select id="cust-mk"><option value="opt_in">Yes, gets 799 News</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<div class="muted" style="margin-top:6px">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</div>':'')+'</div></div>'+
-  '<div class="card"><label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea><div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save</button></div></div>'+
-  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):(o.status==='done'?'Done':'Open')+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
-  '<div class="card dz" style="margin-top:40px"><p><b style="color:#fff">Delete customer data.</b> For when someone asks to be forgotten. Removes their record, back-in-stock requests and 799 News subscription. Orders stay for your books, without name, email, phone or address. Stripe keeps its own payment records.</p><button class="danger" type="button" id="cust-del">Delete customer data</button></div>';
+  '<div class="cgrid"><div class="card"><b>Orders</b><div><span class="big2">'+c.orders_count+'</span> '+(c.orders_count===1?'order':'orders')+' · '+money(c.total_spent)+' total</div></div>'+
+  '<div class="card"><b>Waiting for restock</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">Nothing</span>')+'</div></div>'+
+  '<div class="card"><b>799 News</b><select id="cust-mk"><option value="opt_in">Subscribed</option><option value="opt_out">Unsubscribed</option><option value="unknown">Not asked yet</option></select><div class="muted" id="cust-mk-why" style="margin-top:6px">'+(c.marketing_source?esc(newsWhy(c.marketing_source))+' · '+day(c.marketing_at):'')+'</div></div></div>'+
+  '<div class="card"><label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea><div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save notes</button></div></div>'+
+  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Delivery</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock pickup · '+esc(o.event||''):esc(DELIVERY[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):(o.status==='done'?'Done':'Open')+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
+  '<div class="card dz" style="margin-top:40px"><p><b style="color:#fff">Delete customer data.</b> Use this when someone asks you to erase their information. It removes this record, their back-in-stock requests and their 799 News subscription. Their orders stay in your records without a name, email, phone or address. Stripe keeps its own payment records.</p><button class="danger" type="button" id="cust-del">Delete customer data</button></div>';
  $('cust-mk').value=c.marketing;$('cust-notes').value=c.notes||'';
  $('cust-back').onclick=custBack;
- $('cust-save').onclick=function(){api('/customers/'+id,{method:'PUT',body:{notes:$('cust-notes').value,marketing:$('cust-mk').value}}).then(function(){msg('Customer saved.');openCustomer(id,false)}).catch(fail)};
+ $('cust-save').onclick=function(){api('/customers/'+id,{method:'PUT',body:{notes:$('cust-notes').value}}).then(function(){msg('Notes saved.')}).catch(fail)};
+ // 799 News saves the moment it changes, and syncs to Resend.
+ $('cust-mk').onchange=function(){var sel=this,v=sel.value;sel.disabled=true;api('/customers/'+id,{method:'PUT',body:{marketing:v}}).then(function(r){sel.disabled=false;c.marketing=v;
+  $('cust-mk-why').textContent='Changed in Pitwall · '+day(Date.now());msg('799 News '+(v==='opt_in'?'subscribed':v==='opt_out'?'unsubscribed':'set to not asked yet')+(r.synced===false?'. Resend will catch up within the hour.':r.synced?' and updated in Resend.':'.'))})
+  .catch(function(e){sel.disabled=false;sel.value=c.marketing;fail(e)})};
  $('cust-del').onclick=function(){if(!confirm('Delete '+(c.name||c.email)+'’s personal details? Orders stay for your records, without name, email, phone or address. This cannot be undone.'))return;
   api('/customers/'+id,{method:'DELETE'}).then(function(r){custBack();msg('Customer data deleted.'+(r.news===false?' Resend did not answer: remove '+c.email+' from 799 News in Resend by hand.':''))}).catch(fail)};
  window.scrollTo(0,0)}).catch(fail)}
