@@ -59,3 +59,44 @@ export function newsConfirmEmail({ firstName = '', link }) {
     'Confirm here: ' + link, '', "Didn't ask for this? Ignore this email and you won't hear from us."].join('\n');
   return { subject: 'Confirm you want 799 News', html: frame({ preheader: 'One click to confirm.', kicker: '799 News', body }), text };
 }
+
+// ---- Shipping ----
+// Carriers Pitwall offers, with their public tracking pages. "Other" has no link.
+export const CARRIERS = Object.freeze({
+  usps: { name: 'USPS', url: n => 'https://tools.usps.com/go/TrackConfirmAction?tLabels=' + encodeURIComponent(n) },
+  ups: { name: 'UPS', url: n => 'https://www.ups.com/track?tracknum=' + encodeURIComponent(n) },
+  fedex: { name: 'FedEx', url: n => 'https://www.fedex.com/fedextrack/?trknbr=' + encodeURIComponent(n) },
+  dhl: { name: 'DHL', url: n => 'https://www.dhl.com/us-en/home/tracking.html?tracking-id=' + encodeURIComponent(n) }
+});
+export function carrierName(code) { return CARRIERS[code]?.name || String(code || '').replace(/^other:/, '') || 'the carrier'; }
+export function trackingUrl(code, number) { return CARRIERS[code] ? CARRIERS[code].url(number) : null; }
+
+// "It's on the way": one email per shipment, with its items and tracking. A partial shipment lists what's still coming.
+//   items / remaining: [{ name, variant, qty }]; tracking: [{ number, url }]
+export function shippedEmail({ firstName = '', number, carrier, tracking = [], items = [], remaining = [], shipTo = null }) {
+  const hi = firstName ? 'Hi ' + firstName + ',' : 'Hi,';
+  const partial = remaining.length > 0;
+  const row = i => '<tr><td style="padding:8px 0;border-bottom:1px solid #eee;font-size:15px;color:#050505">' + esc(i.qty + ' × ' + i.name + (i.variant ? ', ' + i.variant : '')) + '</td></tr>';
+  const a = shipTo?.address;
+  const addr = a ? [shipTo.name, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', ') + ' ' + (a.postal_code || '')].filter(Boolean).map(esc).join('<br>') : '';
+  const many = tracking.length > 1;
+  const track = tracking.map((t, k) => t.url ? button(t.url, many ? 'Track box ' + (k + 1) + ' of ' + tracking.length : 'Track your package')
+    : '<p style="margin:14px 0 0;font-size:15px;color:#050505">' + (many ? 'Box ' + (k + 1) + ': ' : 'Tracking number: ') + '<strong>' + esc(t.number) + '</strong></p>').join('');
+  const body =
+    '<h1 style="margin:0 0 6px;font-size:24px;line-height:1.15;color:#050505">' + (partial ? 'Part of your order is on the way.' : 'Your order is on the way.') + '</h1>' +
+    '<p style="margin:0 0 18px;color:#555;font-size:15px;line-height:1.6">' + esc(hi) + ' order ' + esc(number) + ' just shipped with ' + esc(carrier) + '.' +
+      (partial ? ' The rest ships separately, and we\'ll email you when it does.' : '') + '</p>' +
+    '<div style="color:#777;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase">In this shipment</div>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + items.map(row).join('') + '</table>' +
+    track +
+    (tracking.length && tracking.every(t => t.url) ? '<p style="margin:10px 0 0;color:#999;font-size:12px">Tracking can take a day to show the first scan.</p>' : '') +
+    (partial ? '<div style="margin-top:22px;color:#777;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase">Still to ship</div>' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + remaining.map(row).join('') + '</table>' : '') +
+    (addr ? '<div style="margin-top:22px;color:#777;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase">Shipping to</div><p style="margin:6px 0 0;color:#050505;font-size:14px;line-height:1.6">' + addr + '</p>' : '') +
+    '<p style="margin:22px 0 0;color:#999;font-size:12px;line-height:1.6">Questions or something wrong with your order? Just reply. <a href="' + SITE + '/returns" style="color:#777">Returns, warranty &amp; shipping</a></p>';
+  const list = l => l.map(i => '  ' + i.qty + ' × ' + i.name + (i.variant ? ', ' + i.variant : '')).join('\n');
+  const text = [hi, '', 'Order ' + number + ' just shipped with ' + carrier + '.' + (partial ? ' The rest ships separately, and we\'ll email you when it does.' : ''), '',
+    'In this shipment:', list(items), '', ...tracking.map((t, k) => (many ? 'Box ' + (k + 1) + ': ' : 'Tracking: ') + t.number + (t.url ? ' ' + t.url : '')),
+    ...(partial ? ['', 'Still to ship:', list(remaining)] : []), '', 'Questions? Just reply.'].join('\n');
+  return { subject: (partial ? 'Part of your 799 order ' : 'Your 799 order ') + number + ' has shipped', html: frame({ preheader: (partial ? 'Part of order ' : 'Order ') + number + ' is on the way.', body }), text };
+}

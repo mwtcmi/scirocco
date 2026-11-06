@@ -54,6 +54,8 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 @media(max-width:800px){.tiles{grid-template-columns:1fr 1fr}.two,.dl{grid-template-columns:1fr}}
 .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}.cgrid .card{margin:0}.cgrid .card b,.card .lbl{display:block;color:#999;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.cgrid .card div{font-size:14px;line-height:1.55}.cgrid .big2{font-size:24px;font-weight:900}
 .items td.n,.items th.n{text-align:right}.items tfoot td{border-top:0;padding-top:6px;padding-bottom:6px}.items tfoot tr:first-child td{border-top:1px solid var(--line);padding-top:14px}.items tfoot .grand td{font-size:16px;font-weight:900;color:#fff}
+.shp{border:1px solid var(--line);padding:14px;margin:0 0 10px}.trk{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0}.trk a{color:var(--green);font-weight:700;text-decoration:none}.trk span{font-weight:700}
+.shform{border:1px solid var(--green);padding:16px;margin-top:14px}.shform select{min-height:44px;min-width:180px}.shform .sq{width:84px}.trow{margin:0 0 8px;align-items:center}.row .linkish{margin-bottom:0;min-height:34px;padding:0 6px}.shp .row{align-items:center}.todo{margin:14px 0;font-size:14px}.todo b{color:#999;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-right:8px}.trow input{flex:1;max-width:360px;min-height:44px}button.sm{min-height:34px;padding:0 14px;font-size:11px}
 .dz{display:flex;gap:16px;align-items:center;justify-content:space-between;border-color:#4a2222}.dz p{margin:0;color:#999;font-size:13px;line-height:1.5;max-width:640px}
 @media(max-width:800px){.cgrid{grid-template-columns:1fr}.dz{flex-direction:column;align-items:flex-start}}
 .orow{cursor:pointer}.orow:hover td{background:#161616}.olink{color:#fff;text-decoration:none}.olink:hover strong{color:var(--green)}
@@ -174,6 +176,7 @@ api('/me').then(function(me){$('who').textContent=me.email;if(/test/i.test(me.st
 // Orders
 var orders=[];
 // Refunds come from Stripe. A fully refunded order counts as finished; a partial refund shows how much went back.
+function statusPill(o){var ship=o.how==='ship';return o.status==='partial'?'<span class="pill on">Partly shipped</span>':o.status==='done'?'<span class="pill done">'+(ship?'Shipped':'Done')+'</span>':'<span class="pill on">Open</span>'}
 function fullRefund(o){return o.refunded>0&&o.refunded>=o.total}
 function refundPill(o){return fullRefund(o)?'<span class="pill ref">Refunded</span>':o.refunded>0?'<span class="pill ref">'+money(o.refunded)+' refunded</span>':''}
 function totalCell(o){return fullRefund(o)?'<s class="muted" style="font-size:inherit">'+money(o.total)+'</s>':money(o.total)}
@@ -186,7 +189,7 @@ function drawOrders(){var all=$('show-done').checked,list=orders.filter(function
   '<thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Delivery</th><th class="n">Items</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+
   list.map(function(o){var how=o.how==='event'?'Paddock pickup · '+esc(o.event||'event'):esc(DELIVERY[o.how]||o.how),n=units(o);
    return '<tr data-open-order="'+esc(o.id)+'"><td><strong>'+o.number+'</strong>'+(o.live?'':' <span class="pill">Test</span>')+'</td><td class="muted">'+when(o.created)+'</td><td>'+(esc(o.name)||esc(o.email)||'<span class="muted">—</span>')+'</td>'+
-    '<td>'+how+'</td><td class="n">'+n+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>'+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>';
+    '<td>'+how+'</td><td class="n">'+n+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):statusPill(o)+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>';
  document.querySelectorAll('#orders [data-open-order]').forEach(function(r){r.onclick=function(){openOrder(r.dataset.openOrder)}})}
 
 // Dashboard
@@ -218,6 +221,46 @@ function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').valu
  document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
 function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x=a.address;return [a.name,x.line1,x.line2,[x.city,x.state].filter(Boolean).join(', ')+' '+(x.postal_code||'')].filter(function(v){return v&&String(v).trim()}).map(esc).join('<br>')}
 function panelOnly(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('')}
+// Shipments on a ship order: a list of boxes sent (carrier, tracking links, items, emailed or not) and a form to add or fix one.
+// Saving a new shipment emails the customer unless the box is unticked; status follows (Partly shipped, then Shipped).
+function itemLabel(i){return i.name+(i.variant?' ('+i.variant+')':'')}
+function drawShipments(o,full){var left=o.items.reduce(function(n,i){return n+i.remaining},0);
+ var list=o.shipments.map(function(sh,k){return '<div class="shp"><div class="row"><strong>Shipment '+(k+1)+'</strong><span class="muted">'+esc(sh.carrierName)+' · '+day(sh.created)+'</span><span class="right muted">'+(sh.emailed?'Emailed '+day(sh.emailed):'Not emailed')+'</span></div>'+
+  '<div class="trk">'+sh.tracking.map(function(tk){return tk.url?'<a href="'+esc(tk.url)+'" target="_blank" rel="noopener">'+esc(tk.number)+' →</a>':'<span>'+esc(tk.number)+'</span>'}).join('')+'</div>'+
+  '<div class="muted">'+sh.items.map(function(x){return x.qty+' × '+esc(itemLabel(x))}).join(' · ')+'</div>'+
+  '<div class="row" style="margin-top:10px"><button class="alt sm" type="button" data-ship-edit="'+k+'">Edit</button><button class="linkish" type="button" data-ship-del="'+sh.id+'">Remove</button></div></div>'}).join('');
+ var todo=o.items.filter(function(i){return i.remaining>0}).map(function(i){return i.remaining+' × '+esc(itemLabel(i))}).join(' · ');
+ $('ship-card').innerHTML='<span class="lbl">Shipments</span>'+(list||'<p class="muted" style="margin:0 0 12px">Nothing shipped yet.</p>')+
+  (left?'<p class="todo"><b>Still to ship</b>'+todo+'</p>'+(full?'':'<button class="go" type="button" id="ship-add">Add shipment</button>'):'<p class="muted" style="margin:12px 0 0">Everything in this order has shipped.</p>')+'<div id="ship-form"></div>';
+ if($('ship-add'))$('ship-add').onclick=function(){shipForm(o,null)};
+ document.querySelectorAll('[data-ship-edit]').forEach(function(b){b.onclick=function(){shipForm(o,o.shipments[Number(b.dataset.shipEdit)])}});
+ document.querySelectorAll('[data-ship-del]').forEach(function(b){b.onclick=function(){if(!confirm('Remove this shipment? The customer is not emailed.'))return;
+  api('/orders/'+encodeURIComponent(o.id)+'/shipments/'+b.dataset.shipDel,{method:'DELETE'}).then(function(){msg('Shipment removed.');openOrder(o.id,false)}).catch(fail)}})}
+function shipForm(o,sh){var mine={};if(sh)sh.items.forEach(function(x){mine[x.i]=x.qty});
+ var rows=o.items.map(function(it,i){var room=it.remaining+(mine[i]||0);if(!room)return '';var v=sh?(mine[i]||0):it.remaining;
+  return '<tr><td>'+esc(itemLabel(it))+'<br><span class="muted">'+esc(it.sku)+'</span></td><td class="n"><input class="num sq" type="number" min="0" max="'+room+'" step="1" data-i="'+i+'" value="'+v+'" aria-label="How many '+esc(it.name)+'"></td><td class="muted">of '+room+'</td></tr>'}).join('');
+ var code=sh?(sh.carrier.indexOf('other:')===0?'other':sh.carrier):'usps',other=sh&&sh.carrier.indexOf('other:')===0?sh.carrier.slice(6):'';
+ var tracks=sh?sh.tracking.map(function(tk){return tk.number}):[''];
+ $('ship-form').innerHTML='<div class="shform"><span class="lbl">'+(sh?'Edit shipment':'New shipment')+'</span>'+
+  '<div class="row"><div class="pf"><label class="f" for="sh-carrier">Carrier</label><select id="sh-carrier">'+o.carriers.map(function(c){return '<option value="'+c.code+'">'+esc(c.name)+'</option>'}).join('')+'<option value="other">Other</option></select></div>'+
+  '<div class="pf" id="sh-other-wrap"><label class="f" for="sh-other">Carrier name</label><input id="sh-other" maxlength="40" value="'+esc(other)+'"></div></div>'+
+  '<label class="f" style="margin-top:14px">Tracking numbers <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">(one per box)</span></label><div id="sh-tracks"></div>'+
+  '<button class="linkish" type="button" id="sh-more">+ Another tracking number</button>'+
+  '<label class="f" style="margin-top:14px">In this box</label><div class="scroll"><table class="items"><tbody>'+rows+'</tbody></table></div>'+
+  '<label class="row" style="margin:14px 0"><input type="checkbox" id="sh-email"'+(sh?'':' checked')+'> '+(sh?'Email the customer the updated tracking':'Email the customer the tracking')+'</label>'+
+  '<div class="row"><button class="go" type="button" id="sh-save">Save shipment</button><button class="alt" type="button" id="sh-cancel">Cancel</button></div></div>';
+ $('sh-carrier').value=code;var oth=function(){$('sh-other-wrap').style.display=$('sh-carrier').value==='other'?'':'none'};oth();$('sh-carrier').onchange=oth;
+ var addTrack=function(v){var d=document.createElement('div');d.className='row trow';d.innerHTML='<input class="sh-track" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Tracking number"><button class="linkish" type="button" aria-label="Remove this tracking number">Remove</button>';
+  d.querySelector('input').value=v||'';d.querySelector('button').onclick=function(){if(document.querySelectorAll('.sh-track').length>1)d.remove();else d.querySelector('input').value=''};$('sh-tracks').appendChild(d);return d};
+ tracks.forEach(function(v){addTrack(v)});$('sh-more').onclick=function(){addTrack('').querySelector('input').focus()};
+ $('sh-cancel').onclick=function(){$('ship-form').innerHTML='';if($('ship-add'))$('ship-add').hidden=false};if($('ship-add'))$('ship-add').hidden=true;
+ $('sh-save').onclick=function(){var b=this;b.disabled=true;
+  var body={carrier:$('sh-carrier').value,carrierName:$('sh-other').value,tracking:[].map.call(document.querySelectorAll('.sh-track'),function(i){return i.value}),
+   items:[].map.call(document.querySelectorAll('.sq'),function(i){return {i:Number(i.dataset.i),q:Number(i.value)}}).filter(function(x){return x.q>0}),email:$('sh-email').checked};
+  api('/orders/'+encodeURIComponent(o.id)+'/shipments'+(sh?'/'+sh.id:''),{method:sh?'PUT':'POST',body:body}).then(function(r){
+   msg('Shipment saved'+(r.emailed===true?' and the customer emailed':r.emailed===false?'. The email did not send; the customer may have no email address':'')+'.'+(r.status==='done'?' Order shipped in full.':''));openOrder(o.id,false)})
+  .catch(function(e){b.disabled=false;fail(e)})};
+ $('ship-form').scrollIntoView({block:'nearest'})}
 // One order on its own page (#orders/<id>). The Copies and Events sections hide while it's open.
 function ordSubs(on){document.querySelectorAll('section.sub[data-panel="orders"]').forEach(function(x){x.style.display=on?'':'none'})}
 function ordList(){$('ord-page').hidden=true;$('ord-page').innerHTML='';$('ord-list').hidden=false;ordSubs(true)}
@@ -236,13 +279,15 @@ function openOrder(id,push){if(push!==false){try{history.pushState(null,'','#ord
  var timeline=['Placed '+day(o.created)+' at '+when2];if(o.status==='done'&&o.handled)timeline.push('Marked done '+day(o.handled));if(o.refundedAt)timeline.push((full?'Refunded ':money(t.refunded)+' refunded ')+day(o.refundedAt));
  $('ord-list').hidden=true;ordSubs(false);$('ord-page').hidden=false;
  $('ord-page').innerHTML='<div class="row" style="align-items:flex-end"><div><div class="kicker">Order</div><h1>'+o.number+'</h1></div><button class="alt right" type="button" id="ord-back">← All orders</button></div>'+
-  '<p class="help">'+timeline.map(esc).join(' · ')+' '+(full?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span> ')+refundPill({refunded:t.refunded,total:t.total})+(o.live?'':' <span class="pill">Test</span>')+'</p>'+
+  '<p class="help">'+timeline.map(esc).join(' · ')+' '+(full?'':statusPill(o)+' ')+refundPill({refunded:t.refunded,total:t.total})+(o.live?'':' <span class="pill">Test</span>')+'</p>'+
   '<div class="cgrid"><div class="card"><b>Customer</b><div>'+(cu.id?'<a style="color:#fff" href="#customers/'+cu.id+'" id="ord-cust">'+(esc(cu.name)||esc(cu.email))+' →</a>':(esc(cu.name)||'<span class="muted">Details deleted</span>'))+(cu.business?'<br>'+esc(cu.business):'')+
    (cu.email?'<br><a style="color:#20C933" href="mailto:'+esc(cu.email)+'">'+esc(cu.email)+'</a>':'')+(cu.phone?'<br><a style="color:#20C933" href="tel:'+esc(cu.phone)+'">'+esc(phoneText(cu.phone))+'</a>':'')+'</div></div>'+
   '<div class="card">'+delivery+'</div><div class="card"><b>Billing</b><div>'+addr(o.billing)+'</div></div></div>'+
   '<div class="card"><span class="lbl">Items</span><div class="scroll"><table class="items"><thead><tr><th>Item</th><th>SKU</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr></thead><tbody>'+rows+'</tbody><tfoot>'+foot+'</tfoot></table></div></div>'+
-  '<div class="card"><div class="row">'+(full?'':'<button class="'+(o.status==='done'?'alt':'go')+'" type="button" id="ord-status">'+(o.status==='done'?'Reopen':'Mark done')+'</button>')+(o.stripe?'<a class="alt btnlink" href="'+esc(o.stripe)+'" target="_blank" rel="noopener">Open in Stripe →</a><span class="muted">Refunds and receipts are handled in Stripe.</span>':'<span class="muted">No Stripe payment is linked to this order.</span>')+'</div></div>';
+  (o.how==='ship'?'<div class="card" id="ship-card"></div>':'')+
+  '<div class="card"><div class="row">'+(full||(o.how==='ship'&&o.shipments.length)?'':'<button class="'+(o.status==='done'?'alt':o.how==='ship'?'alt':'go')+'" type="button" id="ord-status">'+(o.status==='done'?'Reopen':o.how==='ship'?'Mark done without tracking':'Mark done')+'</button>')+(o.stripe?'<a class="alt btnlink" href="'+esc(o.stripe)+'" target="_blank" rel="noopener">Open in Stripe →</a><span class="muted">Refunds and receipts are handled in Stripe.</span>':'<span class="muted">No Stripe payment is linked to this order.</span>')+'</div></div>';
  $('ord-back').onclick=ordBack;
+ if(o.how==='ship')drawShipments(o,full);
  if($('ord-cust'))$('ord-cust').onclick=function(e){e.preventDefault();openCustomer(cu.id)};
  if($('ord-status'))$('ord-status').onclick=function(){var b=this,next=o.status==='done'?'new':'done';b.disabled=true;api('/orders/'+encodeURIComponent(o.id),{method:'PUT',body:{status:next}}).then(function(){msg(o.number+(next==='done'?' marked done.':' reopened.'));openOrder(o.id,false)}).catch(function(e){b.disabled=false;fail(e)})};
  window.scrollTo(0,0)}).catch(fail)}
@@ -269,7 +314,7 @@ function openCustomer(id,push){custOpen=id;if($('cust-list').closest('[data-pane
   '<div class="card"><b>Waiting for restock</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">Nothing</span>')+'</div></div>'+
   '<div class="card"><b>799 News</b><select id="cust-mk"><option value="opt_in">Subscribed</option><option value="opt_out">Unsubscribed</option><option value="unknown">Not asked yet</option></select><div class="muted" id="cust-mk-why" style="margin-top:6px">'+(c.marketing_source?esc(newsWhy(c.marketing_source))+' · '+day(c.marketing_at):'')+'</div></div></div>'+
   '<div class="card"><label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea><div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save notes</button></div></div>'+
-  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Delivery</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr class="orow" data-open-order="'+esc(o.id)+'"><td><strong>'+o.number+'</strong></td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock pickup · '+esc(o.event||''):esc(DELIVERY[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):(o.status==='done'?'Done':'Open')+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
+  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Delivery</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr class="orow" data-open-order="'+esc(o.id)+'"><td><strong>'+o.number+'</strong></td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock pickup · '+esc(o.event||''):esc(DELIVERY[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):statusPill(o)+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
   '<div class="card dz" style="margin-top:40px"><p><b style="color:#fff">Delete customer data.</b> Use this when someone asks you to erase their information. It removes this record, their back-in-stock requests and their 799 News subscription. Their orders stay in your records without a name, email, phone or address. Stripe keeps its own payment records.</p><button class="danger" type="button" id="cust-del">Delete customer data</button></div>';
  $('cust-mk').value=c.marketing;$('cust-notes').value=c.notes||'';
  $('cust-back').onclick=custBack;

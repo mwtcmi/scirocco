@@ -7,7 +7,7 @@
 import { PAGE } from './page.mjs';
 // Product names and order come from the product list bundled at deploy time (every catalog change redeploys Pitwall).
 import bundledCatalog from '../store/catalog.json' with { type: 'json' };
-import { backInStockEmail, FROM, REPLY_TO, SITE } from '../store/emails.mjs';
+import { backInStockEmail, shippedEmail, carrierName, trackingUrl, CARRIERS, FROM, REPLY_TO, SITE } from '../store/emails.mjs';
 import { syncNews, forgetNews, newsReady } from '../store/resend.mjs';
 
 const CATALOG_PATH = 'store/catalog.json';
@@ -168,6 +168,69 @@ async function sendRestockNotices(env, db, data, sku, mailFetch, now) {
     else { failed++; console.log('Resend error', res.status, (await res.text().catch(() => '')).slice(0, 200)); }
   }
   return { sent, failed };
+}
+
+// ---- Orders and shipments ----
+const orderNumber = id => '799-' + String(id).slice(-8).toUpperCase();
+// An order's items with names and the price each sold at (older orders have no saved price).
+function orderItems(data, o) {
+  const idx = skuIndex(data), byCart = Object.fromEntries(data.products.filter(p => p.cart).map(p => [p.cart, p]));
+  return parseJSON(o.items, []).map(i => {
+    const hit = i.s ? idx[i.s] : null, p = hit ? hit.p : byCart[i.p], v = hit ? hit.v : (p ? variantsOf(p).find(x => x.name === i.c) || variantsOf(p)[0] : null);
+    const unit = Number.isFinite(i.u) ? i.u : null;
+    return { name: p ? p.name : (i.s || i.p), variant: v?.name || i.c || '', sku: v?.sku || i.s || '', qty: i.q || 1, unit, line: unit === null ? null : unit * (i.q || 1) };
+  });
+}
+// Shipments of one order, with tracking links, and how many of each item have shipped.
+async function orderShipments(db, items, sessionId) {
+  const { results } = await db.prepare('SELECT * FROM shipments WHERE session_id = ? ORDER BY created_at, id').bind(sessionId).all();
+  const shipped = items.map(() => 0);
+  const list = results.map(r => {
+    const its = parseJSON(r.items, []).filter(x => items[x.i]);
+    its.forEach(x => { shipped[x.i] += x.q; });
+    return { id: r.id, carrier: r.carrier, carrierName: carrierName(r.carrier), tracking: parseJSON(r.tracking, []).map(n => ({ number: n, url: trackingUrl(r.carrier, n) })),
+      items: its.map(x => ({ i: x.i, qty: x.q, name: items[x.i].name, variant: items[x.i].variant })), emailed: r.emailed_at, created: r.created_at };
+  });
+  return { list, shipped, remaining: items.map((it, k) => Math.max(it.qty - shipped[k], 0)) };
+}
+// A ship order's status follows its shipments: nothing shipped = open, some = partly shipped, everything = done.
+async function syncShipStatus(db, o, remaining, shippedAny, now) {
+  if (o.fulfillment !== 'ship') return o.status || 'new';
+  const status = remaining.every(n => n === 0) ? 'done' : shippedAny ? 'partial' : 'new';
+  if (status !== (o.status || 'new')) await db.prepare('UPDATE orders SET status = ?, handled_at = ? WHERE session_id = ?').bind(status, status === 'done' ? now : null, o.session_id).run();
+  return status;
+}
+// Validate a shipment from Pitwall: a known carrier (or "other:<name>"), 1–10 tracking numbers, and items that are still to ship.
+function readShipment(body, items, remaining) {
+  let carrier = String(body.carrier || '').toLowerCase().trim();
+  if (carrier === 'other') { const nm = String(body.carrierName || '').trim().slice(0, 40); if (!nm) throw new APIError(400, 'Name the carrier.'); carrier = 'other:' + nm; }
+  else if (!CARRIERS[carrier]) throw new APIError(400, 'Pick a carrier.');
+  const tracking = [...new Set((Array.isArray(body.tracking) ? body.tracking : []).map(n => String(n || '').replace(/\s+/g, '').toUpperCase().slice(0, 40)).filter(Boolean))];
+  if (!tracking.length) throw new APIError(400, 'Add a tracking number.');
+  if (tracking.length > 10) throw new APIError(400, 'Up to 10 tracking numbers per shipment.');
+  const picked = (Array.isArray(body.items) ? body.items : []).map(x => ({ i: Number(x.i), q: Number(x.q) })).filter(x => Number.isInteger(x.i) && Number.isInteger(x.q) && x.q > 0);
+  if (!picked.length) throw new APIError(400, 'Pick at least one item for this shipment.');
+  const seen = new Set();
+  for (const x of picked) {
+    if (!items[x.i] || seen.has(x.i)) throw new APIError(400, 'Unknown item in the shipment.');
+    seen.add(x.i);
+    if (x.q > remaining[x.i]) throw new APIError(400, 'Only ' + remaining[x.i] + ' × ' + items[x.i].name + ' left to ship.');
+  }
+  return { carrier, tracking, items: picked };
+}
+async function emailShipment(env, mailFetch, o, items, ship, remaining) {
+  if (!env.RESEND_API_KEY || !o.email) return false;
+  const first = String(o.name || '').trim().split(/\s+/)[0] || '';
+  const mail = shippedEmail({ firstName: first, number: orderNumber(o.session_id), carrier: carrierName(ship.carrier),
+    tracking: ship.tracking.map(n => ({ number: n, url: trackingUrl(ship.carrier, n) })),
+    items: ship.items.map(x => ({ name: items[x.i].name, variant: items[x.i].variant, qty: x.q })),
+    remaining: items.map((it, k) => ({ name: it.name, variant: it.variant, qty: remaining[k] })).filter(x => x.qty > 0), shipTo: parseJSON(o.ship_to, null) });
+  const res = await mailFetch('https://api.resend.com/emails', { method: 'POST',
+    headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'ship-' + ship.id + '-' + ship.version },
+    body: JSON.stringify({ from: env.MAIL_FROM || FROM, to: [o.email], reply_to: REPLY_TO, subject: mail.subject, html: mail.html, text: mail.text }) })
+    .catch(e => ({ ok: false, status: 0, text: async () => String(e?.message || e) }));
+  if (!res.ok) console.log('Resend error', res.status, (await res.text().catch(() => '')).slice(0, 200));
+  return res.ok;
 }
 
 // ---- Dashboard ----
@@ -407,27 +470,56 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
               event: o.event_name, email: o.email, name: o.name, phone: o.phone, shipTo, total: o.amount_total, refunded: o.refunded_cents || 0, lines: names(items), status: o.status || 'new', handled: o.handled_at };
           }) });
         }
-        // One order, in full: buyer, delivery, items at the price they sold for, money breakdown, refunds and a link to Stripe.
+        // One order, in full: buyer, delivery, items at the price they sold for, money breakdown, refunds, shipments and a link to Stripe.
         if (seg[2] === 'orders' && seg[3] && seg.length === 4 && request.method === 'GET') {
           const o = await db.prepare(`SELECT o.*, e.name AS event_name, e.starts AS event_starts, e.ends AS event_ends, e.place AS event_place, c.id AS cust_id
             FROM orders o LEFT JOIN events e ON e.id = o.event_id LEFT JOIN customers c ON c.id = o.customer_id WHERE o.session_id = ?`).bind(decodeURIComponent(seg[3])).first();
           if (!o) throw new APIError(404, 'Order not found.');
-          const idx = skuIndex(catalogData), byCart = Object.fromEntries(catalogData.products.filter(p => p.cart).map(p => [p.cart, p]));
-          const items = parseJSON(o.items, []).map(i => {
-            const hit = i.s ? idx[i.s] : null, p = hit ? hit.p : byCart[i.p], v = hit ? hit.v : (p ? variantsOf(p).find(x => x.name === i.c) || variantsOf(p)[0] : null);
-            const unit = Number.isFinite(i.u) ? i.u : null;
-            return { name: p ? p.name : (i.s || i.p), variant: v?.name || i.c || '', sku: v?.sku || i.s || '', qty: i.q || 1, unit, line: unit === null ? null : unit * (i.q || 1) };
-          });
+          const items = orderItems(catalogData, o), sh = await orderShipments(db, items, o.session_id);
+          items.forEach((it, k) => { it.shipped = sh.shipped[k]; it.remaining = sh.remaining[k]; });
           const pi = o.payment_intent, test = !o.livemode;
           const stripe = pi ? 'https://dashboard.stripe.com/' + (test ? 'test/' : '') + 'payments/' + encodeURIComponent(pi) : null; // no payment (older or free orders): no link
-          return json({ order: { id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, live: !!o.livemode, how: o.fulfillment,
+          return json({ order: { id: o.session_id, number: orderNumber(o.session_id), created: o.created_at, live: !!o.livemode, how: o.fulfillment,
             event: o.event_id ? { name: o.event_name || o.event_id, starts: o.event_starts, ends: o.event_ends, place: o.event_place } : null,
             customer: { id: o.cust_id || null, name: o.name, business: o.business, email: o.email, phone: o.phone }, shipTo: parseJSON(o.ship_to, null), billing: parseJSON(o.billing, null),
             items, totals: { subtotal: o.amount_subtotal, shipping: o.amount_shipping, tax: o.amount_tax, discount: o.amount_discount, total: o.amount_total, refunded: o.refunded_cents || 0 },
-            status: o.status || 'new', handled: o.handled_at, refundedAt: o.refunded_at, stripe } });
+            status: o.status || 'new', handled: o.handled_at, refundedAt: o.refunded_at, stripe, shipments: sh.list,
+            carriers: Object.entries(CARRIERS).map(([code, c]) => ({ code, name: c.name })) } });
+        }
+        // Shipments: add (POST), change (PUT /:sid) or remove (DELETE /:sid). Adding emails the customer unless told not to;
+        // a change emails only when asked; removing never does.
+        if (seg[2] === 'orders' && seg[3] && seg[4] === 'shipments') {
+          const o = await db.prepare('SELECT * FROM orders WHERE session_id = ?').bind(decodeURIComponent(seg[3])).first();
+          if (!o) throw new APIError(404, 'Order not found.');
+          if (o.fulfillment !== 'ship') throw new APIError(400, 'Only shipped orders have tracking.');
+          const items = orderItems(catalogData, o);
+          const sid = seg[5] ? Number(seg[5]) : null;
+          const old = sid ? await db.prepare('SELECT * FROM shipments WHERE id = ? AND session_id = ?').bind(sid, o.session_id).first() : null;
+          if (sid && !old) throw new APIError(404, 'Shipment not found.');
+          let emailed = null, id = sid;
+          if (request.method === 'DELETE' && sid) {
+            await db.prepare('DELETE FROM shipments WHERE id = ?').bind(sid).run();
+          } else if ((request.method === 'POST' && !sid) || (request.method === 'PUT' && sid)) {
+            const before = await orderShipments(db, items, o.session_id);
+            const room = before.remaining.slice();
+            if (old) parseJSON(old.items, []).forEach(x => { if (room[x.i] !== undefined) room[x.i] += x.q; }); // editing: this shipment's own items are available again
+            const ship = readShipment(body, items, room);
+            if (old) await db.prepare('UPDATE shipments SET carrier = ?, tracking = ?, items = ?, updated_at = ? WHERE id = ?').bind(ship.carrier, JSON.stringify(ship.tracking), JSON.stringify(ship.items), t, sid).run();
+            else id = (await db.prepare('INSERT INTO shipments (session_id, carrier, tracking, items, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING id')
+              .bind(o.session_id, ship.carrier, JSON.stringify(ship.tracking), JSON.stringify(ship.items), t, t).first()).id;
+            const sendIt = old ? body.email === true : body.email !== false;
+            if (sendIt) {
+              const after = await orderShipments(db, items, o.session_id);
+              emailed = await emailShipment(env, mailFetch, o, items, { ...ship, id, version: t }, after.remaining);
+              if (emailed) await db.prepare('UPDATE shipments SET emailed_at = ? WHERE id = ?').bind(t, id).run();
+            }
+          } else throw new APIError(405, 'Not allowed.');
+          const now2 = await orderShipments(db, items, o.session_id);
+          const status = await syncShipStatus(db, o, now2.remaining, now2.list.length > 0, t);
+          return json({ id, status, emailed }); // emailed: true sent, false failed or no email address, null not asked
         }
         if (seg[2] === 'orders' && seg[3] && request.method === 'PUT') {
-          const status = body.status === 'done' ? 'done' : 'new';
+          const status = body.status === 'done' ? 'done' : body.status === 'partial' ? 'partial' : 'new';
           const r = await db.prepare('UPDATE orders SET status = ?, handled_at = ? WHERE session_id = ?').bind(status, status === 'done' ? t : null, decodeURIComponent(seg[3])).run();
           if (!r.meta?.changes) throw new APIError(404, 'Order not found.');
           return json({ status });

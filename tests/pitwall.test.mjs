@@ -297,7 +297,7 @@ test('order page: one order with buyer, delivery, items at their sold price, mon
   s.sqlite.prepare("INSERT INTO orders (session_id, created_at, livemode, fulfillment, amount_total, items) VALUES ('cs_test_old00001', 4, 0, 'pickup', 4599, ?)").run(JSON.stringify([{ p: 'jug', c: 'Black', q: 1 }]));
   const o = (await s.call('/api/orders/cs_live_abc12345')).body.order;
   assert.equal(o.number, '799-ABC12345'); assert.equal(o.customer.id, cid); assert.equal(o.shipTo.address.line1, '1 Main');
-  assert.deepEqual(o.items, [{ name: 'Tuff Jug 5 Gallon Utility Jug', variant: 'Red', sku: 'RUASVS20', qty: 1, unit: 4599, line: 4599 }]);
+  assert.deepEqual(o.items, [{ name: 'Tuff Jug 5 Gallon Utility Jug', variant: 'Red', sku: 'RUASVS20', qty: 1, unit: 4599, line: 4599, shipped: 0, remaining: 1 }]);
   assert.deepEqual(o.totals, { subtotal: 4599, shipping: 2500, tax: 426, discount: 0, total: 7525, refunded: 1000 });
   assert.equal(o.stripe, 'https://dashboard.stripe.com/payments/pi_123');
   const old = (await s.call('/api/orders/cs_test_old00001')).body.order;
@@ -316,4 +316,41 @@ test('free shipping: Pitwall turns it on and off for one product without touchin
   const s = setup(t);
   assert.equal((await s.call('/api/products/pump', { method: 'PUT', data: { freeShipping: true } })).status, 200);
   assert.equal((await s.call('/api/products')).body.products.find(p => p.cart === 'pump').freeShipping, true);
+});
+
+test('shipments: partial shipping, several boxes, edits, removal, status and the customer email', async t => {
+  const s = setup(t); const mail = [];
+  _resetCertCache();
+  const app = createPitwall({ now: () => 1800000000000, fetchCerts, mailFetch: async (url, init) => { mail.push({ key: init.headers['Idempotency-Key'], ...JSON.parse(init.body) }); return new Response('{"id":"em"}'); } });
+  s.env.RESEND_API_KEY = 're_test';
+  const call = async (path, method = 'GET', data) => { const r = await app.fetch(new Request('https://pitwall.example' + path, { method, headers: { 'content-type': 'application/json', 'cf-access-jwt-assertion': token() }, body: data === undefined ? undefined : JSON.stringify(data) }), s.env); return { status: r.status, body: await r.json() }; };
+  s.sqlite.prepare(`INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, name, amount_total, items, ship_to) VALUES ('cs_live_ship0001', 1, 1, 'ship', 'pat@example.com', 'Pat Buyer', 20000, ?, ?)`)
+    .run(JSON.stringify([{ s: 'RUASVS20', q: 2, u: 4599 }, { s: 'LTP', q: 1, u: 7499 }]), JSON.stringify({ name: 'Pat Buyer', address: { line1: '1 Main', city: 'TC', state: 'MI', postal_code: '49684' } }));
+  s.sqlite.prepare("INSERT INTO orders (session_id, created_at, livemode, fulfillment, amount_total, items) VALUES ('cs_live_pick0001', 1, 1, 'pickup', 100, '[]')").run();
+  const P = '/api/orders/cs_live_ship0001/shipments';
+  // Refused: no carrier, no tracking, too many, pickup orders
+  assert.equal((await call(P, 'POST', { carrier: 'pony', tracking: ['1'], items: [{ i: 0, q: 1 }] })).status, 400);
+  assert.equal((await call(P, 'POST', { carrier: 'usps', tracking: [], items: [{ i: 0, q: 1 }] })).status, 400);
+  assert.match((await call(P, 'POST', { carrier: 'usps', tracking: ['1'], items: [{ i: 0, q: 3 }] })).body.error, /Only 2/);
+  assert.equal((await call('/api/orders/cs_live_pick0001/shipments', 'POST', { carrier: 'usps', tracking: ['1'], items: [{ i: 0, q: 1 }] })).status, 400);
+  // Partial: one jug in one box
+  const a = await call(P, 'POST', { carrier: 'usps', tracking: ['9400 1111 2222'], items: [{ i: 0, q: 1 }] });
+  assert.deepEqual([a.status, a.body.status, a.body.emailed], [200, 'partial', true]);
+  assert.equal(mail[0].to[0], 'pat@example.com'); assert.match(mail[0].subject, /^Part of your 799 order 799-SHIP0001 has shipped$/);
+  assert.match(mail[0].html, /tLabels=940011112222/); assert.match(mail[0].text, /Still to ship:\n  1 × Tuff Jug 5 Gallon Utility Jug, Red\n  1 × Tuff Jug Electric Transfer Pump/);
+  // The rest in two boxes with another carrier, no email
+  const b = await call(P, 'POST', { carrier: 'other', carrierName: 'Speedee', tracking: ['A1', 'A2', 'A1'], items: [{ i: 0, q: 1 }, { i: 1, q: 1 }], email: false });
+  assert.deepEqual([b.body.status, b.body.emailed], ['done', null]); assert.equal(mail.length, 1);
+  const o = (await call('/api/orders/cs_live_ship0001')).body.order;
+  assert.equal(o.shipments.length, 2); assert.deepEqual(o.shipments[1].tracking, [{ number: 'A1', url: null }, { number: 'A2', url: null }]);
+  assert.equal(o.shipments[1].carrierName, 'Speedee'); assert.deepEqual(o.items.map(i => i.remaining), [0, 0]);
+  assert.equal(s.sqlite.prepare("SELECT status FROM orders WHERE session_id = 'cs_live_ship0001'").get().status, 'done');
+  assert.match((await call(P, 'POST', { carrier: 'ups', tracking: ['1Z'], items: [{ i: 1, q: 1 }] })).body.error, /Only 0/, 'nothing left to ship');
+  // Edit the first shipment (fix tracking) and email the correction; its own item can stay in it
+  const e = await call(P + '/' + a.body.id, 'PUT', { carrier: 'ups', tracking: ['1Z999'], items: [{ i: 0, q: 1 }], email: true });
+  assert.deepEqual([e.body.status, e.body.emailed], ['done', true]); assert.match(mail[1].subject, /^Your 799 order 799-SHIP0001 has shipped$/); assert.match(mail[1].html, /ups\.com\/track\?tracknum=1Z999/);
+  // Remove the second: back to partly shipped, no email
+  const d = await call(P + '/' + b.body.id, 'DELETE');
+  assert.equal(d.body.status, 'partial'); assert.equal(mail.length, 2);
+  assert.equal((await call(P + '/999', 'DELETE')).status, 404);
 });
