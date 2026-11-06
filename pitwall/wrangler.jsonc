@@ -16,7 +16,7 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "scirocco799-store", "database_id": "acffdb53-41aa-4a51-a4fc-7a4c50711baa" }
   ],
-  "vars": { "STORE_LABEL": "Live store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "main", "ACCESS_TEAM": "misty-bread-ce22.cloudflareaccess.com", "ACCESS_AUD": "250d8aaf591a27af1666b31a402faa93d3c3cb7886720c8a5817326217c2f23f", "ALLOWED_EMAILS": "mr.mikewhite@me.com" },
+  "vars": { "STORE_LABEL": "Live store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "main", "ACCESS_TEAM": "misty-bread-ce22.cloudflareaccess.com", "ACCESS_AUD": "250d8aaf591a27af1666b31a402faa93d3c3cb7886720c8a5817326217c2f23f", "ALLOWED_EMAILS": "mr.mikewhite@me.com", "NEWS_TOPIC": "d33d8326-080e-45f7-b497-1d73e62b55cf", "NEWS_SEGMENT": "4e4f2fc7-503d-45da-80b6-74083891a01a" },
   "env": {
     "test": {
       "name": "scirocco799-pitwall-test",
@@ -26,7 +26,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "scirocco799-store-test", "database_id": "33c6396a-1344-4c34-825f-a1e57732f29f" }
       ],
-      "vars": { "STORE_LABEL": "Test store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "staging", "ACCESS_TEAM": "misty-bread-ce22.cloudflareaccess.com", "ACCESS_AUD": "76d2245c28495f86cf55bc6f0b55aeadeaab4de3c07047d3a30f5d484db67b38", "ALLOWED_EMAILS": "mr.mikewhite@me.com" }
+      "vars": { "STORE_LABEL": "Test store", "GITHUB_REPO": "mwtcmi/scirocco", "GITHUB_BRANCH": "staging", "ACCESS_TEAM": "misty-bread-ce22.cloudflareaccess.com", "ACCESS_AUD": "76d2245c28495f86cf55bc6f0b55aeadeaab4de3c07047d3a30f5d484db67b38", "ALLOWED_EMAILS": "mr.mikewhite@me.com", "NEWS_TOPIC": "d33d8326-080e-45f7-b497-1d73e62b55cf", "NEWS_SEGMENT": "afd2cd6e-9eec-4f77-b760-9f52e79fc082" }
     }
   }
 }

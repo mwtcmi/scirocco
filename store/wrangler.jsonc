@@ -14,7 +14,9 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "scirocco799-store", "database_id": "acffdb53-41aa-4a51-a4fc-7a4c50711baa", "migrations_dir": "migrations" }
   ],
-  "vars": { "STRIPE_TAX": "on" },
+  "vars": { "STRIPE_TAX": "on", "NEWS_TOPIC": "d33d8326-080e-45f7-b497-1d73e62b55cf", "NEWS_SEGMENT": "4e4f2fc7-503d-45da-80b6-74083891a01a", "SITE_URL": "https://799motorsport.com" },
+  // Hourly: send 799 News changes to Resend and pick up unsubscribes.
+  "triggers": { "crons": ["23 * * * *"] },
   "env": {
     "test": {
       "name": "scirocco799-store-test",
@@ -25,7 +27,9 @@
         { "binding": "DB", "database_name": "scirocco799-store-test", "database_id": "33c6396a-1344-4c34-825f-a1e57732f29f", "migrations_dir": "migrations" }
       ],
       // Stripe Tax is off in the test store (test mode has no tax registrations). Preview links may call it.
-      "vars": { "STRIPE_TAX": "off", "ALLOWED_ORIGINS": "https://staging.scirocco-4s4.pages.dev,http://127.0.0.1:8799,http://localhost:8788" }
+      "vars": { "STRIPE_TAX": "off", "ALLOWED_ORIGINS": "https://staging.scirocco-4s4.pages.dev,http://127.0.0.1:8799,http://localhost:8788",
+        "NEWS_TOPIC": "d33d8326-080e-45f7-b497-1d73e62b55cf", "NEWS_SEGMENT": "afd2cd6e-9eec-4f77-b760-9f52e79fc082", "SITE_URL": "https://staging.scirocco-4s4.pages.dev" },
+      "triggers": { "crons": ["23 * * * *"] }
     }
   }
 }

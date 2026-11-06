@@ -46,3 +46,16 @@ export function backInStockEmail({ name, variant = '', cents, image = '', url, i
     'Stock is limited, and this email doesn\'t hold one for you.', 'This is the only email you\'ll get about this request. Questions? Just reply.'].join('\n');
   return { subject: 'It\'s back: ' + full, html: frame({ preheader: full + ' is back in stock.', body }), text };
 }
+
+// Double opt-in for site sign-ups: one button, nothing else.
+export function newsConfirmEmail({ firstName = '', link }) {
+  const hi = firstName ? 'Hi ' + firstName + ',' : 'Hi,';
+  const body =
+    '<h1 style="margin:0 0 6px;font-size:24px;line-height:1.15;color:#050505">Confirm you want 799 News.</h1>' +
+    '<p style="margin:0 0 6px;color:#555;font-size:15px;line-height:1.6">' + esc(hi) + ' someone (hopefully you) asked for 799 News at 799motorsport.com: race results, new Paddock Store gear and where to find 799 next. A few emails a season.</p>' +
+    button(link, 'Yes, sign me up') +
+    '<p style="margin:16px 0 0;color:#999;font-size:12px;line-height:1.6">Didn\'t ask for this? Ignore this email and you won\'t hear from us. Unsubscribe any time from any 799 News email.</p>';
+  const text = [hi, '', 'Someone (hopefully you) asked for 799 News at 799motorsport.com: race results, new Paddock Store gear and where to find 799 next.', '',
+    'Confirm here: ' + link, '', "Didn't ask for this? Ignore this email and you won't hear from us."].join('\n');
+  return { subject: 'Confirm you want 799 News', html: frame({ preheader: 'One click to confirm.', kicker: '799 News', body }), text };
+}

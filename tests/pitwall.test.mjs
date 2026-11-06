@@ -216,7 +216,7 @@ test('dashboard: sales by Michigan day/week/month, open orders, next event, stoc
   assert.equal(d.open.total, 2); assert.deepEqual(d.open.by, { ship: 1, event: 1 });
   assert.equal(d.nextEvent.name, 'Empire Hill Climb'); assert.equal(d.nextEvent.orders, 1); assert.equal(d.nextEvent.daysToCutoff, 3); assert.equal(d.nextEvent.open, true);
   const sb = d.stock.find(i => i.sku === 'SpoutBender'); assert.equal(sb.qty, 0); assert.equal(sb.waiting, 1);
-  assert.deepEqual(d.customers, { total: 2, month: 1, optIn: 1, buyers: 1 });
+  assert.deepEqual(d.customers, { total: 2, month: 1, optIn: 1, buyers: 1, signups: 0 });
   assert.deepEqual(d.top, [{ name: 'Tuff Jug Electric Transfer Pump', units: 3 }, { name: 'Tuff Jug 5 Gallon Utility Jug', units: 1 }]);
 });
 
@@ -249,4 +249,24 @@ test('customers: search, detail with orders, notes and email setting, CSV export
   assert.deepEqual({ ...o }, { email: null, name: null, amount_total: 4599, customer_id: null });
   assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM restock_requests WHERE email = 'pat@example.com'").get().n, 0);
   assert.equal((await s.call('/api/customers/999')).status, 404);
+});
+
+test('add customer by hand: in-person 799 News opt-in goes straight to Resend; duplicates refused; changing the setting syncs', async t => {
+  const s = setup(t); const calls = [];
+  _resetCertCache();
+  const app = createPitwall({ now: () => 1800000000000, fetchCerts, newsFetch: async (url, init) => { calls.push([init.method, url.replace('https://api.resend.com', ''), init.body ? JSON.parse(init.body) : null]); return new Response('{"id":"c"}', { status: 201 }); } });
+  Object.assign(s.env, { RESEND_API_KEY: 're_test', NEWS_TOPIC: 'top_799', NEWS_SEGMENT: 'seg_799' });
+  const call = (method, path, data) => app.fetch(new Request('https://pitwall.example' + path, { method, headers: { 'content-type': 'application/json', 'cf-access-jwt-assertion': token() }, body: data ? JSON.stringify(data) : undefined }), s.env).then(async r => ({ status: r.status, body: await r.json() }));
+  const r = await call('POST', '/api/customers', { email: 'Track@Fan.co', name: 'Track Fan', phone: '+1555', notes: 'Met at Empire', news: true });
+  assert.equal(r.status, 201); assert.equal(r.body.synced, true);
+  const row = s.sqlite.prepare('SELECT * FROM customers WHERE id = ?').get(r.body.id);
+  assert.equal(row.email, 'track@fan.co'); assert.equal(row.marketing, 'opt_in'); assert.equal(row.marketing_source, 'in person: mike@scirocco799.com'); assert.equal(row.source, 'pitwall');
+  assert.deepEqual(calls[0], ['POST', '/contacts', { email: 'track@fan.co', first_name: 'Track', last_name: 'Fan', segments: [{ id: 'seg_799' }], topics: [{ id: 'top_799', subscription: 'opt_in' }] }]);
+  assert.equal((await call('POST', '/api/customers', { email: 'track@fan.co' })).status, 409);
+  assert.equal((await call('POST', '/api/customers', { email: 'nope' })).status, 400);
+  const put = await call('PUT', '/api/customers/' + r.body.id, { marketing: 'opt_out' });
+  assert.equal(put.body.synced, true);
+  assert.deepEqual(calls.at(-1), ['PATCH', '/contacts/track%40fan.co/topics', [{ id: 'top_799', subscription: 'opt_out' }]]);
+  const quiet = await call('POST', '/api/customers', { email: 'quiet@fan.co' });
+  assert.equal(quiet.body.synced, false); assert.equal(calls.length, 2);
 });

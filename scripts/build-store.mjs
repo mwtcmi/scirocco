@@ -80,7 +80,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="cart-error" id="cart-error" role="alert" hidden></p>
   <div class="cart-sum"><span id="sum-label">Subtotal</span><strong id="cart-sub">$0.00</strong></div>
   <button class="checkout" id="checkout">Checkout</button>
-  <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen.</p>
+  <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
 <script src="/paddock-store.js?v=7"></script>`;
@@ -166,7 +166,7 @@ const options = p => multi(p) ? `<fieldset class="opt"><legend>Color <span data-
 const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
 const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';
 // "Email me when it's back", shown by paddock-store.js only when the chosen item is out of stock.
-const notifyForm = p => `<form class="notify" data-notify="${p.cart}" hidden novalidate><label for="notify-${p.cart}">Want one? Get an email when it's back.</label><div class="notify-row"><input id="notify-${p.cart}" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Notify me</button></div><input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"><p class="notify-msg" role="status"></p></form>`;
+const notifyForm = p => `<form class="notify" data-notify="${p.cart}" hidden novalidate><label for="notify-${p.cart}">Want one? Get an email when it's back.</label><div class="notify-row"><input id="notify-${p.cart}" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Notify me</button></div><input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"><p class="notify-msg" role="status"></p><p class="fine">You'll also get occasional 799 News. Unsubscribe any time.</p></form>`;
 
 // A product card in a grid (store front, category pages, "goes with" rows).
 function card(p, lazy = true) {

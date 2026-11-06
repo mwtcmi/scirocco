@@ -84,11 +84,21 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 
 <section data-panel="customers" hidden>
 <div class="kicker">Paddock Store</div><h1>Customers</h1>
-<p class="help">Everyone who has ordered or asked to be told when something is back, one record per email. "Email OK" means they ticked the box to get news by email.</p>
-<div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, email or phone" aria-label="Search customers" style="max-width:420px"><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
+<p class="help">Everyone who has ordered, asked to be notified, signed up for 799 News or been added here, one record per email. "799 News" shows who gets news emails; it stays in step with Resend, including unsubscribes.</p>
+<div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, email or phone" aria-label="Search customers" style="max-width:420px"><button class="go" type="button" id="cust-new">+ Add customer</button><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
+<form class="card" id="cust-form" hidden>
+<div class="grid">
+<div class="wide"><label class="f" for="n-email">Email</label><input id="n-email" type="email" required maxlength="254"></div>
+<div class="wide"><label class="f" for="n-name">Name</label><input id="n-name" maxlength="120"></div>
+<div class="wide"><label class="f" for="n-phone">Phone</label><input id="n-phone" type="tel" maxlength="40"></div>
+<div class="wide"><label class="f" for="n-news">799 News</label><label class="row" style="min-height:44px"><input type="checkbox" id="n-news"> They asked to get 799 News</label></div>
+<div class="full"><label class="f" for="n-notes">Notes</label><input id="n-notes" maxlength="2000" placeholder="Met at Empire, interested in the pump"></div>
+</div>
+<div class="row" style="margin-top:14px"><button class="go" type="submit">Add customer</button><button class="alt" type="button" id="cust-cancel">Cancel</button></div>
+</form>
 <div id="cust-detail"></div>
 <div class="scroll"><table class="clist"><colgroup><col style="width:22%"><col style="width:26%"><col style="width:14%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:10%"></colgroup>
-<thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="n">Orders</th><th class="n">Spent</th><th>Email OK</th><th>Last order</th></tr></thead><tbody id="customers"></tbody></table></div>
+<thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="n">Orders</th><th class="n">Spent</th><th>799 News</th><th>Last order</th></tr></thead><tbody id="customers"></tbody></table></div>
 </section>
 
 <section data-panel="orders" hidden>
@@ -183,13 +193,18 @@ function loadDash(){$('dash-when').textContent='Updated '+new Date().toLocaleTim
    tile('To hand over or ship',String(d.open.total),Object.keys(d.open.by).map(function(k){return howCount(k,d.open.by[k])}).join(' · ')||'All caught up');
   var e=d.nextEvent;$('dash-event').innerHTML=e?'<h2 style="margin:6px 0 4px;font-size:22px">'+esc(e.name)+'</h2><p class="muted" style="margin:0 0 12px">'+day(e.starts)+(e.ends!==e.starts?' – '+day(e.ends):'')+(e.place?' · '+esc(e.place):'')+'</p>'+
    '<div class="stat"><span>Paddock pickup orders</span><b>'+e.orders+'</b></div><div class="stat"><span>Order-ahead cutoff</span><b>'+(e.open?(e.daysToCutoff===0?'Today':e.daysToCutoff+(e.daysToCutoff===1?' day':' days')):'Closed')+'</b></div>':'<p class="muted">No upcoming events. Add one under Orders → Events.</p>';
-  var c=d.customers;$('dash-cust').innerHTML='<div class="stat"><span>Customers</span><b>'+c.total+'</b></div><div class="stat"><span>New this month</span><b>'+c.month+'</b></div><div class="stat"><span>Have ordered</span><b>'+c.buyers+'</b></div><div class="stat"><span>Email OK</span><b>'+c.optIn+'</b></div>';
+  var c=d.customers;$('dash-cust').innerHTML='<div class="stat"><span>Customers</span><b>'+c.total+'</b></div><div class="stat"><span>New this month</span><b>'+c.month+'</b></div><div class="stat"><span>Have ordered</span><b>'+c.buyers+'</b></div><div class="stat"><span>On 799 News</span><b>'+c.optIn+'</b></div><div class="stat"><span>Site sign-ups this month</span><b>'+c.signups+'</b></div>';
   $('dash-stock').innerHTML=d.stock.length?d.stock.map(function(i){return '<div class="stat"><span>'+esc(i.label)+(i.waiting?' <span class="wait">· '+i.waiting+' waiting</span>':'')+'</span>'+flag(i.qty).replace('>Out<','>Out<').replace('<span class="flag','<span style="margin-left:10px" class="flag')+'</div>'}).join(''):'<p class="muted">Everything is stocked.</p>';
   $('dash-top').innerHTML=d.top.length?d.top.map(function(t){return '<div class="stat"><span>'+esc(t.name)+'</span><b>'+t.units+'</b></div>'}).join(''):'<p class="muted">No sales in the last 30 days yet.</p>'}).catch(fail)}
 
 // Customers
 var custTimer=null,custOpen=null;
 $('cust-q').oninput=function(){clearTimeout(custTimer);custTimer=setTimeout(loadCustomers,250)};
+$('cust-new').onclick=function(){$('cust-form').hidden=false;$('n-email').focus()};
+$('cust-cancel').onclick=function(){$('cust-form').reset();$('cust-form').hidden=true};
+$('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').checked;api('/customers',{method:'POST',body:{email:$('n-email').value,name:$('n-name').value,phone:$('n-phone').value,notes:$('n-notes').value,news:news}})
+ .then(function(r){msg('Customer added.'+(news?(r.synced?' Added to 799 News in Resend.':' They will be added to 799 News in Resend within the hour.'):''));$('cust-form').reset();$('cust-form').hidden=true;loadCustomers();openCustomer(r.id)})
+ .catch(fail)};
 var MK={opt_in:'<span class="pill on">Yes</span>',opt_out:'<span class="pill">No</span>',unknown:'<span class="muted">Not asked</span>'};
 function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').value.trim())).then(function(j){
  $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(esc(c.phone)||'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
@@ -200,7 +215,7 @@ function openCustomer(id){custOpen=id;api('/customers/'+id).then(function(j){var
   '<p class="muted" style="margin:0">Customer since '+when(c.created_at)+' · first came via '+esc({online:'an online order',event:'paddock pickup',table:'the 799 table',notify:'a back-in-stock request'}[c.source]||c.source)+'</p>'+
   '<div class="dl"><div><b>Contact</b><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a>':'')+'</div><div><b>Shipping</b>'+addr(c.shipping)+'</div><div><b>Billing</b>'+addr(c.billing)+'</div></div>'+
   '<div class="dl"><div><b>Orders</b>'+c.orders_count+' · '+money(c.total_spent)+'</div><div><b>Waiting for</b>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div>'+
-  '<div><b>Email news</b><select id="cust-mk" style="max-width:220px"><option value="opt_in">Yes, opted in</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<br><span class="muted">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</span>':'')+'</div></div>'+
+  '<div><b>799 News</b><select id="cust-mk" style="max-width:220px"><option value="opt_in">Yes, gets 799 News</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<br><span class="muted">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</span>':'')+'</div></div>'+
   '<label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea>'+
   '<div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save</button><button class="danger right" type="button" id="cust-del">Delete customer data</button></div>'+
   (j.orders.length?'<div class="scroll" style="margin-top:18px"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+money(o.total)+'</td><td>'+(o.status==='done'?'Done':'Open')+'</td></tr>'}).join('')+'</tbody></table></div>':'')+'</div>';

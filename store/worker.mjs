@@ -8,7 +8,8 @@
 // ---- Catalog: built from store/catalog.json, the one product list for the site and checkout. ----
 // Prices in cents. map = minimum advertised price (Tuff Jug policy: MSRP - 15%).
 import catalogFile from './catalog.json' with { type: 'json' };
-import { frame, FROM as PADDOCK_FROM, REPLY_TO } from './emails.mjs';
+import { frame, FROM as PADDOCK_FROM, REPLY_TO, newsConfirmEmail } from './emails.mjs';
+import { syncNews, newsStatus, newsReady } from './resend.mjs';
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
@@ -134,7 +135,9 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     cancel_url: cancelBase + '?order=cancelled',
     allow_promotion_codes: 'true',
     customer_creation: 'always', // a Stripe customer per buyer, linked to the 799 customer record
-    consent_collection: { promotions: 'auto' }, // Stripe's unticked "keep me updated by email" checkbox
+    // 799 News: buyers are subscribed by default (US opt-out rules), with a visible choice at checkout.
+    custom_fields: [{ key: 'news', type: 'dropdown', optional: 'true', label: { type: 'custom', custom: '799 News by email' },
+      dropdown: { default_value: 'yes', options: [{ label: 'Yes, send me 799 News', value: 'yes' }, { label: 'No thanks', value: 'no' }] } }],
     excluded_payment_method_types: ['affirm', 'klarna'], // no pay-later: they cost about 6% a sale
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
       product_data: { name: l.name, description: l.description } } })),
@@ -191,7 +194,8 @@ async function customerStatements(db, { email, who, shipTo, billing, how, sessio
   const prior = await db.prepare('SELECT addresses FROM customers WHERE email = ?').bind(email).first().catch(() => null);
   let addresses = []; try { addresses = JSON.parse(prior?.addresses || '[]'); } catch {}
   if (shipTo && !addresses.some(a => sameAddress(a, shipTo))) addresses = [shipTo, ...addresses].slice(0, 5);
-  const optIn = session.consent?.promotions === 'opt_in';
+  // 799 News choice at checkout: "yes" by default; "no" opts out. Someone who opted out stays out until they say otherwise.
+  const field = (session.custom_fields || []).find(f => f.key === 'news'), news = field?.dropdown?.value === 'no' ? 'opt_out' : 'opt_in';
   const source = how === 'event' ? 'event' : how === 'table' ? 'table' : 'online';
   const stripeCustomer = typeof session.customer === 'string' ? session.customer : session.customer?.id || null;
   return [
@@ -200,15 +204,15 @@ async function customerStatements(db, { email, who, shipTo, billing, how, sessio
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
       ON CONFLICT (email) DO UPDATE SET name = COALESCE(excluded.name, name), phone = COALESCE(excluded.phone, phone),
         billing = COALESCE(excluded.billing, billing), shipping = COALESCE(excluded.shipping, shipping), addresses = excluded.addresses,
-        marketing = CASE WHEN excluded.marketing = 'opt_in' THEN 'opt_in' ELSE marketing END,
-        marketing_at = CASE WHEN excluded.marketing = 'opt_in' THEN excluded.marketing_at ELSE marketing_at END,
-        marketing_source = CASE WHEN excluded.marketing = 'opt_in' THEN excluded.marketing_source ELSE marketing_source END,
+        marketing = CASE WHEN excluded.marketing = 'opt_out' OR marketing = 'opt_out' THEN 'opt_out' ELSE 'opt_in' END,
+        marketing_at = CASE WHEN (CASE WHEN excluded.marketing = 'opt_out' OR marketing = 'opt_out' THEN 'opt_out' ELSE 'opt_in' END) <> marketing THEN excluded.marketing_at ELSE marketing_at END,
+        marketing_source = CASE WHEN (CASE WHEN excluded.marketing = 'opt_out' OR marketing = 'opt_out' THEN 'opt_out' ELSE 'opt_in' END) <> marketing THEN excluded.marketing_source ELSE marketing_source END,
         source = CASE WHEN source = 'notify' AND orders_count = 0 THEN excluded.source ELSE source END,
         stripe_customer = COALESCE(excluded.stripe_customer, stripe_customer),
         orders_count = orders_count + 1, total_spent = total_spent + excluded.total_spent,
         first_order_at = COALESCE(first_order_at, excluded.first_order_at), last_order_at = excluded.last_order_at, updated_at = excluded.updated_at`)
       .bind(email, who.name || null, who.phone || null, billing ? JSON.stringify(billing) : null, shipTo ? JSON.stringify(shipTo) : null, JSON.stringify(addresses),
-        optIn ? 'opt_in' : 'unknown', optIn ? now : null, optIn ? 'checkout' : null, source, stripeCustomer, session.amount_total ?? 0, now, now, now, now),
+        news, now, 'checkout', source, stripeCustomer, session.amount_total ?? 0, now, now, now, now),
     db.prepare('UPDATE orders SET customer_id = (SELECT id FROM customers WHERE email = ?) WHERE session_id = ?').bind(email, session.id)
   ];
 }
@@ -340,8 +344,36 @@ async function sendSamples(env, emailFetch, stamp) {
 }
 
 // A clock and fetch dependency keep the Worker testable without Stripe.
-export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => fetch(...a), emailFetch = (...a) => fetch(...a) } = {}) {
+// Send one customer's 799 News status to Resend now (opt-in or opt-out) and note when it was sent.
+async function pushNews(env, db, fetchFn, email, now) {
+  if (!newsReady(env)) return false;
+  const c = await db.prepare('SELECT name, marketing FROM customers WHERE email = ?').bind(email).first();
+  if (!c || c.marketing === 'unknown') return false;
+  const [first, ...rest] = String(c.name || '').trim().split(/\s+/);
+  const ok = await syncNews(env, fetchFn, { email, firstName: first || '', lastName: rest.join(' '), subscribed: c.marketing === 'opt_in' });
+  if (ok) await db.prepare('UPDATE customers SET news_synced_at = ? WHERE email = ?').bind(now, email).run();
+  return ok;
+}
+// Hourly: retry anything not yet in Resend, and pick up unsubscribes made from 799 News emails.
+export async function newsSweep(env, db, fetchFn, now, { pause = ms => new Promise(r => setTimeout(r, ms)), batch = 15 } = {}) {
+  if (!newsReady(env)) return { off: true };
+  let pushed = 0, unsubscribed = 0;
+  const due = (await db.prepare("SELECT email FROM customers WHERE marketing IN ('opt_in', 'opt_out') AND (news_synced_at IS NULL OR news_synced_at < updated_at) ORDER BY updated_at LIMIT ?").bind(batch).all()).results;
+  for (const r of due) { if (await pushNews(env, db, fetchFn, r.email, now)) pushed++; await pause(600); }
+  const check = (await db.prepare("SELECT email FROM customers WHERE marketing = 'opt_in' AND news_synced_at IS NOT NULL ORDER BY COALESCE(news_checked_at, 0) LIMIT ?").bind(batch).all()).results;
+  for (const r of check) {
+    const st = await newsStatus(env, fetchFn, r.email);
+    if (st === 'opt_out') { unsubscribed++;
+      await db.prepare("UPDATE customers SET marketing = 'opt_out', marketing_at = ?, marketing_source = 'unsubscribed (799 News email)', news_checked_at = ?, news_synced_at = ?, updated_at = ? WHERE email = ?").bind(now, now, now, now, r.email).run();
+    } else await db.prepare('UPDATE customers SET news_checked_at = ? WHERE email = ?').bind(now, r.email).run();
+    await pause(1100);
+  }
+  return { pushed, unsubscribed };
+}
+
+export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => fetch(...a), emailFetch = (...a) => fetch(...a), newsFetch = (...a) => fetch(...a) } = {}) {
   return {
+    async scheduled(event, env, ctx) { ctx.waitUntil(newsSweep(env, env.DB, newsFetch, now()).then(r => console.log('News sweep', JSON.stringify(r)))); },
     async fetch(request, env) {
       const url = new URL(request.url), origin = request.headers.get('origin');
       const allowed = [...ORIGINS, ...(env.ALLOWED_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean)];
@@ -405,6 +437,46 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           return json({ url: session.url });
         }
 
+        // 799 News sign-up from the site: save, then email a confirmation link (double opt-in).
+        if (request.method === 'POST' && url.pathname === '/api/subscribe') {
+          const text = await request.text();
+          if (text.length > 1024) throw new APIError(413, 'Request too large.');
+          let data; try { data = JSON.parse(text); } catch { throw new APIError(400, 'Invalid request.'); }
+          if (data.website) return json({ ok: true });
+          const email = String(data.email || '').trim().toLowerCase(), firstName = String(data.firstName || '').trim().slice(0, 60);
+          if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new APIError(400, 'Please enter a valid email address.');
+          const recent = await db.prepare('SELECT COUNT(*) AS n FROM signups WHERE email = ? AND created_at > ?').bind(email, now() - 864e5).first();
+          const current = await db.prepare('SELECT marketing FROM customers WHERE email = ?').bind(email).first();
+          await db.prepare("INSERT OR IGNORE INTO customers (email, name, source, created_at, updated_at) VALUES (?, ?, 'signup', ?, ?)").bind(email, firstName || null, now(), now()).run();
+          // Already on the list, or asked several times today: say the same thing, send nothing.
+          if (current?.marketing === 'opt_in' || (recent?.n || 0) >= 3) return json({ ok: true });
+          const token = [...crypto.getRandomValues(new Uint8Array(24))].map(b => b.toString(16).padStart(2, '0')).join('');
+          await db.prepare('INSERT INTO signups (token, email, first_name, created_at) VALUES (?, ?, ?, ?)').bind(token, email, firstName || null, now()).run();
+          if (env.RESEND_API_KEY) {
+            const mail = newsConfirmEmail({ firstName, link: url.origin + '/api/confirm?t=' + token });
+            const res = await emailFetch('https://api.resend.com/emails', { method: 'POST',
+              headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'signup-' + token },
+              body: JSON.stringify({ from: env.ORDER_FROM || ORDER_FROM, to: [email], reply_to: OWNER_EMAIL, subject: mail.subject, html: mail.html, text: mail.text }) }).catch(() => null);
+            if (!res?.ok) console.log('Resend error (signup)', res?.status);
+          }
+          return json({ ok: true });
+        }
+        if (request.method === 'GET' && url.pathname === '/api/confirm') {
+          const site = (env.SITE_URL || SITE) + '/news';
+          const token = url.searchParams.get('t') || '';
+          const row = /^[a-f0-9]{48}$/.test(token) ? await db.prepare('SELECT * FROM signups WHERE token = ?').bind(token).first() : null;
+          if (!row || now() - row.created_at > 14 * 864e5) return Response.redirect(site + '?confirmed=0', 302);
+          if (!row.confirmed_at) {
+            await db.batch([
+              db.prepare('UPDATE signups SET confirmed_at = ? WHERE token = ?').bind(now(), token),
+              db.prepare(`INSERT INTO customers (email, name, source, marketing, marketing_at, marketing_source, created_at, updated_at) VALUES (?, ?, 'signup', 'opt_in', ?, 'site sign-up (confirmed)', ?, ?)
+                ON CONFLICT (email) DO UPDATE SET name = COALESCE(name, excluded.name), marketing = 'opt_in', marketing_at = excluded.marketing_at,
+                  marketing_source = excluded.marketing_source, updated_at = excluded.updated_at`).bind(row.email, row.first_name, now(), now(), now())]);
+            await pushNews(env, db, newsFetch, row.email, now()).catch(e => console.log('News sync', e?.message || e));
+          }
+          return Response.redirect(site + '?confirmed=1', 302);
+        }
+
         // "Email me when it's back" for an out-of-stock item. Pitwall sends the email when stock comes back.
         if (request.method === 'POST' && url.pathname === '/api/notify') {
           const text = await request.text();
@@ -419,7 +491,11 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           if ((waiting?.n || 0) >= 20) throw new APIError(429, 'That email already has a lot of requests waiting.');
           await db.batch([
             db.prepare('INSERT INTO restock_requests (sku, email, created_at) VALUES (?, ?, ?) ON CONFLICT (sku, email) DO UPDATE SET created_at = excluded.created_at, notified_at = NULL').bind(sku, email, now()),
-            db.prepare("INSERT OR IGNORE INTO customers (email, source, created_at, updated_at) VALUES (?, 'notify', ?, ?)").bind(email, now(), now())]);
+            db.prepare(`INSERT INTO customers (email, source, marketing, marketing_at, marketing_source, created_at, updated_at) VALUES (?, 'notify', 'opt_in', ?, 'notify request (default)', ?, ?)
+              ON CONFLICT (email) DO UPDATE SET marketing = CASE WHEN marketing = 'unknown' THEN 'opt_in' ELSE marketing END,
+                marketing_at = CASE WHEN marketing = 'unknown' THEN excluded.marketing_at ELSE marketing_at END,
+                marketing_source = CASE WHEN marketing = 'unknown' THEN excluded.marketing_source ELSE marketing_source END, updated_at = excluded.updated_at`).bind(email, now(), now(), now())]);
+          await pushNews(env, db, newsFetch, email, now());
           return json({ ok: true });
         }
 
@@ -433,6 +509,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const result = await recordOrder(db, session, now());
           const pickupEvent = session.metadata?.event_id ? await eventRow(db, session.metadata.event_id).catch(() => null) : null;
           const email = result === 'recorded' ? await sendOrderEmail(env, session, emailFetch, pickupEvent, await orderCopies(db)) : 'skipped';
+          if (result === 'recorded' && session.customer_details?.email) await pushNews(env, db, newsFetch, String(session.customer_details.email).trim().toLowerCase(), now()).catch(e => console.log('News sync', e?.message || e));
           return json({ received: true, result, email });
         }
 

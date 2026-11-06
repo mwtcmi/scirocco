@@ -23,7 +23,8 @@ function service(t, { key = 'rk_test_abc', stripeStatus = 200, emailStatus = 200
     const h = { ...headers }; if (origin) h.origin = origin;
     const body = raw ?? (data === undefined ? undefined : JSON.stringify(data));
     const res = await worker.fetch(new Request('https://store.example' + path, { method, headers: h, body }), env);
-    return { status: res.status, body: method === 'OPTIONS' ? null : await res.json(), res };
+    const text = method === 'OPTIONS' ? '' : await res.text();
+    return { status: res.status, body: text ? JSON.parse(text) : null, res };
   }
   function sign(payload, at = Math.floor(time / 1000)) {
     const sig = crypto.createHmac('sha256', SECRET).update(at + '.' + payload).digest('hex');
@@ -352,15 +353,75 @@ test('customers: one record per email with details, addresses, totals and opt-in
   assert.deepEqual(s.sqlite.prepare('SELECT DISTINCT customer_id FROM orders').all().map(r => r.customer_id), [c[0].id]);
 });
 
-test('customers: checkout creates a Stripe customer and shows the opt-in box; notify requests add a "not asked" customer', async t => {
+test('customers: checkout creates a Stripe customer and asks "799 News by email" (Yes by default); notify requests opt in by default', async t => {
   const s = service(t);
   await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: 'LTP', qty: 1 }] } });
-  assert.equal(s.sent[0].params.get('customer_creation'), 'always');
-  assert.equal(s.sent[0].params.get('consent_collection[promotions]'), 'auto');
+  const p = s.sent[0].params;
+  assert.equal(p.get('customer_creation'), 'always'); assert.equal(p.get('consent_collection[promotions]'), null);
+  assert.equal(p.get('custom_fields[0][key]'), 'news'); assert.equal(p.get('custom_fields[0][type]'), 'dropdown');
+  assert.equal(p.get('custom_fields[0][dropdown][default_value]'), 'yes'); assert.equal(p.get('custom_fields[0][dropdown][options][1][value]'), 'no');
   await s.call('/api/notify', { method: 'POST', data: { sku: 'SpoutBender', email: 'New@Person.co' } });
-  const c = s.sqlite.prepare("SELECT email, source, marketing, orders_count FROM customers").get();
-  assert.deepEqual({ ...c }, { email: 'new@person.co', source: 'notify', marketing: 'unknown', orders_count: 0 });
+  const c = s.sqlite.prepare("SELECT email, source, marketing, marketing_source, orders_count FROM customers").get();
+  assert.deepEqual({ ...c }, { email: 'new@person.co', source: 'notify', marketing: 'opt_in', marketing_source: 'notify request (default)', orders_count: 0 });
   const ev = paid('cs_test_n1', [{ s: 'LTP', q: 1 }], 'event'); ev.data.object.customer_details.email = 'new@person.co';
   await s.webhook(ev);
   assert.equal(s.sqlite.prepare("SELECT source FROM customers").get().source, 'event', 'first order replaces the notify source');
+});
+
+test('799 News at checkout: "No" opts out and a later default "Yes" never re-subscribes them', async t => {
+  const s = service(t);
+  const order = (id, choice) => { const ev = paid(id, [{ s: 'LTP', q: 1 }]); ev.data.object.customer_details.email = 'pat@example.com';
+    if (choice) ev.data.object.custom_fields = [{ key: 'news', type: 'dropdown', dropdown: { value: choice } }]; return ev; };
+  await s.webhook(order('cs_test_m1', 'yes'));
+  assert.equal(s.sqlite.prepare('SELECT marketing FROM customers').get().marketing, 'opt_in');
+  await s.webhook(order('cs_test_m2', 'no'));
+  assert.equal(s.sqlite.prepare('SELECT marketing, marketing_source FROM customers').get().marketing, 'opt_out');
+  await s.webhook(order('cs_test_m3', 'yes'));
+  assert.equal(s.sqlite.prepare('SELECT marketing FROM customers').get().marketing, 'opt_out');
+});
+
+test('sign-up: saves, emails a confirm link, confirming opts in and redirects; repeats and bots send nothing', async t => {
+  const s = service(t); s.env.RESEND_API_KEY = 're_test'; s.env.SITE_URL = 'https://staging.example';
+  const r = await s.call('/api/subscribe', { method: 'POST', data: { email: ' Fan@Example.com ', firstName: 'Fan' } });
+  assert.equal(r.status, 200); assert.equal(s.mail.length, 1);
+  const m = s.mail[0].body;
+  assert.equal(m.from, '799 Motorsport Paddock <paddock@799motorsport.com>'); assert.equal(m.subject, 'Confirm you want 799 News');
+  const link = /https:\/\/store\.example\/api\/confirm\?t=([a-f0-9]{48})/.exec(m.html);
+  assert.ok(link, 'confirm link');
+  assert.equal(s.sqlite.prepare("SELECT marketing, source FROM customers WHERE email = 'fan@example.com'").get().marketing, 'unknown');
+  const c = await s.call('/api/confirm?t=' + link[1], { origin: null });
+  assert.equal(c.res.status, 302); assert.equal(c.res.headers.get('location'), 'https://staging.example/news?confirmed=1');
+  const row = s.sqlite.prepare("SELECT marketing, marketing_source, name, source FROM customers WHERE email = 'fan@example.com'").get();
+  assert.deepEqual({ ...row }, { marketing: 'opt_in', marketing_source: 'site sign-up (confirmed)', name: 'Fan', source: 'signup' });
+  await s.call('/api/subscribe', { method: 'POST', data: { email: 'fan@example.com' } });
+  assert.equal(s.mail.length, 1, 'already on the list: no second email');
+  await s.call('/api/subscribe', { method: 'POST', data: { email: 'bot@spam.co', website: 'x' } });
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM customers WHERE email = 'bot@spam.co'").get().n, 0);
+  assert.equal((await s.call('/api/subscribe', { method: 'POST', data: { email: 'nope' } })).status, 400);
+  const bad = await s.call('/api/confirm?t=' + 'a'.repeat(48), { origin: null });
+  assert.equal(bad.res.headers.get('location'), 'https://staging.example/news?confirmed=0');
+});
+
+test('Resend sync: opt-ins join the 799 News segment and topic; the hourly sweep retries and picks up unsubscribes', async t => {
+  const { newsSweep } = worker;
+  const s = service(t);
+  const env = { RESEND_API_KEY: 're_test', NEWS_TOPIC: 'top_799', NEWS_SEGMENT: 'seg_799' }, calls = [];
+  let unsubscribedInResend = false;
+  const fetchFn = async (url, init) => { const path = url.replace('https://api.resend.com', ''); calls.push([init.method, path, init.body ? JSON.parse(init.body) : null]);
+    if (init.method === 'POST' && path === '/contacts') return new Response('{"id":"c1"}', { status: 201 });
+    if (init.method === 'GET' && path.endsWith('/topics')) return new Response(JSON.stringify({ data: [{ id: 'top_799', subscription: unsubscribedInResend ? 'opt_out' : 'opt_in' }, { id: 'ehc', subscription: 'opt_in' }] }));
+    if (init.method === 'GET') return new Response('{"unsubscribed":false}');
+    return new Response('{}'); };
+  s.sqlite.prepare("INSERT INTO customers (email, name, marketing, created_at, updated_at) VALUES ('pat@example.com', 'Pat Buyer', 'opt_in', 1, 2), ('quiet@example.com', NULL, 'unknown', 1, 2)").run();
+  const r1 = await newsSweep(env, s.db, fetchFn, 100, { pause: async () => {} });
+  assert.equal(r1.pushed, 1);
+  assert.deepEqual(calls[0], ['POST', '/contacts', { email: 'pat@example.com', first_name: 'Pat', last_name: 'Buyer', segments: [{ id: 'seg_799' }], topics: [{ id: 'top_799', subscription: 'opt_in' }] }]);
+  assert.ok(!calls.some(c => JSON.stringify(c).includes('quiet@example.com')), 'never asked = never sent to Resend');
+  unsubscribedInResend = true;
+  const r2 = await newsSweep(env, s.db, fetchFn, 200, { pause: async () => {} });
+  assert.equal(r2.unsubscribed, 1);
+  const row = s.sqlite.prepare("SELECT marketing, marketing_source FROM customers WHERE email = 'pat@example.com'").get();
+  assert.deepEqual({ ...row }, { marketing: 'opt_out', marketing_source: 'unsubscribed (799 News email)' });
+  assert.ok(!calls.some(c => c[2] && JSON.stringify(c[2]).includes('"unsubscribed":true')), 'never unsubscribes them from the whole account');
+  assert.deepEqual(await newsSweep({}, s.db, fetchFn, 300), { off: true });
 });

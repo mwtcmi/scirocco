@@ -8,6 +8,7 @@ import { PAGE } from './page.mjs';
 // Product names and order come from the product list bundled at deploy time (every catalog change redeploys Pitwall).
 import bundledCatalog from '../store/catalog.json' with { type: 'json' };
 import { backInStockEmail, FROM, REPLY_TO, SITE } from '../store/emails.mjs';
+import { syncNews } from '../store/resend.mjs';
 
 const CATALOG_PATH = 'store/catalog.json';
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -191,6 +192,7 @@ export async function dashboard(db, data, now) {
   const attention = stockGroups(data).filter(g => g.status === 'live').flatMap(g => g.items).map(i => ({ label: i.label, sku: i.sku, qty: stockRows[i.sku] ?? 0, waiting: wait[i.sku] || 0 }))
     .filter(i => i.qty < 2 || i.waiting);
   const cust = await db.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS month, SUM(CASE WHEN marketing = 'opt_in' THEN 1 ELSE 0 END) AS optin, SUM(CASE WHEN orders_count > 0 THEN 1 ELSE 0 END) AS buyers FROM customers").bind(p.month).first();
+  const signups = await db.prepare("SELECT COUNT(*) AS n FROM customers WHERE marketing_source = 'site sign-up (confirmed)' AND marketing_at >= ?").bind(p.month).first().catch(() => ({ n: 0 }));
   const recent = (await db.prepare('SELECT items, amount_total FROM orders WHERE created_at >= ?').bind(p.last30).all()).results;
   const sold = {};
   for (const o of recent) { let items = []; try { items = JSON.parse(o.items || '[]'); } catch {}
@@ -199,7 +201,7 @@ export async function dashboard(db, data, now) {
   return { sales, open: { total: open.reduce((n, r) => n + r.n, 0), by: Object.fromEntries(open.map(r => [r.fulfillment, r.n])) },
     nextEvent: ev ? { name: ev.name, starts: ev.starts, ends: ev.ends, place: ev.place, orderBy: ev.order_by, orders: ev.orders, open: today <= ev.order_by,
       daysToCutoff: Math.round((Date.parse(ev.order_by) - Date.parse(today)) / 864e5) } : null,
-    stock: attention, customers: { total: cust.total || 0, month: cust.month || 0, optIn: cust.optin || 0, buyers: cust.buyers || 0 }, top };
+    stock: attention, customers: { total: cust.total || 0, month: cust.month || 0, optIn: cust.optin || 0, buyers: cust.buyers || 0, signups: signups?.n || 0 }, top };
 }
 
 // ---- Customers ----
@@ -207,7 +209,17 @@ const parseJSON = (v, d) => { try { return v ? JSON.parse(v) : d; } catch { retu
 const csvCell = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
 const addrText = a => a?.address ? [a.name, a.address.line1, a.address.line2, [a.address.city, a.address.state].filter(Boolean).join(', ') + ' ' + (a.address.postal_code || ''), a.address.country].filter(x => x && String(x).trim()).join(', ') : '';
 
-export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), mailFetch = (...a) => fetch(...a), catalogData = bundledCatalog } = {}) {
+// Send a customer's 799 News choice to Resend right away (the store's hourly sweep retries if this fails).
+async function pushNews(env, db, newsFetch, id, now) {
+  const c = await db.prepare('SELECT email, name, marketing FROM customers WHERE id = ?').bind(id).first();
+  if (!c || c.marketing === 'unknown') return false;
+  const [first, ...rest] = String(c.name || '').trim().split(/\s+/);
+  const ok = await syncNews(env, newsFetch, { email: c.email, firstName: first || '', lastName: rest.join(' '), subscribed: c.marketing === 'opt_in' }).catch(() => false);
+  if (ok) await db.prepare('UPDATE customers SET news_synced_at = ? WHERE id = ?').bind(now, id).run();
+  return ok;
+}
+
+export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetch(...a), fetchCerts = u => fetch(u), mailFetch = (...a) => fetch(...a), newsFetch = (...a) => fetch(...a), catalogData = bundledCatalog } = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -302,6 +314,20 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
             WHERE ? = '' OR lower(email) LIKE ? OR lower(COALESCE(name, '')) LIKE ? OR COALESCE(phone, '') LIKE ? ORDER BY COALESCE(last_order_at, created_at) DESC LIMIT 300`).bind(q, like, like, like).all();
           return json({ customers: results });
         }
+        // Add someone by hand (met at the track, asked at the table). "They asked for 799 News" records an in-person opt-in.
+        if (path === '/api/customers' && request.method === 'POST') {
+          const email = clean(body.email, 254).toLowerCase();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new APIError(400, 'Please enter a valid email address.');
+          const existing = await db.prepare('SELECT id FROM customers WHERE email = ?').bind(email).first();
+          if (existing) return json({ error: 'That email is already a customer.', id: existing.id }, 409);
+          const news = body.news === true;
+          const r = await db.prepare(`INSERT INTO customers (email, name, phone, notes, source, marketing, marketing_at, marketing_source, created_at, updated_at)
+            VALUES (?, ?, ?, ?, 'pitwall', ?, ?, ?, ?, ?)`).bind(email, clean(body.name, 120) || null, clean(body.phone, 40) || null, clean(body.notes, 2000),
+              news ? 'opt_in' : 'unknown', news ? t : null, news ? 'in person: ' + user.email : null, t, t).run();
+          const id = r.meta?.last_row_id ?? (await db.prepare('SELECT id FROM customers WHERE email = ?').bind(email).first()).id;
+          const synced = news ? await pushNews(env, db, newsFetch, id, t) : false;
+          return json({ id, synced }, 201);
+        }
         if (path === '/api/customers.csv' && request.method === 'GET') {
           const { results } = await db.prepare('SELECT * FROM customers ORDER BY created_at').all();
           const head = ['email', 'name', 'phone', 'marketing', 'marketing_source', 'marketing_at', 'source', 'orders', 'total_spent', 'first_order', 'last_order', 'billing_address', 'shipping_address', 'notes', 'stripe_customer', 'created'];
@@ -331,7 +357,8 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
               marketing = body.marketing; marketing_at = t; marketing_source = 'pitwall: ' + user.email;
             }
             await db.prepare('UPDATE customers SET notes = ?, marketing = ?, marketing_at = ?, marketing_source = ?, updated_at = ? WHERE id = ?').bind(notes, marketing, marketing_at, marketing_source, t, id).run();
-            return json({ id, notes, marketing });
+            const synced = marketing !== c.marketing ? await pushNews(env, db, newsFetch, id, t) : null;
+            return json({ id, notes, marketing, synced });
           }
           if (request.method === 'DELETE') {
             // A deletion request: remove the customer and their notify requests; keep orders for the books, without personal details.
