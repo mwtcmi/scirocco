@@ -8,7 +8,7 @@ import { PAGE } from './page.mjs';
 // Product names and order come from the product list bundled at deploy time (every catalog change redeploys Pitwall).
 import bundledCatalog from '../store/catalog.json' with { type: 'json' };
 import { backInStockEmail, FROM, REPLY_TO, SITE } from '../store/emails.mjs';
-import { syncNews } from '../store/resend.mjs';
+import { syncNews, forgetNews, newsReady } from '../store/resend.mjs';
 
 const CATALOG_PATH = 'store/catalog.json';
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -361,12 +361,15 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
             return json({ id, notes, marketing, synced });
           }
           if (request.method === 'DELETE') {
-            // A deletion request: remove the customer and their notify requests; keep orders for the books, without personal details.
+            // A deletion request: remove the customer, their notify requests and site sign-ups, and take them off 799 News in
+            // Resend; keep orders for the books, without personal details. Stripe keeps its own payment records.
+            const news = newsReady(env) ? await forgetNews(env, newsFetch, c.email).catch(() => false) : null;
             await db.batch([
+              db.prepare('DELETE FROM signups WHERE email = ?').bind(c.email),
               db.prepare('UPDATE orders SET email = NULL, name = NULL, phone = NULL, ship_to = NULL, billing = NULL, customer_id = NULL WHERE customer_id = ?').bind(id),
               db.prepare('DELETE FROM restock_requests WHERE email = ?').bind(c.email),
               db.prepare('DELETE FROM customers WHERE id = ?').bind(id)]);
-            return json({ deleted: id });
+            return json({ deleted: id, news }); // news: true = off 799 News in Resend, false = do it by hand, null = Resend not connected
           }
         }
 

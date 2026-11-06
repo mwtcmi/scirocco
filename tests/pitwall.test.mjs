@@ -269,4 +269,9 @@ test('add customer by hand: in-person 799 News opt-in goes straight to Resend; d
   assert.deepEqual(calls.at(-1), ['PATCH', '/contacts/track%40fan.co/topics', [{ id: 'top_799', subscription: 'opt_out' }]]);
   const quiet = await call('POST', '/api/customers', { email: 'quiet@fan.co' });
   assert.equal(quiet.body.synced, false); assert.equal(calls.length, 2);
+  s.sqlite.prepare("INSERT INTO signups (token, email, created_at) VALUES ('tok1', 'track@fan.co', 1)").run();
+  const del = await call('DELETE', '/api/customers/' + r.body.id);
+  assert.equal(del.status, 200); assert.equal(del.body.news, true);
+  assert.deepEqual(calls.slice(2), [['PATCH', '/contacts/track%40fan.co/topics', [{ id: 'top_799', subscription: 'opt_out' }]], ['DELETE', '/contacts/track%40fan.co/segments/seg_799', null]]);
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM signups WHERE email = 'track@fan.co'").get().n, 0);
 });

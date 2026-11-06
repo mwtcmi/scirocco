@@ -52,6 +52,9 @@ a.btnlink{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;
 .detail h2{margin:0 0 4px;font-size:24px}.dl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}.dl div{font-size:14px;line-height:1.5}.dl b{display:block;color:#999;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
 button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
 @media(max-width:800px){.tiles{grid-template-columns:1fr 1fr}.two,.dl{grid-template-columns:1fr}}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}.cgrid .card{margin:0}.cgrid .card b,.card .lbl{display:block;color:#999;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.cgrid .card div{font-size:14px;line-height:1.55}.cgrid .big2{font-size:24px;font-weight:900}
+.dz{display:flex;gap:16px;align-items:center;justify-content:space-between;border-color:#4a2222}.dz p{margin:0;color:#999;font-size:13px;line-height:1.5;max-width:640px}
+@media(max-width:800px){.cgrid{grid-template-columns:1fr}.dz{flex-direction:column;align-items:flex-start}}
 .linkish{background:none;border:0;padding:0;margin-bottom:10px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
 .policy{color:#aaa;font-size:13px;line-height:1.5;white-space:pre-wrap}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}h1{font-size:32px}}
@@ -83,6 +86,7 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 </section>
 
 <section data-panel="customers" hidden>
+<div id="cust-list">
 <div class="kicker">Paddock Store</div><h1>Customers</h1>
 <p class="help">Everyone who has ordered, asked to be notified, signed up for 799 News or been added here, one record per email. "799 News" shows who gets news emails; it stays in step with Resend, including unsubscribes.</p>
 <div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, email or phone" aria-label="Search customers" style="max-width:420px"><button class="go" type="button" id="cust-new">+ Add customer</button><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
@@ -96,9 +100,10 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 </div>
 <div class="row" style="margin-top:14px"><button class="go" type="submit">Add customer</button><button class="alt" type="button" id="cust-cancel">Cancel</button></div>
 </form>
-<div id="cust-detail"></div>
 <div class="scroll"><table class="clist"><colgroup><col style="width:22%"><col style="width:26%"><col style="width:14%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:10%"></colgroup>
 <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="n">Orders</th><th class="n">Spent</th><th>799 News</th><th>Last order</th></tr></thead><tbody id="customers"></tbody></table></div>
+</div>
+<div id="cust-page" hidden></div>
 </section>
 
 <section data-panel="orders" hidden>
@@ -156,7 +161,7 @@ var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvent
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
 document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){show(b.dataset.go);scrollTo(0,0)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
- document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
+ document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');if(tab==='customers')custList();try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
 api('/me').then(function(me){$('who').textContent=me.email;if(/test/i.test(me.store))$('store').className='badge test'}).catch(function(){});
 
 // Orders
@@ -204,21 +209,29 @@ function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').valu
  $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(esc(c.phone)||'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
  document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
 function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x=a.address;return [a.name,x.line1,x.line2,[x.city,x.state].filter(Boolean).join(', ')+' '+(x.postal_code||'')].filter(function(v){return v&&String(v).trim()}).map(esc).join('<br>')}
-function openCustomer(id){custOpen=id;api('/customers/'+id).then(function(j){var c=j.customer;
- $('cust-detail').innerHTML='<div class="card detail"><div class="row"><h2>'+(esc(c.name)||esc(c.email))+'</h2><button class="alt right" type="button" id="cust-close">Close</button></div>'+
-  '<p class="muted" style="margin:0">Customer since '+when(c.created_at)+' · first came via '+esc({online:'an online order',event:'paddock pickup',table:'the 799 table',notify:'a back-in-stock request'}[c.source]||c.source)+'</p>'+
-  '<div class="dl"><div><b>Contact</b><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a>':'')+'</div><div><b>Shipping</b>'+addr(c.shipping)+'</div><div><b>Billing</b>'+addr(c.billing)+'</div></div>'+
-  '<div class="dl"><div><b>Orders</b>'+c.orders_count+' · '+money(c.total_spent)+'</div><div><b>Waiting for</b>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div>'+
-  '<div><b>799 News</b><select id="cust-mk" style="max-width:220px"><option value="opt_in">Yes, gets 799 News</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<br><span class="muted">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</span>':'')+'</div></div>'+
-  '<label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea>'+
-  '<div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save</button><button class="danger right" type="button" id="cust-del">Delete customer data</button></div>'+
-  (j.orders.length?'<div class="scroll" style="margin-top:18px"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+money(o.total)+'</td><td>'+(o.status==='done'?'Done':'Open')+'</td></tr>'}).join('')+'</tbody></table></div>':'')+'</div>';
+function custList(){$('cust-page').hidden=true;$('cust-page').innerHTML='';$('cust-list').hidden=false;custOpen=null}
+function custBack(){custList();try{history.pushState(null,'','#customers')}catch(e){}loadCustomers()}
+var VIA={online:'an online order',event:'paddock pickup',table:'the 799 table',notify:'a back-in-stock request',signup:'a 799 News sign-up',pitwall:'being added in Pitwall'};
+function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushState(null,'','#customers/'+id)}catch(e){}}
+ api('/customers/'+id).then(function(j){var c=j.customer;
+ $('cust-list').hidden=true;$('cust-page').hidden=false;
+ $('cust-page').innerHTML='<button class="linkish" type="button" id="cust-back">← Customers</button>'+
+  '<div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1>'+
+  '<p class="help">Customer since '+when(c.created_at)+' · first came via '+esc(VIA[c.source]||c.source)+'</p>'+
+  '<div class="cgrid"><div class="card"><b>Contact</b><div><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a>':'')+'</div></div>'+
+  '<div class="card"><b>Shipping</b><div>'+addr(c.shipping)+'</div></div><div class="card"><b>Billing</b><div>'+addr(c.billing)+'</div></div></div>'+
+  '<div class="cgrid"><div class="card"><b>Orders</b><div><span class="big2">'+c.orders_count+'</span> · '+money(c.total_spent)+' spent</div></div>'+
+  '<div class="card"><b>Waiting for</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div></div>'+
+  '<div class="card"><b>799 News</b><select id="cust-mk"><option value="opt_in">Yes, gets 799 News</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<div class="muted" style="margin-top:6px">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</div>':'')+'</div></div>'+
+  '<div class="card"><label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea><div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save</button></div></div>'+
+  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+money(o.total)+'</td><td>'+(o.status==='done'?'Done':'Open')+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
+  '<div class="card dz" style="margin-top:40px"><p><b style="color:#fff">Delete customer data.</b> For when someone asks to be forgotten. Removes their record, back-in-stock requests and 799 News subscription. Orders stay for your books, without name, email, phone or address. Stripe keeps its own payment records.</p><button class="danger" type="button" id="cust-del">Delete customer data</button></div>';
  $('cust-mk').value=c.marketing;$('cust-notes').value=c.notes||'';
- $('cust-close').onclick=function(){$('cust-detail').innerHTML='';custOpen=null};
- $('cust-save').onclick=function(){api('/customers/'+id,{method:'PUT',body:{notes:$('cust-notes').value,marketing:$('cust-mk').value}}).then(function(){msg('Customer saved.');openCustomer(id);loadCustomers()}).catch(fail)};
- $('cust-del').onclick=function(){if(!confirm('Delete this customer\u2019s personal details? Orders stay for your records, without name, email, phone or address. This cannot be undone.'))return;
-  api('/customers/'+id,{method:'DELETE'}).then(function(){msg('Customer data deleted.');$('cust-detail').innerHTML='';loadCustomers()}).catch(fail)};
- $('cust-detail').scrollIntoView({block:'start'})}).catch(fail)}
+ $('cust-back').onclick=custBack;
+ $('cust-save').onclick=function(){api('/customers/'+id,{method:'PUT',body:{notes:$('cust-notes').value,marketing:$('cust-mk').value}}).then(function(){msg('Customer saved.');openCustomer(id,false)}).catch(fail)};
+ $('cust-del').onclick=function(){if(!confirm('Delete '+(c.name||c.email)+'’s personal details? Orders stay for your records, without name, email, phone or address. This cannot be undone.'))return;
+  api('/customers/'+id,{method:'DELETE'}).then(function(r){custBack();msg('Customer data deleted.'+(r.news===false?' Resend did not answer: remove '+c.email+' from 799 News in Resend by hand.':''))}).catch(fail)};
+ window.scrollTo(0,0)}).catch(fail)}
 
 // Order email copies
 function copyRow(v){var d=document.createElement('div');d.className='row';d.style.marginBottom='8px';d.innerHTML='<input type="email" maxlength="254" placeholder="name@example.com" aria-label="Copy to" style="flex:1;max-width:460px"><button class="alt" type="button" aria-label="Remove">Remove</button>';
@@ -290,7 +303,11 @@ $('p-save').onclick=function(){var c=pChanges(),b=this,bad=c.stock.filter(functi
  c.policy.forEach(function(x){steps=steps.then(function(){return api('/brands/'+encodeURIComponent(x.brand),{method:'PUT',body:{policy:x.policy}}).then(function(){notes.push(x.brand+' MAP policy saved.')}).catch(function(e){errors.push(e.message)})})});
  steps.then(function(){msg(errors.length?errors.join(' '):[...new Set(notes)].join(' '),!!errors.length);loadProducts()})};
 
-var start=(location.hash||'').slice(1);show(loaders[start]?start:'dash');
+// Addresses: #dash, #orders, #products, #customers and #customers/<id> (a customer's own page; the back button works).
+function route(){var h=(location.hash||'').slice(1),p=h.split('/'),m=p[0]==='customers'&&p.length===2&&p[1]!==''&&String(Number(p[1]))===p[1]?[h,p[1]]:null;
+ if(m){if($('cust-list').closest('[data-panel]').hidden){show('customers');try{history.replaceState(null,'','#'+h)}catch(e){}}openCustomer(Number(m[1]),false);return}
+ show(loaders[h]?h:'dash')}
+window.addEventListener('popstate',route);route();
 })();
 </script>
 </body>

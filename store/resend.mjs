@@ -25,6 +25,16 @@ export async function syncNews(env, fetchFn, { email, firstName = '', lastName =
   return top.ok || top.status === 404; // not in Resend at all = nothing to unsubscribe
 }
 
+// A deletion request: unsubscribe them from 799 News and take them out of this store's segment. The contact
+// itself stays, because the Resend account also holds other lists. Returns true when Resend has nothing left.
+export async function forgetNews(env, fetchFn, email) {
+  if (!newsReady(env)) return false;
+  const top = await call(env, fetchFn, 'PATCH', '/contacts/' + enc(email) + '/topics', [{ id: env.NEWS_TOPIC, subscription: 'opt_out' }]);
+  if (top.status === 404) return true; // never in Resend
+  const seg = await call(env, fetchFn, 'DELETE', '/contacts/' + enc(email) + '/segments/' + enc(env.NEWS_SEGMENT));
+  return top.ok && (seg.ok || seg.status === 404);
+}
+
 // 'opt_out' if they unsubscribed in Resend (from 799 News or from everything), 'opt_in', or null if unknown.
 export async function newsStatus(env, fetchFn, email) {
   if (!newsReady(env)) return null;
