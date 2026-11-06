@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // Builds The Paddock store pages from store/catalog.json:
 //   paddock/<category>/index.html            category pages (24 products a page; more add /page/2/ ...)
-//   paddock/<category>/<product>/index.html  product pages for products sold through the 799 cart
-//   paddock.html                             the parts between <!-- store:... --> markers (category tiles, structured data, cart)
+//   paddock/products/<product>/index.html    product pages for products sold through the 799 cart (the address
+//                                            never depends on the category, so a product can move without losing it)
+//   paddock/brands/<brand>/index.html        brand pages, for brands that aren't already a category of their own
+//   _redirects                               the part between "# store:redirects" markers (old product addresses)
+//   paddock.html                             the parts between <!-- store:... --> markers (category tiles, brand row, structured data, cart)
 // Head styles, menus and the footer are copied from paddock.html and scripts/site-footer.html,
 // so the store pages always match the rest of the site. Run after any catalog change, then
 // node scripts/wrap-up.mjs before committing.
@@ -33,7 +36,13 @@ const inCat = slug => products.filter(p => p.category === slug && !isRetired(p))
 const cartProducts = products.filter(p => p.cart);
 const sellable = cartProducts.filter(isLive);
 const catUrl = c => `/paddock/${c.slug}/`;
-const prodUrl = p => p.external || `/paddock/${p.category}/${p.slug}/`;
+const prodUrl = p => p.external || `/paddock/products/${p.slug}/`;
+// Brands: every product sold through the 799 cart names its "brand". A brand gets its own page at
+// /paddock/brands/<brand>/, unless a category already holds exactly that brand's products (Tuff Jug today):
+// then the category page is the brand page, so the store never has two pages with the same list.
+const slugify = s => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const brandInfo = catalog.brands || {};
+for (const p of products) if (p.cart && !p.brand) throw new Error(`${p.slug}: products sold through the cart need a brand`);
 const abs = u => u.startsWith('http') ? u : SITE + u;
 const money = s => '$' + s;
 for (const p of products) if (!catBySlug[p.category]) throw new Error(`${p.slug}: unknown category ${p.category}`);
@@ -248,6 +257,51 @@ ${pager}
   }
 }
 
+// ---- Brand pages ----
+const brandNames = [...new Set(products.filter(p => p.brand && !isRetired(p)).map(p => p.brand))].sort();
+const sameList = (a, b) => a.length === b.length && a.every(p => b.includes(p));
+const brands = brandNames.map(name => {
+  const list = products.filter(p => p.brand === name && !isRetired(p)), slug = slugify(name);
+  const asCat = live.find(c => sameList(inCat(c.slug), list));
+  return { name, slug, list, info: brandInfo[name] || {}, url: asCat ? catUrl(asCat) : `/paddock/brands/${slug}/`, own: !asCat };
+});
+for (const b of brands.filter(b => b.own)) {
+  const trail = [['Paddock Store', '/paddock'], [b.name, b.url]];
+  const desc = b.info.intro || `Every ${b.name} product in the 799 Paddock Store. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping.`;
+  const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: b.list.filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(prodUrl(p)), name: p.name })) };
+  write(`paddock/brands/${b.slug}/index.html`,
+    head({ title: `${b.name} | Paddock Store | Scirocco 799`, desc, url: SITE + b.url, ld: [crumbsLd(trail), itemList] }) + `
+${crumbs(trail)}
+<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store · Brand</div><h1>${esc(b.name)}</h1><p>${esc(desc)}</p></div></header>
+<section class="store-page store" id="store"><div class="wrap">
+<p class="store-note" id="store-note" role="status" hidden></p>
+${grid(b.list)}
+<p class="store-fine">All sales final. <a href="/returns">Returns, warranty &amp; shipping</a></p>
+</div></section>
+` + foot);
+}
+
+// ---- Old addresses ----
+// Product pages used to live under their category. Every category a product has been in is listed in
+// "pastCategories" (plus its current one), and each old address sends visitors and search engines to the new one.
+// A brand that once was a category (and isn't any more) keeps that address too.
+const moved = [];
+for (const p of cartProducts) for (const c of new Set([p.category, ...(p.pastCategories || [])]))
+  moved.push([`/paddock/${c}/${p.slug}`, prodUrl(p)], [`/paddock/${c}/${p.slug}/`, prodUrl(p)]);
+for (const b of brands.filter(b => b.own && !live.some(c => c.slug === b.slug)))
+  moved.push([`/paddock/${b.slug}`, b.url], [`/paddock/${b.slug}/`, b.url]);
+const redirectsFile = path.join(ROOT, '_redirects');
+const redirects = fs.readFileSync(redirectsFile, 'utf8');
+// A hand-written rule that sends a live category away (like the old /paddock/fuel-fluids rule) would hide its page.
+const handRules = redirects.replace(/# store:redirects[\s\S]*?# \/store:redirects/, '').split('\n').map(l => l.trim().split(/\s+/)[0]);
+for (const c of live) if (handRules.some(r => r === `/paddock/${c.slug}` || r?.startsWith(`/paddock/${c.slug}/`)))
+  throw new Error(`_redirects sends /paddock/${c.slug}/ away, but that category now has products. Remove that rule.`);
+const block = `# store:redirects (written by scripts/build-store.mjs; edit store/catalog.json instead)\n${moved.map(([a, b]) => `${a} ${b} 301`).join('\n')}\n# /store:redirects`;
+const reBlock = /# store:redirects[\s\S]*?# \/store:redirects/;
+// Generated lines go first: Cloudflare uses the first rule that matches, so they win over the wildcard rules below.
+fs.writeFileSync(redirectsFile, reBlock.test(redirects) ? redirects.replace(reBlock, () => block) : block + '\n' + redirects);
+written.push('_redirects');
+
 for (const p of cartProducts) {
   const c = catBySlug[p.category], url = prodUrl(p);
   const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
@@ -263,7 +317,7 @@ for (const p of cartProducts) {
   <button class="add" data-add="${p.cart}">Add to cart</button>
   ${notifyForm(p)}`;
   const image = abs(defaultVariant(p).img.src);
-  write(`paddock/${p.category}/${p.slug}/index.html`,
+  write(`paddock/products/${p.slug}/index.html`,
     head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
       url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
 ${crumbs(trail)}
@@ -303,6 +357,11 @@ fill('categories', live.map((c, i) => {
   return n ? `<a class="cat" href="${catUrl(c)}"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Shop ${n} ${n === 1 ? 'item' : 'items'} →</span></a>`
     : `<div class="cat soon"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Coming soon</span></div>`;
 }).join('\n'));
+// "Shop by brand" appears once there are two or more brands; until then the block stays empty.
+fill('brands', brands.length < 2 ? '' : `<section class="categories brands-row"><div class="wrap">
+<div class="section-head"><div><div class="kicker">Who Makes It</div><h2>Shop By<br>Brand.</h2></div><p>The makers whose gear earned a place in the 799 trailer.</p></div><div class="cat-grid">
+${brands.map((b, i) => `<a class="cat" href="${b.url}"><span class="cat-num">${String(i + 1).padStart(2, '0')}</span><h3>${esc(b.name)}</h3><p>${esc(b.info.blurb || `${b.list.length} ${b.list.length === 1 ? 'product' : 'products'} in the Paddock Store.`)}</p><span class="cat-count">Shop ${esc(b.name)} →</span></a>`).join('\n')}
+</div></div></section>`);
 // Structured data for the store front: the category pages it links to.
 fill('jsonld', ldScript({ '@context': 'https://schema.org', '@type': 'ItemList', name: 'Paddock Store categories',
   itemListElement: live.map((c, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(catUrl(c)), name: c.name })) }));

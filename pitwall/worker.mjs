@@ -145,7 +145,7 @@ export function restockMessage(data, sku) {
   const base = p.variantImage && v.img ? p.variantImage.replace('{img}', v.img) : null;
   const image = base ? SITE + base + '-900.webp' : p.images?.[0]?.src ? SITE + p.images[0].src : '';
   const alt = p.variantAlt ? p.variantAlt.replace('{name}', p.name).replace('{variant}', v.name) : p.images?.[0]?.alt || p.name;
-  return backInStockEmail({ name: p.name, variant: v.name, cents: Math.round(Number(p.price) * 100), image, imageAlt: alt, url: SITE + '/paddock/' + p.category + '/' + p.slug + '/' });
+  return backInStockEmail({ name: p.name, variant: v.name, cents: Math.round(Number(p.price) * 100), image, imageAlt: alt, url: SITE + '/paddock/products/' + p.slug + '/' });
 }
 async function sendRestockNotices(env, db, data, sku, mailFetch, now) {
   const { results } = await db.prepare('SELECT id, email FROM restock_requests WHERE sku = ? AND notified_at IS NULL ORDER BY created_at').bind(sku).all();

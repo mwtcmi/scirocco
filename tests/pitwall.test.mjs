@@ -118,7 +118,7 @@ test('back in stock: raising stock above 0 emails everyone waiting once, from pa
   const m = mail[0];
   assert.equal(m.from, '799 Motorsport Paddock <paddock@799motorsport.com>'); assert.equal(m.reply_to, 'mike@scirocco799.com');
   assert.equal(m.subject, "It's back: Tuff Jug 5 Gallon Utility Jug, Kawi Green");
-  assert.match(m.html, /https:\/\/799motorsport\.com\/paddock\/tuff-jug\/tuff-jug-5-gallon\/\?color=Kawi%20Green/);
+  assert.match(m.html, /https:\/\/799motorsport\.com\/paddock\/products\/tuff-jug-5-gallon\/\?color=Kawi%20Green/);
   assert.match(m.html, /tuffjug-5gal-kawi-spout-900\.webp/); assert.match(m.html, /\$45\.99/); assert.match(m.html, /Get it now/i);
   assert.equal((await call({ changes: [{ sku: 'KUASVS20', qty: 4 }] })).notified, 0);
   assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM restock_requests WHERE sku = 'LTP' AND notified_at IS NULL").get().n, 1);
