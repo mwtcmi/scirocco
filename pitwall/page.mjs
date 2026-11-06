@@ -211,9 +211,11 @@ $('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').chec
  .catch(fail)};
 var MK={opt_in:'<span class="pill on">Yes</span>',opt_out:'<span class="pill">No</span>',unknown:'<span class="muted">Not asked</span>'};
 function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').value.trim())).then(function(j){
- $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(esc(c.phone)||'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
+ $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(phoneText(c.phone)):'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
  document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
 function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x=a.address;return [a.name,x.line1,x.line2,[x.city,x.state].filter(Boolean).join(', ')+' '+(x.postal_code||'')].filter(function(v){return v&&String(v).trim()}).map(esc).join('<br>')}
+// US numbers read as (231) 709-5546; anything else is shown as Stripe stored it.
+function phoneText(p){var d=String(p||'').replace(/[^0-9]/g,'');if(d.length===11&&d.charAt(0)==='1')d=d.slice(1);return d.length===10?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):p}
 function custList(){$('cust-page').hidden=true;$('cust-page').innerHTML='';$('cust-list').hidden=false;custOpen=null}
 function custBack(){custList();try{history.pushState(null,'','#customers')}catch(e){}loadCustomers()}
 var VIA={online:'an online order',event:'paddock pickup',table:'the 799 table',notify:'a back-in-stock request',signup:'a 799 News sign-up',pitwall:'being added in Pitwall'};
@@ -223,7 +225,7 @@ function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushStat
  $('cust-page').innerHTML='<button class="linkish" type="button" id="cust-back">← Customers</button>'+
   '<div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1>'+
   '<p class="help">Customer since '+when(c.created_at)+' · first came via '+esc(VIA[c.source]||c.source)+'</p>'+
-  '<div class="cgrid"><div class="card"><b>Contact</b><div><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a>':'')+'</div></div>'+
+  '<div class="cgrid"><div class="card"><b>Contact</b><div>'+(c.name?esc(c.name)+'<br>':'')+'<a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(phoneText(c.phone))+'</a>':'')+'</div></div>'+
   '<div class="card"><b>Shipping</b><div>'+addr(c.shipping)+'</div></div><div class="card"><b>Billing</b><div>'+addr(c.billing)+'</div></div></div>'+
   '<div class="cgrid"><div class="card"><b>Orders</b><div><span class="big2">'+c.orders_count+'</span> · '+money(c.total_spent)+' spent</div></div>'+
   '<div class="card"><b>Waiting for</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div></div>'+
