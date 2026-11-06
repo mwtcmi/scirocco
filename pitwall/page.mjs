@@ -92,11 +92,12 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, email or phone" aria-label="Search customers" style="max-width:420px"><button class="go" type="button" id="cust-new">+ Add customer</button><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
 <form class="card" id="cust-form" hidden>
 <div class="grid">
-<div class="wide"><label class="f" for="n-email">Email</label><input id="n-email" type="email" required maxlength="254"></div>
-<div class="wide"><label class="f" for="n-name">Name</label><input id="n-name" maxlength="120"></div>
-<div class="wide"><label class="f" for="n-phone">Phone</label><input id="n-phone" type="tel" maxlength="40"></div>
-<div class="wide"><label class="f" for="n-news">799 News</label><label class="row" style="min-height:44px"><input type="checkbox" id="n-news"> They asked to get 799 News</label></div>
+<div class="wide"><label class="f" for="n-first">First name</label><input id="n-first" maxlength="60" autocomplete="off"></div>
+<div class="wide"><label class="f" for="n-last">Last name</label><input id="n-last" maxlength="60" autocomplete="off"></div>
+<div class="wide"><label class="f" for="n-email">Email</label><input id="n-email" type="email" required maxlength="254" autocomplete="off"></div>
+<div class="wide"><label class="f" for="n-phone">Phone</label><input id="n-phone" type="tel" maxlength="40" autocomplete="off"></div>
 <div class="full"><label class="f" for="n-notes">Notes</label><input id="n-notes" maxlength="2000" placeholder="Met at Empire, interested in the pump"></div>
+<div class="full"><label class="row" style="min-height:44px"><input type="checkbox" id="n-news"> They asked to get 799 News</label></div>
 </div>
 <div class="row" style="margin-top:14px"><button class="go" type="submit">Add customer</button><button class="alt" type="button" id="cust-cancel">Cancel</button></div>
 </form>
@@ -199,9 +200,9 @@ function loadDash(){$('dash-when').textContent='Updated '+new Date().toLocaleTim
 // Customers
 var custTimer=null,custOpen=null;
 $('cust-q').oninput=function(){clearTimeout(custTimer);custTimer=setTimeout(loadCustomers,250)};
-$('cust-new').onclick=function(){$('cust-form').hidden=false;$('n-email').focus()};
+$('cust-new').onclick=function(){$('cust-form').hidden=false;$('n-first').focus()};
 $('cust-cancel').onclick=function(){$('cust-form').reset();$('cust-form').hidden=true};
-$('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').checked;api('/customers',{method:'POST',body:{email:$('n-email').value,name:$('n-name').value,phone:$('n-phone').value,notes:$('n-notes').value,news:news}})
+$('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').checked;api('/customers',{method:'POST',body:{email:$('n-email').value,firstName:$('n-first').value,lastName:$('n-last').value,phone:$('n-phone').value,notes:$('n-notes').value,news:news}})
  .then(function(r){msg('Customer added.'+(news?(r.synced?' Added to 799 News in Resend.':' They will be added to 799 News in Resend within the hour.'):''));$('cust-form').reset();$('cust-form').hidden=true;loadCustomers();openCustomer(r.id)})
  .catch(fail)};
 var MK={opt_in:'<span class="pill on">Yes</span>',opt_out:'<span class="pill">No</span>',unknown:'<span class="muted">Not asked</span>'};

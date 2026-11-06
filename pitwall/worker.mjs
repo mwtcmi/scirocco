@@ -322,7 +322,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           if (existing) return json({ error: 'That email is already a customer.', id: existing.id }, 409);
           const news = body.news === true;
           const r = await db.prepare(`INSERT INTO customers (email, name, phone, notes, source, marketing, marketing_at, marketing_source, created_at, updated_at)
-            VALUES (?, ?, ?, ?, 'pitwall', ?, ?, ?, ?, ?)`).bind(email, clean(body.name, 120) || null, clean(body.phone, 40) || null, clean(body.notes, 2000),
+            VALUES (?, ?, ?, ?, 'pitwall', ?, ?, ?, ?, ?)`).bind(email, ([clean(body.firstName, 60), clean(body.lastName, 60)].filter(Boolean).join(' ') || clean(body.name, 120)) || null, clean(body.phone, 40) || null, clean(body.notes, 2000),
               news ? 'opt_in' : 'unknown', news ? t : null, news ? 'in person: ' + user.email : null, t, t).run();
           const id = r.meta?.last_row_id ?? (await db.prepare('SELECT id FROM customers WHERE email = ?').bind(email).first()).id;
           const synced = news ? await pushNews(env, db, newsFetch, id, t) : false;

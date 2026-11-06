@@ -257,7 +257,7 @@ test('add customer by hand: in-person 799 News opt-in goes straight to Resend; d
   const app = createPitwall({ now: () => 1800000000000, fetchCerts, newsFetch: async (url, init) => { calls.push([init.method, url.replace('https://api.resend.com', ''), init.body ? JSON.parse(init.body) : null]); return new Response('{"id":"c"}', { status: 201 }); } });
   Object.assign(s.env, { RESEND_API_KEY: 're_test', NEWS_TOPIC: 'top_799', NEWS_SEGMENT: 'seg_799' });
   const call = (method, path, data) => app.fetch(new Request('https://pitwall.example' + path, { method, headers: { 'content-type': 'application/json', 'cf-access-jwt-assertion': token() }, body: data ? JSON.stringify(data) : undefined }), s.env).then(async r => ({ status: r.status, body: await r.json() }));
-  const r = await call('POST', '/api/customers', { email: 'Track@Fan.co', name: 'Track Fan', phone: '+1555', notes: 'Met at Empire', news: true });
+  const r = await call('POST', '/api/customers', { email: 'Track@Fan.co', firstName: 'Track', lastName: 'Fan', phone: '+1555', notes: 'Met at Empire', news: true });
   assert.equal(r.status, 201); assert.equal(r.body.synced, true);
   const row = s.sqlite.prepare('SELECT * FROM customers WHERE id = ?').get(r.body.id);
   assert.equal(row.email, 'track@fan.co'); assert.equal(row.marketing, 'opt_in'); assert.equal(row.marketing_source, 'in person: mike@scirocco799.com'); assert.equal(row.source, 'pitwall');
