@@ -225,13 +225,32 @@ async function recordOrder(db, session, now) {
   const who = session.customer_details || {}, shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
   const billing = who.address ? { name: who.name || null, address: who.address } : null;
   const how = session.metadata?.fulfillment || 'unknown', email = who.email ? String(who.email).trim().toLowerCase() : null;
-  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to, billing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+  const pi = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
+  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to, billing, payment_intent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     .bind(session.id, now, session.livemode ? 1 : 0, how, email, session.amount_total ?? null, JSON.stringify(items),
-      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null, billing ? JSON.stringify(billing) : null)];
+      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null, billing ? JSON.stringify(billing) : null, pi)];
   for (const [k, q] of Object.entries(need)) statements.push(db.prepare('UPDATE stock SET qty = MAX(qty - ?, 0), updated_at = ? WHERE key = ?').bind(q, now, k));
   if (email) statements.push(...await customerStatements(db, { email, who, shipTo, billing, how, session, now }));
   try { await db.batch(statements); return 'recorded'; }
   catch (e) { if (/UNIQUE|PRIMARY KEY|constraint/i.test(String(e?.message))) return 'duplicate'; throw e; }
+}
+
+// A refund in Stripe (full or partial). charge.amount_refunded is the running total, so Stripe retries change nothing.
+// The customer's spend drops by the newly refunded amount, and a fully refunded order no longer counts as an order.
+// Stock is not put back automatically: a returned item may be damaged, so stock stays a Pitwall decision.
+async function recordRefund(db, charge, now) {
+  const pi = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+  if (!pi) return 'no payment';
+  const o = await db.prepare('SELECT session_id, amount_total, refunded_cents, customer_id FROM orders WHERE payment_intent = ?').bind(pi).first();
+  if (!o) return 'unknown order';
+  const total = o.amount_total ?? 0, refunded = Math.min(Math.max(Number(charge.amount_refunded) || 0, 0), total), delta = refunded - (o.refunded_cents || 0);
+  if (delta <= 0) return 'no change';
+  const nowFull = refunded >= total && (o.refunded_cents || 0) < total;
+  const statements = [db.prepare('UPDATE orders SET refunded_cents = ?, refunded_at = ? WHERE session_id = ?').bind(refunded, now, o.session_id)];
+  if (o.customer_id) statements.push(db.prepare('UPDATE customers SET total_spent = MAX(total_spent - ?, 0), orders_count = MAX(orders_count - ?, 0), updated_at = ? WHERE id = ?')
+    .bind(delta, nowFull ? 1 : 0, now, o.customer_id));
+  await db.batch(statements);
+  return nowFull ? 'refunded' : 'partly refunded';
 }
 
 // ---- Branded order confirmation (sent through Resend after a paid webhook) ----
@@ -504,6 +523,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           if (!(await verifySignature(payload, request.headers.get('stripe-signature'), env.STRIPE_WEBHOOK_SECRET, Math.floor(now() / 1000))))
             throw new APIError(400, 'Bad signature.');
           const event = JSON.parse(payload), session = event.data?.object;
+          if (event.type === 'charge.refunded') return json({ received: true, result: await recordRefund(db, session, now()) });
           const paid = (event.type === 'checkout.session.completed' && session?.payment_status === 'paid') || event.type === 'checkout.session.async_payment_succeeded';
           if (!paid) return json({ received: true, ignored: event.type });
           const result = await recordOrder(db, session, now());

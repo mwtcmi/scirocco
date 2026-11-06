@@ -181,19 +181,19 @@ export async function dashboard(db, data, now) {
   const p = periodStarts(now), idx = skuIndex(data), byCart = Object.fromEntries(data.products.filter(x => x.cart).map(x => [x.cart, x]));
   const sales = {};
   for (const k of ['today', 'week', 'month']) {
-    const r = await db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(amount_total), 0) AS cents FROM orders WHERE created_at >= ?').bind(p[k]).first();
+    const r = await db.prepare('SELECT COALESCE(SUM(CASE WHEN NOT (refunded_cents > 0 AND refunded_cents >= COALESCE(amount_total, 0)) THEN 1 ELSE 0 END), 0) AS n, COALESCE(SUM(COALESCE(amount_total, 0) - refunded_cents), 0) AS cents FROM orders WHERE created_at >= ?').bind(p[k]).first();
     sales[k] = { orders: r.n, cents: r.cents };
   }
-  const open = (await db.prepare("SELECT fulfillment, COUNT(*) AS n FROM orders WHERE COALESCE(status, 'new') <> 'done' GROUP BY fulfillment").all()).results;
+  const open = (await db.prepare("SELECT fulfillment, COUNT(*) AS n FROM orders WHERE COALESCE(status, 'new') <> 'done' AND NOT (refunded_cents > 0 AND refunded_cents >= COALESCE(amount_total, 0)) GROUP BY fulfillment").all()).results;
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Detroit' }).format(new Date(now));
-  const ev = await db.prepare('SELECT e.*, (SELECT COUNT(*) FROM orders o WHERE o.event_id = e.id) AS orders FROM events e WHERE e.active = 1 AND e.ends >= ? ORDER BY e.starts LIMIT 1').bind(today).first();
+  const ev = await db.prepare('SELECT e.*, (SELECT COUNT(*) FROM orders o WHERE o.event_id = e.id AND NOT (o.refunded_cents > 0 AND o.refunded_cents >= COALESCE(o.amount_total, 0))) AS orders FROM events e WHERE e.active = 1 AND e.ends >= ? ORDER BY e.starts LIMIT 1').bind(today).first();
   const stockRows = Object.fromEntries((await db.prepare('SELECT key, qty FROM stock').all()).results.map(r => [r.key, r.qty]));
   const wait = Object.fromEntries((await db.prepare('SELECT sku, COUNT(*) AS n FROM restock_requests WHERE notified_at IS NULL GROUP BY sku').all()).results.map(r => [r.sku, r.n]));
   const attention = stockGroups(data).filter(g => g.status === 'live').flatMap(g => g.items).map(i => ({ label: i.label, sku: i.sku, qty: stockRows[i.sku] ?? 0, waiting: wait[i.sku] || 0 }))
     .filter(i => i.qty < 2 || i.waiting);
   const cust = await db.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS month, SUM(CASE WHEN marketing = 'opt_in' THEN 1 ELSE 0 END) AS optin, SUM(CASE WHEN orders_count > 0 THEN 1 ELSE 0 END) AS buyers FROM customers").bind(p.month).first();
   const signups = await db.prepare("SELECT COUNT(*) AS n FROM customers WHERE marketing_source = 'site sign-up (confirmed)' AND marketing_at >= ?").bind(p.month).first().catch(() => ({ n: 0 }));
-  const recent = (await db.prepare('SELECT items, amount_total FROM orders WHERE created_at >= ?').bind(p.last30).all()).results;
+  const recent = (await db.prepare('SELECT items, amount_total FROM orders WHERE created_at >= ? AND NOT (refunded_cents > 0 AND refunded_cents >= COALESCE(amount_total, 0))').bind(p.last30).all()).results;
   const sold = {};
   for (const o of recent) { let items = []; try { items = JSON.parse(o.items || '[]'); } catch {}
     for (const i of items) { const prod = i.s ? idx[i.s]?.p : byCart[i.p], key = prod ? prod.name : (i.s || i.p); sold[key] = (sold[key] || 0) + (i.q || 1); } }
@@ -347,7 +347,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
             const waiting = (await db.prepare('SELECT sku FROM restock_requests WHERE email = ? AND notified_at IS NULL').bind(c.email).all()).results.map(r => skuIndex(catalogData)[r.sku] ? stockGroups(catalogData).flatMap(g => g.items).find(i => i.sku === r.sku).label : r.sku);
             return json({ customer: { ...c, billing: parseJSON(c.billing, null), shipping: parseJSON(c.shipping, null), addresses: parseJSON(c.addresses, []) }, waiting,
               orders: results.map(o => ({ id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, how: o.fulfillment, event: o.event_name,
-                total: o.amount_total, lines: names(parseJSON(o.items, [])), status: o.status || 'new' })) });
+                total: o.amount_total, refunded: o.refunded_cents || 0, lines: names(parseJSON(o.items, [])), status: o.status || 'new' })) });
           }
           if (request.method === 'PUT') {
             const notes = body.notes === undefined ? c.notes : clean(body.notes, 2000);
@@ -399,7 +399,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
             let items = []; try { items = JSON.parse(o.items || '[]'); } catch {}
             let shipTo = null; try { shipTo = o.ship_to ? JSON.parse(o.ship_to) : null; } catch {}
             return { id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, live: !!o.livemode, how: o.fulfillment,
-              event: o.event_name, email: o.email, name: o.name, phone: o.phone, shipTo, total: o.amount_total, lines: names(items), status: o.status || 'new', handled: o.handled_at };
+              event: o.event_name, email: o.email, name: o.name, phone: o.phone, shipTo, total: o.amount_total, refunded: o.refunded_cents || 0, lines: names(items), status: o.status || 'new', handled: o.handled_at };
           }) });
         }
         if (seg[2] === 'orders' && seg[3] && request.method === 'PUT') {

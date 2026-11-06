@@ -425,3 +425,21 @@ test('Resend sync: opt-ins join the 799 News segment and topic; the hourly sweep
   assert.ok(!calls.some(c => c[2] && JSON.stringify(c[2]).includes('"unsubscribed":true')), 'never unsubscribes them from the whole account');
   assert.deepEqual(await newsSweep({}, s.db, fetchFn, 300), { off: true });
 });
+
+test('refunds: charge.refunded marks the order, takes it off the customer totals once, and handles partial refunds', async t => {
+  const s = service(t);
+  const order = (id, pi) => { const ev = paid(id, [{ s: 'LTP', q: 1 }]); Object.assign(ev.data.object, { amount_total: 8000, payment_intent: pi, customer_details: { email: 'pat@example.com', name: 'Pat Buyer' } }); return ev; };
+  await s.webhook(order('cs_test_r1', 'pi_one')); await s.webhook(order('cs_test_r2', 'pi_two'));
+  const refund = (pi, amount) => ({ type: 'charge.refunded', data: { object: { id: 'ch_' + pi, object: 'charge', payment_intent: pi, amount: 8000, amount_refunded: amount } } });
+  assert.equal((await s.webhook(refund('pi_one', 3000))).body.result, 'partly refunded');
+  let c = s.sqlite.prepare('SELECT orders_count, total_spent FROM customers').get();
+  assert.deepEqual({ ...c }, { orders_count: 2, total_spent: 13000 });
+  assert.equal((await s.webhook(refund('pi_one', 8000))).body.result, 'refunded');
+  assert.equal((await s.webhook(refund('pi_one', 8000))).body.result, 'no change', 'Stripe retries change nothing');
+  c = s.sqlite.prepare('SELECT orders_count, total_spent FROM customers').get();
+  assert.deepEqual({ ...c }, { orders_count: 1, total_spent: 8000 });
+  const o = s.sqlite.prepare("SELECT refunded_cents, refunded_at FROM orders WHERE session_id = 'cs_test_r1'").get();
+  assert.equal(o.refunded_cents, 8000); assert.ok(o.refunded_at);
+  assert.equal((await s.webhook(refund('pi_unknown', 100))).body.result, 'unknown order');
+  assert.equal(s.sqlite.prepare("SELECT qty FROM stock WHERE key = 'LTP'").get().qty, 0, 'stock is not put back automatically');
+});

@@ -218,6 +218,17 @@ test('dashboard: sales by Michigan day/week/month, open orders, next event, stoc
   const sb = d.stock.find(i => i.sku === 'SpoutBender'); assert.equal(sb.qty, 0); assert.equal(sb.waiting, 1);
   assert.deepEqual(d.customers, { total: 2, month: 1, optIn: 1, buyers: 1, signups: 0 });
   assert.deepEqual(d.top, [{ name: 'Tuff Jug Electric Transfer Pump', units: 3 }, { name: 'Tuff Jug 5 Gallon Utility Jug', units: 1 }]);
+  // Refunds: a fully refunded order leaves sales, open orders, the event count and top sellers; a partial refund only lowers sales.
+  ins('e', now - 1800e3, 5000, [{ s: 'SpoutBender', q: 5 }], 'event', 'new', 'empire-2027');
+  ins('f', now - 1700e3, 0, [{ s: 'SpoutBender', q: 1 }], 'table');
+  s.sqlite.prepare("UPDATE orders SET refunded_cents = 5000 WHERE session_id = 'e'").run();
+  s.sqlite.prepare("UPDATE orders SET refunded_cents = 400 WHERE session_id = 'a'").run();
+  const r = (await s.call('/api/dashboard')).body;
+  assert.deepEqual(r.sales.today, { orders: 2, cents: 600 }, 'free table order still counts; refunded one does not');
+  assert.equal(r.open.total, 3); assert.equal(r.nextEvent.orders, 1);
+  assert.equal(r.top.find(x => x.name === 'Tuff Jug Spout Bender').units, 1);
+  const list = (await s.call('/api/orders')).body.orders;
+  assert.equal(list.find(o => o.id === 'e').refunded, 5000); assert.equal(list.find(o => o.id === 'b').refunded, 0);
 });
 
 test('customers: search, detail with orders, notes and email setting, CSV export, delete keeps orders without personal data', async t => {

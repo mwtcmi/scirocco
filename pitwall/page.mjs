@@ -33,7 +33,7 @@ button.alt{background:none;border:1px solid #555;color:#fff}button:disabled{opac
 .muted{color:#888;font-size:12px}.ok{color:var(--green)}.bad{color:var(--red)}
 .msg{min-height:22px;margin:10px 0;font-size:14px}
 .pill{display:inline-block;padding:3px 8px;border:1px solid #555;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#ccc}
-.pill.on{border-color:var(--green);color:var(--green)}.pill.done{border-color:#555;color:#777}
+.pill.on{border-color:var(--green);color:var(--green)}.pill.ref{border-color:var(--red);color:var(--red)}.pill.done{border-color:#555;color:#777}
 td input.num{width:110px}
 .sub{margin-top:56px;padding-top:40px;border-top:1px solid #292929}.h2{margin:0 0 6px;font-size:30px;line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
 .savebar{position:sticky;top:0;z-index:5;background:var(--black);padding:12px 0;margin-bottom:6px}
@@ -167,18 +167,22 @@ api('/me').then(function(me){$('who').textContent=me.email;if(/test/i.test(me.st
 
 // Orders
 var orders=[];
+// Refunds come from Stripe. A fully refunded order counts as finished; a partial refund shows how much went back.
+function fullRefund(o){return o.refunded>0&&o.refunded>=o.total}
+function refundPill(o){return fullRefund(o)?'<span class="pill ref">Refunded</span>':o.refunded>0?'<span class="pill ref">'+money(o.refunded)+' refunded</span>':''}
+function totalCell(o){return fullRefund(o)?'<s class="muted" style="font-size:inherit">'+money(o.total)+'</s>':money(o.total)}
 function loadOrders(){api('/orders').then(function(j){orders=j.orders;drawOrders()}).catch(fail)}
 $('show-done').onchange=drawOrders;
-function drawOrders(){var all=$('show-done').checked,list=orders.filter(function(o){return all||o.status!=='done'});
+function drawOrders(){var all=$('show-done').checked,list=orders.filter(function(o){return all||(o.status!=='done'&&!fullRefund(o))});
  if(!list.length){$('orders').innerHTML='<p class="muted">No '+(all?'':'open ')+'orders.</p>';return}
  $('orders').innerHTML=list.map(function(o){var how=o.how==='event'?'Paddock pickup: '+esc(o.event||'event'):o.how==='ship'?'Ship':o.how==='table'?'Paid at the table':o.how==='pickup'?'Traverse City pickup':esc(o.how);
   var a=o.shipTo&&o.shipTo.address,addr=a?[o.shipTo.name,a.line1,a.line2,[a.city,a.state].filter(Boolean).join(', ')+' '+(a.postal_code||'')].filter(Boolean).map(esc).join('<br>'):'';
-  return '<div class="card"><div class="row"><strong>'+o.number+'</strong><span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>'+(o.live?'':'<span class="pill">Test</span>')+
-  '<span class="muted">'+when(o.created)+'</span><span class="right"><strong>'+money(o.total)+'</strong></span></div>'+
+  return '<div class="card"><div class="row"><strong>'+o.number+'</strong>'+(fullRefund(o)?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>')+refundPill(o)+(o.live?'':'<span class="pill">Test</span>')+
+  '<span class="muted">'+when(o.created)+'</span><span class="right"><strong>'+totalCell(o)+'</strong></span></div>'+
   '<p style="margin:10px 0 4px">'+o.lines.map(esc).join('<br>')+'</p><p class="muted" style="margin:8px 0">'+how+'</p>'+
   '<p style="margin:0 0 10px;font-size:14px">'+[esc(o.name),o.email?'<a style="color:#20C933" href="mailto:'+esc(o.email)+'">'+esc(o.email)+'</a>':'',o.phone?'<a style="color:#20C933" href="tel:'+esc(o.phone)+'">'+esc(o.phone)+'</a>':''].filter(Boolean).join(' · ')+'</p>'+
   (addr?'<p class="muted" style="margin:0 0 10px">'+addr+'</p>':'')+
-  '<div class="row"><button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button></div></div>'}).join('');
+  (fullRefund(o)?'':'<div class="row"><button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button></div>')+'</div>'}).join('');
  document.querySelectorAll('[data-order]').forEach(function(b){b.onclick=function(){b.disabled=true;api('/orders/'+encodeURIComponent(b.dataset.order),{method:'PUT',body:{status:b.dataset.status}})
   .then(function(){var o=orders.find(function(x){return x.id===b.dataset.order});o.status=b.dataset.status;drawOrders();msg(o.number+(o.status==='done'?' marked done.':' reopened.'))}).catch(function(e){b.disabled=false;fail(e)})}})}
 
@@ -225,7 +229,7 @@ function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushStat
   '<div class="card"><b>Waiting for</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">—</span>')+'</div></div>'+
   '<div class="card"><b>799 News</b><select id="cust-mk"><option value="opt_in">Yes, gets 799 News</option><option value="opt_out">No, opted out</option><option value="unknown">Not asked</option></select>'+(c.marketing_source?'<div class="muted" style="margin-top:6px">'+esc(c.marketing_source)+' · '+when(c.marketing_at)+'</div>':'')+'</div></div>'+
   '<div class="card"><label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea><div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save</button></div></div>'+
-  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+money(o.total)+'</td><td>'+(o.status==='done'?'Done':'Open')+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
+  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>How</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock: '+esc(o.event||''):esc(HOW[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):(o.status==='done'?'Done':'Open')+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
   '<div class="card dz" style="margin-top:40px"><p><b style="color:#fff">Delete customer data.</b> For when someone asks to be forgotten. Removes their record, back-in-stock requests and 799 News subscription. Orders stay for your books, without name, email, phone or address. Stripe keeps its own payment records.</p><button class="danger" type="button" id="cust-del">Delete customer data</button></div>';
  $('cust-mk').value=c.marketing;$('cust-notes').value=c.notes||'';
  $('cust-back').onclick=custBack;
