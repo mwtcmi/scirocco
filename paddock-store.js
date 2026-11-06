@@ -55,10 +55,14 @@ function drawProduct(id){var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=l
  all(attr('data-stock',id)).forEach(function(e){e.textContent=av?stockText(have(v.sku),rest):''});
  all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!av||rest<1;b.textContent=!online?'Store offline':!av?'Coming soon':have(v.sku)<1?'Out of stock':rest<1?'All in your cart':'Add to cart'});
  all('form'+attr('data-notify',id)).forEach(function(f){var show=av&&have(v.sku)<1;f.hidden=!show;if(f.dataset.sku!==v.sku){f.dataset.sku=v.sku;f.querySelector('.notify-msg').textContent=''}})}
+// Free shipping: the order ships free only when every item in the cart is marked free shipping.
+function freeShip(id){var c=data.catalog[id];return c&&c.freeShipping!==undefined?!!c.freeShipping:!!(PRODUCTS[id]&&PRODUCTS[id].freeShipping)}
 function draw(){
  IDS.forEach(drawProduct);
- var n=count(),sub=cart.reduce(function(s,l){var h=BYSKU[l.sku];return s+l.qty*((h&&price(h.id))||0)},0),get=getChoice().fulfillment,shipC=(data.shipping[get]||{cents:0}).cents;
- $('ship-label').textContent='Ship to me, '+money((data.shipping.ship||{cents:2500}).cents)+' flat';
+ var free=cart.filter(function(l){var h=BYSKU[l.sku];return h&&freeShip(h.id)}).length,allFree=cart.length>0&&free===cart.length,flat=(data.shipping.ship||{cents:2500}).cents;
+ var n=count(),sub=cart.reduce(function(s,l){var h=BYSKU[l.sku];return s+l.qty*((h&&price(h.id))||0)},0),get=getChoice().fulfillment,shipC=get==='ship'&&allFree?0:(data.shipping[get]||{cents:0}).cents;
+ $('ship-label').textContent=allFree?'Ship to me, free':'Ship to me, '+money(flat)+' flat';
+ if($('ship-note'))$('ship-note').textContent='Lower 48. Address on the next screen.'+(free&&!allFree?' Ships free when every item in the cart has free shipping.':'');
  $('cart-count').textContent=n;$('cart-total').textContent=money(sub);$('cart-sub').textContent=money(sub+(n?shipC:0));$('sum-label').textContent=get==='ship'&&n?'Total with shipping':'Total';
  var ul=$('cart-lines');ul.innerHTML='';if(!cart.length)ul.innerHTML='<li class="empty-cart">Your cart is empty.</li>';
  cart.forEach(function(l,i){var h=BYSKU[l.sku],li=document.createElement('li');li.innerHTML='<strong></strong><span class="q"><button type="button" aria-label="Remove one">&minus;</button><span>'+l.qty+'</span><button type="button" aria-label="Add one">+</button></span><small></small>';

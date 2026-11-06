@@ -38,7 +38,7 @@ td input.num{width:110px}
 .sub{margin-top:56px;padding-top:40px;border-top:1px solid #292929}.h2{margin:0 0 6px;font-size:30px;line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
 .savebar{position:sticky;top:0;z-index:5;background:var(--black);padding:12px 0;margin-bottom:6px}
 .stock th.n,.stock td.n{text-align:right}.stock td.n{width:120px}.stock input.num{width:112px;text-align:right;font-weight:400;letter-spacing:0}input.num{-moz-appearance:textfield;appearance:textfield}input.num::-webkit-inner-spin-button,input.num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.pf{display:flex;flex-direction:column;gap:6px}.pf label.f{margin:0}.money{position:relative;display:block}.money:before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;font-size:15px;pointer-events:none}.stock .money input.num{padding-left:26px}.prices{gap:14px;align-items:flex-end}.stock input.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.pf{display:flex;flex-direction:column;gap:6px}.pf label.f{margin:0}.money{position:relative;display:block}.money:before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;font-size:15px;pointer-events:none}.stock .money input.num{padding-left:26px}.prices{gap:14px;align-items:flex-end}.lbl2{display:block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#aaa}.freebox{display:flex;align-items:center;gap:10px;width:112px;box-sizing:border-box;min-height:44px;padding:0 14px;border:1px solid #444;background:#0b0b0b;font-size:15px;cursor:pointer}.freebox.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}.stock input.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
 .stock .sku{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#bbb}.flag{display:inline-block;min-width:44px;padding:3px 8px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;text-align:center}
 .flag.out{border:1px solid var(--red);color:var(--red)}.flag.low{border:1px solid #f2d600;color:#f2d600}.flag.ok{border:1px solid #444;color:#777}.wait{color:var(--green);font-weight:700}
 .stock table{table-layout:fixed;min-width:640px}.stock col.c1{width:26%}.stock col.c2{width:20%}.stock col.c3{width:16%}.stock col.c4{width:10%}.stock col.c5{width:10%}.stock col.c6{width:18%}.stock th.n,.stock td.n{padding-right:24px}
@@ -91,13 +91,14 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <div id="cust-list">
 <div class="kicker">Paddock Store</div><h1>Customers</h1>
 <p class="help">Everyone who has ordered, asked to be notified, signed up for 799 News or been added here, one record per email. "799 News" shows who gets news emails; it stays in step with Resend, including unsubscribes.</p>
-<div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, email or phone" aria-label="Search customers" style="max-width:420px"><button class="go" type="button" id="cust-new">+ Add customer</button><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
+<div class="row" style="margin-bottom:16px"><input id="cust-q" type="search" placeholder="Search name, business, email or phone" aria-label="Search customers" style="max-width:420px"><button class="go" type="button" id="cust-new">+ Add customer</button><a class="alt btnlink" href="/api/customers.csv" download>Export CSV</a></div>
 <form class="card" id="cust-form" hidden>
 <div class="grid">
 <div class="wide"><label class="f" for="n-first">First name</label><input id="n-first" maxlength="60" autocomplete="off"></div>
 <div class="wide"><label class="f" for="n-last">Last name</label><input id="n-last" maxlength="60" autocomplete="off"></div>
 <div class="wide"><label class="f" for="n-email">Email</label><input id="n-email" type="email" required maxlength="254" autocomplete="off"></div>
 <div class="wide"><label class="f" for="n-phone">Phone</label><input id="n-phone" type="tel" maxlength="40" autocomplete="off"></div>
+<div class="full"><label class="f" for="n-biz">Business <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label><input id="n-biz" maxlength="120" autocomplete="off" placeholder="Race team, shop or company"></div>
 <div class="full"><label class="f" for="n-notes">Notes</label><input id="n-notes" maxlength="2000" placeholder="Met at Empire, interested in the pump"></div>
 <div class="full"><label class="row" style="min-height:44px"><input type="checkbox" id="n-news"> They asked to get 799 News</label></div>
 </div>
@@ -212,12 +213,12 @@ var custTimer=null,custOpen=null;
 $('cust-q').oninput=function(){clearTimeout(custTimer);custTimer=setTimeout(loadCustomers,250)};
 $('cust-new').onclick=function(){$('cust-form').hidden=false;$('n-first').focus()};
 $('cust-cancel').onclick=function(){$('cust-form').reset();$('cust-form').hidden=true};
-$('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').checked;api('/customers',{method:'POST',body:{email:$('n-email').value,firstName:$('n-first').value,lastName:$('n-last').value,phone:$('n-phone').value,notes:$('n-notes').value,news:news}})
+$('cust-form').onsubmit=function(e){e.preventDefault();var news=$('n-news').checked;api('/customers',{method:'POST',body:{email:$('n-email').value,firstName:$('n-first').value,lastName:$('n-last').value,business:$('n-biz').value,phone:$('n-phone').value,notes:$('n-notes').value,news:news}})
  .then(function(r){msg('Customer added.'+(news?(r.synced?' Added to 799 News in Resend.':' They will be added to 799 News in Resend within the hour.'):''));$('cust-form').reset();$('cust-form').hidden=true;loadCustomers();openCustomer(r.id)})
  .catch(fail)};
 var MK={opt_in:'<span class="pill on">Subscribed</span>',opt_out:'<span class="pill">Unsubscribed</span>',unknown:'<span class="muted">Not asked yet</span>'};
 function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').value.trim())).then(function(j){
- $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(phoneText(c.phone)):'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
+ $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+(c.business?'<br><span class="muted">'+esc(c.business)+'</span>':'')+'</td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(phoneText(c.phone)):'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
  document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
 function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x=a.address;return [a.name,x.line1,x.line2,[x.city,x.state].filter(Boolean).join(', ')+' '+(x.postal_code||'')].filter(function(v){return v&&String(v).trim()}).map(esc).join('<br>')}
 function panelOnly(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('')}
@@ -240,7 +241,7 @@ function openOrder(id,push){if(push!==false){try{history.pushState(null,'','#ord
  $('ord-list').hidden=true;ordSubs(false);$('ord-page').hidden=false;
  $('ord-page').innerHTML='<div class="row" style="align-items:flex-end"><div><div class="kicker">Order</div><h1>'+o.number+'</h1></div><button class="alt right" type="button" id="ord-back">← All orders</button></div>'+
   '<p class="help">'+timeline.map(esc).join(' · ')+' '+(full?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span> ')+refundPill({refunded:t.refunded,total:t.total})+(o.live?'':' <span class="pill">Test</span>')+'</p>'+
-  '<div class="cgrid"><div class="card"><b>Customer</b><div>'+(cu.id?'<a style="color:#fff" href="#customers/'+cu.id+'" id="ord-cust">'+(esc(cu.name)||esc(cu.email))+' →</a>':(esc(cu.name)||'<span class="muted">Details deleted</span>'))+
+  '<div class="cgrid"><div class="card"><b>Customer</b><div>'+(cu.id?'<a style="color:#fff" href="#customers/'+cu.id+'" id="ord-cust">'+(esc(cu.name)||esc(cu.email))+' →</a>':(esc(cu.name)||'<span class="muted">Details deleted</span>'))+(cu.business?'<br>'+esc(cu.business):'')+
    (cu.email?'<br><a style="color:#20C933" href="mailto:'+esc(cu.email)+'">'+esc(cu.email)+'</a>':'')+(cu.phone?'<br><a style="color:#20C933" href="tel:'+esc(cu.phone)+'">'+esc(phoneText(cu.phone))+'</a>':'')+'</div></div>'+
   '<div class="card">'+delivery+'</div><div class="card"><b>Billing</b><div>'+addr(o.billing)+'</div></div></div>'+
   '<div class="card"><span class="lbl">Items</span><div class="scroll"><table class="items"><thead><tr><th>Item</th><th>SKU</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr></thead><tbody>'+rows+'</tbody><tfoot>'+foot+'</tfoot></table></div></div>'+
@@ -265,7 +266,7 @@ function openCustomer(id,push){custOpen=id;if($('cust-list').closest('[data-pane
  $('cust-list').hidden=true;$('cust-page').hidden=false;
  $('cust-page').innerHTML='<div class="row" style="align-items:flex-end"><div><div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1></div>'+
   '<button class="alt right" type="button" id="cust-back">← All customers</button></div>'+
-  '<p class="help">Customer since '+day(c.created_at)+' · '+esc(JOINED[c.source]||c.source)+'</p>'+
+  '<p class="help">'+(c.business?'<strong style="color:#fff">'+esc(c.business)+'</strong> · ':'')+'Customer since '+day(c.created_at)+' · '+esc(JOINED[c.source]||c.source)+'</p>'+
   '<div class="cgrid"><div class="card"><b>Contact</b><div><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(phoneText(c.phone))+'</a>':'')+'</div></div>'+
   '<div class="card"><b>Shipping</b><div>'+addr(c.shipping)+'</div></div><div class="card"><b>Billing</b><div>'+addr(c.billing)+'</div></div></div>'+
   '<div class="cgrid"><div class="card"><b>Orders</b><div><span class="big2">'+c.orders_count+'</span> '+(c.orders_count===1?'order':'orders')+' · '+money(c.total_spent)+' total</div></div>'+
@@ -315,7 +316,7 @@ $('event-form').onsubmit=function(ev){ev.preventDefault();var b={name:$('e-name'
  $('e-save').disabled=true;api(editing?'/events/'+encodeURIComponent(editing):'/events',{method:editing?'PUT':'POST',body:b}).then(function(){msg(editing?'Event saved.':'Event added.');resetEvent();loadEvents()}).catch(fail).then(function(){$('e-save').disabled=false})};
 
 // Products: one card per product with price, MAP and a row per SKU for stock. One save for everything.
-var P0={stock:{},price:{},map:{}},pPolicy={};
+var P0={stock:{},price:{},map:{},free:{}},pPolicy={};
 function flag(q){return q<1?'<span class="flag out">Out</span>':q<2?'<span class="flag low">Low</span>':'<span class="flag ok">OK</span>'}
 function cents2(v){return v==null||v===''?'':Number(v).toFixed(2)}
 function loadProducts(){$('products').innerHTML='<p class="muted">Loading…</p>';$('p-note').textContent='';
@@ -323,22 +324,24 @@ function loadProducts(){$('products').innerHTML='<p class="muted">Loading…</p>
   (pr.products||[]).forEach(function(p){byCart[p.cart]=p});(pr.brands||[]).forEach(function(b){brands[b.name]=b.policy});pPolicy=brands;
   if(pr.error)$('p-note').textContent='Prices are read-only right now: '+pr.error;
   if(!st.email&&st.groups.some(function(g){return g.items.some(function(i){return i.waiting})}))$('p-note').textContent+=(pr.error?' ':'')+'Back-in-stock email is not connected yet, so requests will wait.';
-  P0={stock:{},price:{},map:{}};var order=[],groups={};
+  P0={stock:{},price:{},map:{},free:{}};var order=[],groups={};
   st.groups.forEach(function(g){var p=byCart[g.product]||{},brand=p.brand||'Products';if(!groups[brand]){groups[brand]=[];order.push(brand)}groups[brand].push({g:g,p:p})});
   $('products').innerHTML=order.map(function(brand){return '<h2 class="h2" style="margin:26px 0 12px">'+esc(brand)+'</h2>'+groups[brand].map(function(x){var g=x.g,p=x.p,live=g.status==='live';
-   P0.price[g.product]=cents2(p.price);P0.map[g.product]=cents2(p.map);
+   P0.price[g.product]=cents2(p.price);P0.map[g.product]=cents2(p.map);P0.free[g.product]=!!p.freeShipping;
    return '<div class="card stock"><div class="row" style="align-items:flex-end;margin-bottom:12px"><h3 style="margin:0">'+esc(g.name)+(live?'':' <span class="pill">'+(g.status==='retired'?'Retired':'Coming soon')+'</span>')+'</h3>'+
     '<div class="row right prices"><div class="pf"><label class="f" for="pr-'+esc(g.product)+'">Price</label><span class="money"><input class="num" id="pr-'+esc(g.product)+'" type="number" min="0.01" step="0.01" inputmode="decimal" data-price="'+esc(g.product)+'" value="'+cents2(p.price)+'"'+(pr.error?' disabled':'')+'></span></div>'+
-    '<div class="pf"><label class="f" for="map-'+esc(g.product)+'">MAP price</label><span class="money"><input class="num" id="map-'+esc(g.product)+'" type="number" min="0.01" step="0.01" inputmode="decimal" data-map="'+esc(g.product)+'" value="'+cents2(p.map)+'"'+(pr.error?' disabled':'')+'></span></div></div></div>'+
+    '<div class="pf"><label class="f" for="map-'+esc(g.product)+'">MAP price</label><span class="money"><input class="num" id="map-'+esc(g.product)+'" type="number" min="0.01" step="0.01" inputmode="decimal" data-map="'+esc(g.product)+'" value="'+cents2(p.map)+'"'+(pr.error?' disabled':'')+'></span></div>'+
+    '<div class="pf"><span class="f lbl2">Shipping</span><label class="freebox"><input type="checkbox" data-free="'+esc(g.product)+'"'+(p.freeShipping?' checked':'')+(pr.error?' disabled':'')+'> Free</label></div></div></div>'+
     '<div class="scroll"><table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>'+(g.items.length>1?'Color':'Option')+'</th><th>SKU</th><th class="n">On hand</th><th></th><th class="n">Waiting</th><th>Last changed</th></tr></thead><tbody>'+
     g.items.map(function(i){P0.stock[i.sku]=i.qty;return '<tr><td>'+esc(i.variant||'—')+'</td><td class="sku">'+esc(i.sku)+'</td><td class="n"><input class="num" type="number" min="0" max="9999" step="1" inputmode="numeric" value="'+i.qty+'" data-sku="'+esc(i.sku)+'" aria-label="'+esc(i.label)+' on hand"></td><td data-flag="'+esc(i.sku)+'">'+flag(i.qty)+'</td>'+
      '<td class="n">'+(i.waiting?'<span class="wait">'+i.waiting+'</span>':'<span class="muted">0</span>')+'</td><td class="muted">'+when(i.updated_at)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}).join('')+
    (brand!=='Products'&&!pr.error?'<div class="card"><label class="f" for="pol-'+esc(brand)+'">'+esc(brand)+' MAP policy</label><textarea data-policy="'+esc(brand)+'" id="pol-'+esc(brand)+'" maxlength="1000">'+esc(brands[brand]||'')+'</textarea></div>':'')}).join('');
-  document.querySelectorAll('#products input,#products textarea').forEach(function(i){i.oninput=pDirty});pDirty()}).catch(fail)}
+  document.querySelectorAll('#products input,#products textarea').forEach(function(i){i.oninput=pDirty;i.onchange=pDirty});pDirty()}).catch(fail)}
 function pChanges(){var c={stock:[],prices:{},policy:[]};
  document.querySelectorAll('#products input[data-sku]').forEach(function(i){var v=i.value===''?NaN:Number(i.value);if(v!==P0.stock[i.dataset.sku])c.stock.push({sku:i.dataset.sku,qty:v,el:i})});
  document.querySelectorAll('#products input[data-price],#products input[data-map]').forEach(function(i){var k=i.dataset.price?'price':'map',id=i.dataset.price||i.dataset.map,v=i.value.trim()===''?'':cents2(i.value);
   if(v!==P0[k][id]){(c.prices[id]=c.prices[id]||{})[k]=v;c.prices[id].els=(c.prices[id].els||[]).concat(i)}});
+ document.querySelectorAll('#products input[data-free]').forEach(function(i){var id=i.dataset.free;if(i.checked!==P0.free[id]){(c.prices[id]=c.prices[id]||{}).freeShipping=i.checked;c.prices[id].els=(c.prices[id].els||[]).concat(i.parentNode)}});
  document.querySelectorAll('#products textarea[data-policy]').forEach(function(t){if(t.value!==(pPolicy[t.dataset.policy]||''))c.policy.push({brand:t.dataset.policy,policy:t.value,el:t})});return c}
 function pCount(c){return c.stock.length+Object.keys(c.prices).length+c.policy.length}
 function pDirty(){var c=pChanges(),n=pCount(c);document.querySelectorAll('#products .changed').forEach(function(e){e.classList.remove('changed')});
@@ -351,8 +354,8 @@ $('p-save').onclick=function(){var c=pChanges(),b=this,bad=c.stock.filter(functi
  b.disabled=true;b.textContent='Saving…';var notes=[],errors=[];
  var steps=Promise.resolve();
  if(c.stock.length)steps=steps.then(function(){return api('/stock',{method:'PUT',body:{changes:c.stock.map(function(x){return{sku:x.sku,qty:x.qty}})}}).then(function(r){notes.push('Stock saved.'+(r.notified?' Sent '+r.notified+' back-in-stock email'+(r.notified===1?'':'s')+'.':'')+(r.held?' '+r.held+' waiting (email not connected yet).':''))}).catch(function(e){errors.push(e.message)})});
- Object.keys(c.prices).forEach(function(id){steps=steps.then(function(){var x=c.prices[id],body={};if(x.price!==undefined)body.price=x.price;if(x.map!==undefined)body.map=x.map;
-  return api('/products/'+encodeURIComponent(id),{method:'PUT',body:body}).then(function(r){if(!r.unchanged)notes.push('Price saved; the store updates in about 2 minutes.')}).catch(function(e){errors.push(e.message)})})});
+ Object.keys(c.prices).forEach(function(id){steps=steps.then(function(){var x=c.prices[id],body={};if(x.price!==undefined)body.price=x.price;if(x.map!==undefined)body.map=x.map;if(x.freeShipping!==undefined)body.freeShipping=x.freeShipping;
+  return api('/products/'+encodeURIComponent(id),{method:'PUT',body:body}).then(function(r){if(!r.unchanged)notes.push('Saved; the store updates in about 2 minutes.')}).catch(function(e){errors.push(e.message)})})});
  c.policy.forEach(function(x){steps=steps.then(function(){return api('/brands/'+encodeURIComponent(x.brand),{method:'PUT',body:{policy:x.policy}}).then(function(){notes.push(x.brand+' MAP policy saved.')}).catch(function(e){errors.push(e.message)})})});
  steps.then(function(){msg(errors.length?errors.join(' '):[...new Set(notes)].join(' '),!!errors.length);loadProducts()})};
 

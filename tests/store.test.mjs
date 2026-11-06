@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import * as worker from '../store/worker.mjs';
-import { createWorker, priceWarnings, verifySignature, orderEmail } from '../store/worker.mjs';
+import { createWorker, priceWarnings, verifySignature, orderEmail, checkoutParams, buyer } from '../store/worker.mjs';
 
 const require = createRequire(import.meta.url);
 const { database } = require('./helpers/d1.cjs');
@@ -452,4 +452,29 @@ test('orders keep the price each item sold at and the money breakdown', async t 
   const o = s.sqlite.prepare("SELECT items, amount_subtotal, amount_shipping, amount_tax, amount_discount, payment_intent FROM orders WHERE session_id = 'cs_test_tot1'").get();
   assert.deepEqual(JSON.parse(o.items), [{ s: 'LTP', q: 2, u: 7499 }]);
   assert.deepEqual([o.amount_subtotal, o.amount_shipping, o.amount_tax, o.amount_discount, o.payment_intent], [14998, 0, 900, 0, 'pi_x']);
+});
+
+test('free shipping: a ship order is free only when every item is marked free shipping', () => {
+  const line = (sku, free) => ({ sku, qty: 1, cents: 1000, name: 'X', description: 'x', freeShipping: free });
+  const rate = lines => checkoutParams(lines, 'ship', 'https://799motorsport.com/paddock').shipping_options[0].shipping_rate_data;
+  assert.deepEqual([rate([line('A', true), line('B', true)]).fixed_amount.amount, rate([line('A', true), line('B', true)]).display_name], [0, 'Free shipping (lower 48)']);
+  assert.equal(rate([line('A', true), line('B', false)]).fixed_amount.amount, 2500);
+  assert.equal(rate([line('B', false)]).fixed_amount.amount, 2500);
+  assert.equal(checkoutParams([line('A', true)], 'pickup', 'https://799motorsport.com/paddock').shipping_options[0].shipping_rate_data.fixed_amount.amount, 0);
+});
+
+test('business name: optional at checkout, saved apart from the person’s name', async t => {
+  const p = checkoutParams([{ sku: 'LTP', qty: 1, cents: 7499, name: 'Pump', description: 'p' }], 'pickup', 'https://799motorsport.com/paddock');
+  assert.deepEqual(p.name_collection, { business: { enabled: 'true', optional: 'true' } });
+  assert.equal(buyer({ customer_details: { name: 'Acme Racing', business_name: 'Acme Racing', individual_name: 'Pat Buyer' } }).name, 'Pat Buyer');
+  assert.equal(buyer({ customer_details: { name: 'Acme Racing', business_name: 'Acme Racing' }, collected_information: { shipping_details: { name: 'Pat Buyer' } } }).name, 'Pat Buyer');
+  assert.equal(buyer({ customer_details: { name: 'Acme Racing', business_name: 'Acme Racing' } }).name, null);
+  assert.deepEqual([buyer({ customer_details: { name: 'Sam Solo' } }).name, buyer({ customer_details: { name: 'Sam Solo' } }).business], ['Sam Solo', null]);
+  const s = service(t);
+  const ev = paid('cs_test_biz1', [{ s: 'LTP', q: 1 }]);
+  ev.data.object.customer_details = { email: 'pat@acme.co', name: 'Acme Racing', business_name: 'Acme Racing', individual_name: 'Pat Buyer' };
+  await s.webhook(ev);
+  const c = s.sqlite.prepare("SELECT name, business FROM customers WHERE email = 'pat@acme.co'").get();
+  assert.deepEqual({ ...c }, { name: 'Pat Buyer', business: 'Acme Racing' });
+  assert.equal(s.sqlite.prepare("SELECT business FROM orders WHERE session_id = 'cs_test_biz1'").get().business, 'Acme Racing');
 });

@@ -62,3 +62,4 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 .store-grid.cols-3{grid-template-columns:repeat(3,1fr)}.store-grid.cols-3 .item h3{font-size:21px}
 @media(max-width:800px){.store-grid.cols-3{grid-template-columns:1fr}}
 @media(max-width:600px){.pd-about h2,.related h2{font-size:22px!important;line-height:1.1!important;letter-spacing:0!important}}
+.freeship{display:inline-block;width:max-content;max-width:100%;align-self:flex-start;margin:0 0 10px;padding:4px 9px;border:1px solid var(--green);color:var(--green);font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}

@@ -69,7 +69,7 @@ const multi = p => !!p.colors;
 
 // The data the shared cart script needs on every store page.
 const clientData = {
-  products: Object.fromEntries(sellable.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: multi(p) ? 'Color' : null,
+  products: Object.fromEntries(sellable.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: multi(p) ? 'Color' : null, freeShipping: p.freeShipping === true,
     default: defaultVariant(p).name, variants: variantsOf(p) }])),
   fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
@@ -84,7 +84,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
     <label id="get-table" style="display:none"><input type="radio" name="get" value="table"> <span><strong>Take it now, free</strong><small>Paying here at the 799 table. Show your confirmation screen to collect.</small></span></label>
     <div id="get-events"></div>
     <label><input type="radio" name="get" value="pickup" checked> <span><strong>Local pickup, free</strong><small>Downtown Traverse City, MI, by appointment. We'll email you to set a time.</small></span></label>
-    <label><input type="radio" name="get" value="ship"> <span><strong id="ship-label">Ship to me</strong><small>Lower 48. Address on the next screen.</small></span></label>
+    <label><input type="radio" name="get" value="ship"> <span><strong id="ship-label">Ship to me</strong><small id="ship-note">Lower 48. Address on the next screen.</small></span></label>
   </fieldset>
   <p class="cart-error" id="cart-error" role="alert" hidden></p>
   <div class="cart-sum"><span id="sum-label">Subtotal</span><strong id="cart-sub">$0.00</strong></div>
@@ -92,7 +92,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=7"></script>`;
+<script src="/paddock-store.js?v=8"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -147,7 +147,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=5">
+<link rel="stylesheet" href="/paddock-store.css?v=6">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -173,6 +173,7 @@ function photoTag(p, { big = false, lazy = true } = {}) {
 const idLine = p => { const v = defaultVariant(p); return v.sku ? `<div class="idline"${multi(p) ? ` data-variant-ids="${p.cart}"` : ''}>SKU ${esc(v.sku)}${v.upc ? ` · UPC ${esc(v.upc)}` : ''}</div>` : '<div class="idline">SKU and UPC to come</div>'; };
 const options = p => multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
 const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
+const shipBadge = p => p.freeShipping ? '<div class="freeship">Free shipping to the lower 48</div>' : '';
 const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';
 // "Email me when it's back", shown by paddock-store.js only when the chosen item is out of stock.
 const notifyForm = p => `<form class="notify" data-notify="${p.cart}" hidden novalidate><label for="notify-${p.cart}">Want one? Get an email when it's back.</label><div class="notify-row"><input id="notify-${p.cart}" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Notify me</button></div><input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"><p class="notify-msg" role="status"></p><p class="fine">You'll also get occasional 799 News. Unsubscribe any time.</p></form>`;
@@ -185,7 +186,7 @@ function card(p, lazy = true) {
   <div class="item-body">
     <span class="badge">${esc(catBySlug[p.category].name)}</span>
     <h3><a href="${url}"${link}>${esc(p.name)}</a></h3>
-    <div class="price" data-price="${p.cart}">${money(p.price)}</div>
+    <div class="price" data-price="${p.cart}">${money(p.price)}</div>${shipBadge(p)}
     ${idLine(p)}
     <p class="desc">${esc(p.desc)}</p>
     <ul class="facts">${p.facts.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
@@ -318,7 +319,7 @@ for (const p of cartProducts) {
   ${notifyForm(p)}`;
   const image = abs(defaultVariant(p).img.src);
   write(`paddock/products/${p.slug}/index.html`,
-    head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or $25 flat-rate shipping.`,
+    head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or ${p.freeShipping ? 'free shipping' : '$25 flat-rate shipping'}.`,
       url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
 ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
@@ -328,7 +329,7 @@ ${crumbs(trail)}
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>
-  ${isLive(p) ? `<div class="price" data-price="${p.cart}">${money(p.price)}</div>` : `<div class="price">${gone ? 'No longer available' : 'Coming soon'}</div>`}
+  ${isLive(p) ? `<div class="price" data-price="${p.cart}">${money(p.price)}</div>${shipBadge(p)}` : `<div class="price">${gone ? 'No longer available' : 'Coming soon'}</div>`}
   ${idLine(p)}
   <p class="desc">${esc(p.desc)}</p>
   <ul class="facts">${p.facts.map(f => `<li>${esc(f)}</li>`).join('')}</ul>

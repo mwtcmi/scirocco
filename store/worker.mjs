@@ -16,6 +16,7 @@ export const SHIPPING = Object.freeze({
   table: { cents: 0, label: 'At the 799 table: paid and collected in person' },
   event: { cents: 0, label: 'Paddock pickup at the event' }
 });
+const FREE_SHIPPING = Object.freeze({ cents: 0, label: 'Free shipping (lower 48)' });
 const cents = v => Math.round(Number(v) * 100);
 // Every sellable thing is a variant with its own SKU. A product with "colors" has one variant per color;
 // any other product has a single variant (its own SKU). Stock, cart lines and orders all use SKUs.
@@ -28,7 +29,7 @@ export function buildCatalog(file) {
     if (!p.cart || (p.status || 'live') !== 'live') continue; // only live products can be bought
     const variants = variantsOf(p);
     for (const v of variants) if (!v.sku) throw new Error(p.slug + ': every variant needs a SKU');
-    const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price), option: p.colors ? 'Color' : null, variants };
+    const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price), option: p.colors ? 'Color' : null, variants, freeShipping: p.freeShipping === true };
     // Older field names, kept so a cached copy of the store page keeps working during a deploy.
     if (p.colors) { item.colors = p.colors.map(c => c.name); item.skus = Object.fromEntries(p.colors.map(c => [c.name, c.sku])); }
     else item.sku = p.sku;
@@ -87,7 +88,7 @@ export function priceLine(line) {
     if (!v) throw new APIError(400, 'Unknown option.');
   }
   const p = CATALOG[id], multi = p.variants.length > 1;
-  return { product: id, sku: v.sku, variant: v.name, qty, cents: p.cents, map: p.map, name: p.name,
+  return { product: id, sku: v.sku, variant: v.name, qty, cents: p.cents, map: p.map, name: p.name, freeShipping: !!p.freeShipping,
     description: (multi ? v.name + ', ' : '') + p.description + ' (' + v.sku + ')', keys: [v.sku] };
 }
 // Order metadata items: {s: sku, q} now, {p, c, q} before SKUs.
@@ -126,7 +127,9 @@ function form(params) {
 }
 
 export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelBase = returnBase, event = null) {
-  const ship = fulfillment === 'ship', rate = SHIPPING[fulfillment];
+  const ship = fulfillment === 'ship';
+  // Free shipping: an order ships free only when every item in it is marked "freeShipping" in the catalog.
+  const rate = ship && lines.length && lines.every(l => l.freeShipping) ? FREE_SHIPPING : SHIPPING[fulfillment];
   const rateLabel = fulfillment === 'event' && event ? 'Paddock pickup: ' + event.name + ', ' + eventDates(event) : rate.label;
   const items = lines.map(l => ({ s: l.sku, q: l.qty }));
   const p = {
@@ -135,6 +138,7 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     cancel_url: cancelBase + '?order=cancelled',
     allow_promotion_codes: 'true',
     customer_creation: 'always', // a Stripe customer per buyer, linked to the 799 customer record
+    name_collection: { business: { enabled: 'true', optional: 'true' } }, // race teams, shops and companies can add their name
     // 799 News: buyers are subscribed by default (US opt-out rules), with a visible choice at checkout.
     custom_fields: [{ key: 'news', type: 'dropdown', optional: 'true', label: { type: 'custom', custom: '799 News by email' },
       dropdown: { default_value: 'yes', options: [{ label: 'Yes, send me 799 News', value: 'yes' }, { label: 'No thanks', value: 'no' }] } }],
@@ -190,6 +194,16 @@ export async function verifySignature(payload, header, secret, nowSec) {
 // history of shipping addresses, totals, and email marketing consent (only the checkout checkbox opts in;
 // an unticked box never changes an earlier choice).
 const sameAddress = (a, b) => JSON.stringify(a?.address || a) === JSON.stringify(b?.address || b);
+// The buyer's details. With the optional business name, Stripe puts the business in customer_details.name, so the
+// person's name comes from individual_name, or from the shipping label when the name given was the business.
+export function buyer(session) {
+  const d = session.customer_details || {}, ci = session.collected_information || {};
+  const business = String(d.business_name || ci.business_name || '').trim() || null;
+  const ship = ci.shipping_details || session.shipping_details || null;
+  let name = String(d.individual_name || ci.individual_name || '').trim() || null;
+  if (!name) name = d.name && d.name !== business ? d.name : (ship?.name && ship.name !== business ? ship.name : null);
+  return { ...d, name, business };
+}
 async function customerStatements(db, { email, who, shipTo, billing, how, session, now }) {
   const prior = await db.prepare('SELECT addresses FROM customers WHERE email = ?').bind(email).first().catch(() => null);
   let addresses = []; try { addresses = JSON.parse(prior?.addresses || '[]'); } catch {}
@@ -200,9 +214,9 @@ async function customerStatements(db, { email, who, shipTo, billing, how, sessio
   const stripeCustomer = typeof session.customer === 'string' ? session.customer : session.customer?.id || null;
   return [
     db.prepare(`INSERT INTO customers (email, name, phone, billing, shipping, addresses, marketing, marketing_at, marketing_source, source, stripe_customer,
-        orders_count, total_spent, first_order_at, last_order_at, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
-      ON CONFLICT (email) DO UPDATE SET name = COALESCE(excluded.name, name), phone = COALESCE(excluded.phone, phone),
+        orders_count, total_spent, first_order_at, last_order_at, created_at, updated_at, business)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (email) DO UPDATE SET name = COALESCE(excluded.name, name), phone = COALESCE(excluded.phone, phone), business = COALESCE(excluded.business, business),
         billing = COALESCE(excluded.billing, billing), shipping = COALESCE(excluded.shipping, shipping), addresses = excluded.addresses,
         marketing = CASE WHEN excluded.marketing = 'opt_out' OR marketing = 'opt_out' THEN 'opt_out' ELSE 'opt_in' END,
         marketing_at = CASE WHEN (CASE WHEN excluded.marketing = 'opt_out' OR marketing = 'opt_out' THEN 'opt_out' ELSE 'opt_in' END) <> marketing THEN excluded.marketing_at ELSE marketing_at END,
@@ -212,7 +226,7 @@ async function customerStatements(db, { email, who, shipTo, billing, how, sessio
         orders_count = orders_count + 1, total_spent = total_spent + excluded.total_spent,
         first_order_at = COALESCE(first_order_at, excluded.first_order_at), last_order_at = excluded.last_order_at, updated_at = excluded.updated_at`)
       .bind(email, who.name || null, who.phone || null, billing ? JSON.stringify(billing) : null, shipTo ? JSON.stringify(shipTo) : null, JSON.stringify(addresses),
-        news, now, 'checkout', source, stripeCustomer, session.amount_total ?? 0, now, now, now, now),
+        news, now, 'checkout', source, stripeCustomer, session.amount_total ?? 0, now, now, now, now, who.business || null),
     db.prepare('UPDATE orders SET customer_id = (SELECT id FROM customers WHERE email = ?) WHERE session_id = ?').bind(email, session.id)
   ];
 }
@@ -222,7 +236,7 @@ async function recordOrder(db, session, now) {
   try { items = JSON.parse(session.metadata?.items || '[]'); } catch { items = []; }
   const lines = items.map(itemLine);
   const need = needs(lines);
-  const who = session.customer_details || {}, shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
+  const who = buyer(session), shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
   const billing = who.address ? { name: who.name || null, address: who.address } : null;
   const how = session.metadata?.fulfillment || 'unknown', email = who.email ? String(who.email).trim().toLowerCase() : null;
   const pi = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
@@ -231,10 +245,10 @@ async function recordOrder(db, session, now) {
   const td = session.total_details || {};
   const num = v => Number.isFinite(v) ? v : null;
   const statements = [db.prepare(`INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to, billing, payment_intent,
-      amount_subtotal, amount_shipping, amount_tax, amount_discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      amount_subtotal, amount_shipping, amount_tax, amount_discount, business) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(session.id, now, session.livemode ? 1 : 0, how, email, session.amount_total ?? null, JSON.stringify(saved),
       session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null, billing ? JSON.stringify(billing) : null, pi,
-      num(session.amount_subtotal), num(td.amount_shipping ?? session.shipping_cost?.amount_total), num(td.amount_tax), num(td.amount_discount))];
+      num(session.amount_subtotal), num(td.amount_shipping ?? session.shipping_cost?.amount_total), num(td.amount_tax), num(td.amount_discount), who.business)];
   for (const [k, q] of Object.entries(need)) statements.push(db.prepare('UPDATE stock SET qty = MAX(qty - ?, 0), updated_at = ? WHERE key = ?').bind(q, now, k));
   if (email) statements.push(...await customerStatements(db, { email, who, shipTo, billing, how, session, now }));
   try { await db.batch(statements); return 'recorded'; }
@@ -275,7 +289,7 @@ export function orderNumber(session) { return '799-' + String(session.id || '').
 
 export function orderEmail(session, event = null) {
   const lines = sessionLines(session);
-  const who = session.customer_details || {};
+  const who = buyer(session);
   const how = session.metadata?.fulfillment, table = how === 'table', atEvent = how === 'event', pickup = how !== 'ship' && !table;
   const shipTo = session.collected_information?.shipping_details || session.shipping_details || null;
   const td = session.total_details || {};

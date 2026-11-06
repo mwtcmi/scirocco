@@ -49,7 +49,7 @@ function productSpan(text, cart) {
   return [start, end];
 }
 const fmt = n => (Math.round(Number(n) * 100) / 100).toFixed(2);
-export function setPrice(text, cart, { price, map }) {
+export function setPrice(text, cart, { price, map, freeShipping }) {
   const [start, end] = productSpan(text, cart);
   let part = text.slice(start, end);
   if (price !== undefined) {
@@ -59,6 +59,11 @@ export function setPrice(text, cart, { price, map }) {
   if (map !== undefined) {
     if (/"map": [0-9.]+/.test(part)) part = part.replace(/"map": [0-9.]+/, '"map": ' + Number(fmt(map)));
     else part = part.replace('"cart": ' + JSON.stringify(cart) + ',', '"cart": ' + JSON.stringify(cart) + ', "map": ' + Number(fmt(map)) + ',');
+  }
+  if (freeShipping !== undefined) {
+    const v = freeShipping === true;
+    if (/"freeShipping": (true|false)/.test(part)) part = part.replace(/"freeShipping": (true|false)/, '"freeShipping": ' + v);
+    else if (v) part = part.replace('"cart": ' + JSON.stringify(cart) + ',', '"cart": ' + JSON.stringify(cart) + ', "freeShipping": true,');
   }
   return text.slice(0, start) + part + text.slice(end);
 }
@@ -97,7 +102,7 @@ async function readCatalog(env, ghFetch) {
 function productList(data) {
   const brands = data.brands || {};
   return data.products.filter(p => p.cart && (p.status || 'live') !== 'retired').map(p => ({ cart: p.cart, status: p.status || 'live', name: p.name, brand: p.brand, price: Number(p.price), map: p.map ?? null,
-    category: p.category }))
+    freeShipping: p.freeShipping === true, category: p.category }))
     .map(p => ({ ...p, policy: brands[p.brand]?.mapPolicy || "" }));
 }
 
@@ -310,8 +315,8 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
         // Customers
         if (path === '/api/customers' && request.method === 'GET') {
           const q = clean(url.searchParams.get('q'), 80).toLowerCase(), like = '%' + q.replace(/[%_]/g, '') + '%';
-          const { results } = await db.prepare(`SELECT id, email, name, phone, marketing, source, orders_count, total_spent, last_order_at, created_at FROM customers
-            WHERE ? = '' OR lower(email) LIKE ? OR lower(COALESCE(name, '')) LIKE ? OR COALESCE(phone, '') LIKE ? ORDER BY COALESCE(last_order_at, created_at) DESC LIMIT 300`).bind(q, like, like, like).all();
+          const { results } = await db.prepare(`SELECT id, email, name, business, phone, marketing, source, orders_count, total_spent, last_order_at, created_at FROM customers
+            WHERE ? = '' OR lower(email) LIKE ? OR lower(COALESCE(name, '')) LIKE ? OR lower(COALESCE(business, '')) LIKE ? OR COALESCE(phone, '') LIKE ? ORDER BY COALESCE(last_order_at, created_at) DESC LIMIT 300`).bind(q, like, like, like, like).all();
           return json({ customers: results });
         }
         // Add someone by hand (met at the track, asked at the table). "They asked for 799 News" records an in-person opt-in.
@@ -321,8 +326,8 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           const existing = await db.prepare('SELECT id FROM customers WHERE email = ?').bind(email).first();
           if (existing) return json({ error: 'That email is already a customer.', id: existing.id }, 409);
           const news = body.news === true;
-          const r = await db.prepare(`INSERT INTO customers (email, name, phone, notes, source, marketing, marketing_at, marketing_source, created_at, updated_at)
-            VALUES (?, ?, ?, ?, 'pitwall', ?, ?, ?, ?, ?)`).bind(email, ([clean(body.firstName, 60), clean(body.lastName, 60)].filter(Boolean).join(' ') || clean(body.name, 120)) || null, clean(body.phone, 40) || null, clean(body.notes, 2000),
+          const r = await db.prepare(`INSERT INTO customers (email, business, name, phone, notes, source, marketing, marketing_at, marketing_source, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'pitwall', ?, ?, ?, ?, ?)`).bind(email, clean(body.business, 120) || null, ([clean(body.firstName, 60), clean(body.lastName, 60)].filter(Boolean).join(' ') || clean(body.name, 120)) || null, clean(body.phone, 40) || null, clean(body.notes, 2000),
               news ? 'opt_in' : 'unknown', news ? t : null, news ? 'in person: ' + user.email : null, t, t).run();
           const id = r.meta?.last_row_id ?? (await db.prepare('SELECT id FROM customers WHERE email = ?').bind(email).first()).id;
           const synced = news ? await pushNews(env, db, newsFetch, id, t) : false;
@@ -330,9 +335,9 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
         }
         if (path === '/api/customers.csv' && request.method === 'GET') {
           const { results } = await db.prepare('SELECT * FROM customers ORDER BY created_at').all();
-          const head = ['email', 'name', 'phone', 'marketing', 'marketing_source', 'marketing_at', 'source', 'orders', 'total_spent', 'first_order', 'last_order', 'billing_address', 'shipping_address', 'notes', 'stripe_customer', 'created'];
+          const head = ['email', 'name', 'business', 'phone', 'marketing', 'marketing_source', 'marketing_at', 'source', 'orders', 'total_spent', 'first_order', 'last_order', 'billing_address', 'shipping_address', 'notes', 'stripe_customer', 'created'];
           const iso = ms => ms ? new Date(ms).toISOString() : '';
-          const rows = results.map(c => [c.email, c.name, c.phone, c.marketing, c.marketing_source, iso(c.marketing_at), c.source, c.orders_count, (c.total_spent / 100).toFixed(2),
+          const rows = results.map(c => [c.email, c.name, c.business, c.phone, c.marketing, c.marketing_source, iso(c.marketing_at), c.source, c.orders_count, (c.total_spent / 100).toFixed(2),
             iso(c.first_order_at), iso(c.last_order_at), addrText(parseJSON(c.billing)), addrText(parseJSON(c.shipping)), c.notes, c.stripe_customer, iso(c.created_at)]);
           return new Response([head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n', { headers: { ...headers, 'Content-Type': 'text/csv;charset=utf-8',
             'Content-Disposition': 'attachment; filename="799-customers-' + new Date(t).toISOString().slice(0, 10) + '.csv"' } });
@@ -417,7 +422,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           const stripe = 'https://dashboard.stripe.com/' + (test ? 'test/' : '') + (pi ? 'payments/' + encodeURIComponent(pi) : 'search?query=' + encodeURIComponent(o.session_id));
           return json({ order: { id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, live: !!o.livemode, how: o.fulfillment,
             event: o.event_id ? { name: o.event_name || o.event_id, starts: o.event_starts, ends: o.event_ends, place: o.event_place } : null,
-            customer: { id: o.cust_id || null, name: o.name, email: o.email, phone: o.phone }, shipTo: parseJSON(o.ship_to, null), billing: parseJSON(o.billing, null),
+            customer: { id: o.cust_id || null, name: o.name, business: o.business, email: o.email, phone: o.phone }, shipTo: parseJSON(o.ship_to, null), billing: parseJSON(o.billing, null),
             items, totals: { subtotal: o.amount_subtotal, shipping: o.amount_shipping, tax: o.amount_tax, discount: o.amount_discount, total: o.amount_total, refunded: o.refunded_cents || 0 },
             status: o.status || 'new', handled: o.handled_at, refundedAt: o.refunded_at, stripe } });
         }
@@ -440,13 +445,15 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
             if (!Number.isFinite(v) || v <= 0 || v > 100000) throw new APIError(400, (k === 'price' ? 'Price' : 'MAP') + ' must be a number above 0.');
             change[k] = v;
           }
+          if (typeof body.freeShipping === 'boolean') change.freeShipping = body.freeShipping;
           if (!Object.keys(change).length) throw new APIError(400, 'Nothing to change.');
           const c = await readCatalog(env, ghFetch), p = c.data.products.find(x => x.cart === cart);
           if (!p) throw new APIError(404, 'Unknown product.');
           const text = setPrice(c.text, cart, change);
           JSON.parse(text);
           if (text === c.text) return json({ unchanged: true });
-          const what = [change.price !== undefined ? 'price $' + p.price + ' → $' + fmt(change.price) : '', change.map !== undefined ? 'MAP $' + fmt(p.map ?? 0) + ' → $' + fmt(change.map) : ''].filter(Boolean).join(', ');
+          const what = [change.price !== undefined ? 'price $' + p.price + ' → $' + fmt(change.price) : '', change.map !== undefined ? 'MAP $' + fmt(p.map ?? 0) + ' → $' + fmt(change.map) : '',
+            change.freeShipping !== undefined && change.freeShipping !== (p.freeShipping === true) ? 'free shipping ' + (change.freeShipping ? 'on' : 'off') : ''].filter(Boolean).join(', ');
           const r = await gh(env, ghFetch, 'PUT', { message: 'Pitwall: ' + p.name + ' ' + what + ' (' + user.email + ')', content: toB64(text), sha: c.sha, branch: env.GITHUB_BRANCH,
             committer: { name: 'Pitwall', email: 'pitwall@799motorsport.com' }, author: { name: user.email, email: user.email } });
           return json({ saved: true, commit: r.commit?.sha || null });

@@ -252,7 +252,7 @@ test('customers: search, detail with orders, notes and email setting, CSV export
   const csv = await s.call('/api/customers.csv');
   assert.match(csv.res.headers.get('content-type'), /text\/csv/);
   const lines = csv.body.trim().split('\r\n');
-  assert.equal(lines.length, 3); assert.match(lines[0], /^email,name,phone,marketing/);
+  assert.equal(lines.length, 3); assert.match(lines[0], /^email,name,business,phone,marketing/);
   assert.match(csv.body, /"Sam ""Quote"", Jr"/); assert.match(csv.body, /Pat Buyer, 1 Main, TC, MI 49684/);
   assert.equal((await s.call('/api/customers/' + pat, { method: 'DELETE' })).status, 200);
   assert.equal(s.sqlite.prepare('SELECT COUNT(*) AS n FROM customers WHERE id = ?').get(pat).n, 0);
@@ -268,10 +268,10 @@ test('add customer by hand: in-person 799 News opt-in goes straight to Resend; d
   const app = createPitwall({ now: () => 1800000000000, fetchCerts, newsFetch: async (url, init) => { calls.push([init.method, url.replace('https://api.resend.com', ''), init.body ? JSON.parse(init.body) : null]); return new Response('{"id":"c"}', { status: 201 }); } });
   Object.assign(s.env, { RESEND_API_KEY: 're_test', NEWS_TOPIC: 'top_799', NEWS_SEGMENT: 'seg_799' });
   const call = (method, path, data) => app.fetch(new Request('https://pitwall.example' + path, { method, headers: { 'content-type': 'application/json', 'cf-access-jwt-assertion': token() }, body: data ? JSON.stringify(data) : undefined }), s.env).then(async r => ({ status: r.status, body: await r.json() }));
-  const r = await call('POST', '/api/customers', { email: 'Track@Fan.co', firstName: 'Track', lastName: 'Fan', phone: '+1555', notes: 'Met at Empire', news: true });
+  const r = await call('POST', '/api/customers', { email: 'Track@Fan.co', firstName: 'Track', lastName: 'Fan', business: 'Fan Racing', phone: '+1555', notes: 'Met at Empire', news: true });
   assert.equal(r.status, 201); assert.equal(r.body.synced, true);
   const row = s.sqlite.prepare('SELECT * FROM customers WHERE id = ?').get(r.body.id);
-  assert.equal(row.email, 'track@fan.co'); assert.equal(row.marketing, 'opt_in'); assert.equal(row.marketing_source, 'in person: mike@scirocco799.com'); assert.equal(row.source, 'pitwall');
+  assert.equal(row.email, 'track@fan.co'); assert.equal(row.business, 'Fan Racing'); assert.equal(row.marketing, 'opt_in'); assert.equal(row.marketing_source, 'in person: mike@scirocco799.com'); assert.equal(row.source, 'pitwall');
   assert.deepEqual(calls[0], ['POST', '/contacts', { email: 'track@fan.co', first_name: 'Track', last_name: 'Fan', segments: [{ id: 'seg_799' }], topics: [{ id: 'top_799', subscription: 'opt_in' }] }]);
   assert.equal((await call('POST', '/api/customers', { email: 'track@fan.co' })).status, 409);
   assert.equal((await call('POST', '/api/customers', { email: 'nope' })).status, 400);
@@ -303,4 +303,17 @@ test('order page: one order with buyer, delivery, items at their sold price, mon
   const old = (await s.call('/api/orders/cs_test_old00001')).body.order;
   assert.equal(old.items[0].variant, 'Black'); assert.equal(old.items[0].unit, null); assert.match(old.stripe, /^https:\/\/dashboard\.stripe\.com\/test\/search\?query=cs_test_old00001$/);
   assert.equal((await s.call('/api/orders/cs_nope')).status, 404);
+});
+
+test('free shipping: Pitwall turns it on and off for one product without touching the rest', async t => {
+  const on = setPrice(CATALOG, 'pump', { freeShipping: true });
+  const data = JSON.parse(on);
+  assert.equal(data.products.find(p => p.cart === 'pump').freeShipping, true);
+  assert.equal(data.products.filter(p => p.freeShipping).length, 1);
+  const off = setPrice(on, 'pump', { freeShipping: false });
+  assert.equal(JSON.parse(off).products.find(p => p.cart === 'pump').freeShipping, false);
+  assert.equal(setPrice(CATALOG, 'pump', { freeShipping: false }), CATALOG, 'turning off when never on changes nothing');
+  const s = setup(t);
+  assert.equal((await s.call('/api/products/pump', { method: 'PUT', data: { freeShipping: true } })).status, 200);
+  assert.equal((await s.call('/api/products')).body.products.find(p => p.cart === 'pump').freeShipping, true);
 });
