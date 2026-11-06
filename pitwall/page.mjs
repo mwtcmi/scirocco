@@ -62,9 +62,8 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <nav role="tablist">
 <button role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
 <button role="tab" data-tab="orders" aria-selected="false">Orders</button>
-<button role="tab" data-tab="stock" aria-selected="false">Stock</button>
+<button role="tab" data-tab="products" aria-selected="false">Products</button>
 <button role="tab" data-tab="customers" aria-selected="false">Customers</button>
-<button role="tab" data-tab="prices" aria-selected="false">Prices</button>
 </nav>
 <p class="msg" id="msg" role="status"></p>
 
@@ -77,7 +76,7 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <div class="card"><div class="row"><div class="kicker">Customers</div><button class="linkish right" type="button" data-go="customers">Open customers →</button></div><div id="dash-cust"></div></div>
 </div>
 <div class="two">
-<div class="card"><div class="row"><div class="kicker">Stock to watch</div><button class="linkish right" type="button" data-go="stock">Open stock →</button></div><div id="dash-stock"></div></div>
+<div class="card"><div class="row"><div class="kicker">Stock to watch</div><button class="linkish right" type="button" data-go="products">Open products →</button></div><div id="dash-stock"></div></div>
 <div class="card"><div class="kicker">Top sellers · last 30 days</div><div id="dash-top"></div></div>
 </div>
 </section>
@@ -133,17 +132,11 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 <div class="scroll"><table><thead><tr><th>Event</th><th>Dates</th><th>Order by</th><th>Orders</th><th>Status</th><th></th></tr></thead><tbody id="events"></tbody></table></div>
 </section>
 
-<section data-panel="stock" hidden>
-<div class="kicker">Paddock Store</div><h1>Stock</h1>
-<p class="help">What's on hand, by SKU. Online orders take stock off by themselves. Change counts after a restock, or after a cash or Tap to Pay sale, then save. Anyone waiting for an item gets one "It's back" email when you bring it above 0.</p>
-<div class="row savebar"><button class="go" id="stock-save" disabled>Save changes</button><button class="alt" id="stock-reset" disabled>Undo</button><span class="muted" id="stock-note"></span></div>
-<div id="stock"></div>
-</section>
-
-<section data-panel="prices" hidden>
-<div class="kicker">Paddock Store</div><h1>Prices</h1>
-<p class="help">Saving updates the store pages, Google's product info and checkout together, about 2 minutes later. Each change is recorded in GitHub with your email.</p>
-<div id="prices"></div>
+<section data-panel="products" hidden>
+<div class="kicker">Paddock Store</div><h1>Products</h1>
+<p class="help">Price, MAP and stock for everything in the store. Stock saves right away; anyone waiting for an item gets one "It's back" email when you bring it above 0. Price changes update the store pages, Google's product info and checkout together about 2 minutes later, and are recorded in GitHub with your email.</p>
+<div class="row savebar"><button class="go" id="p-save" disabled>Save changes</button><button class="alt" id="p-reset" disabled>Undo</button><span class="muted" id="p-note"></span></div>
+<div id="products"></div>
 </section>
 </main>
 <script>
@@ -158,7 +151,7 @@ function api(path,opt){opt=opt||{};return fetch('/api'+path,{method:opt.method||
  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j})})}
 function fail(e){msg(e.message||'Something went wrong.',true)}
 // Tabs
-var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvents()},stock:loadStock,customers:loadCustomers,prices:loadPrices};
+var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvents()},products:loadProducts,customers:loadCustomers};
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
 document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){show(b.dataset.go);scrollTo(0,0)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
@@ -254,39 +247,47 @@ $('e-starts').onchange=function(){if(!$('e-ends').value||$('e-ends').value<$('e-
 $('event-form').onsubmit=function(ev){ev.preventDefault();var b={name:$('e-name').value,place:$('e-place').value,starts:$('e-starts').value,ends:$('e-ends').value,orderBy:$('e-orderby').value,whereToFind:$('e-where').value,active:$('e-active').checked};
  $('e-save').disabled=true;api(editing?'/events/'+encodeURIComponent(editing):'/events',{method:editing?'PUT':'POST',body:b}).then(function(){msg(editing?'Event saved.':'Event added.');resetEvent();loadEvents()}).catch(fail).then(function(){$('e-save').disabled=false})};
 
-// Stock: grouped by product, one row per SKU; edit any counts, then one save.
-var stockOrig={};
+// Products: one card per product with price, MAP and a row per SKU for stock. One save for everything.
+var P0={stock:{},price:{},map:{}},pPolicy={};
 function flag(q){return q<1?'<span class="flag out">Out</span>':q<2?'<span class="flag low">Low</span>':'<span class="flag ok">OK</span>'}
-function loadStock(){api('/stock').then(function(j){stockOrig={};
- $('stock').innerHTML=j.groups.map(function(g){return '<div class="card stock"><h3>'+esc(g.name)+(g.status!=='live'?' <span class="pill">'+(g.status==='retired'?'Retired':'Coming soon')+'</span>':'')+'</h3><div class="scroll"><table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>'+(g.items.length>1?'Color':'Option')+'</th><th>SKU</th><th class="n">On hand</th><th></th><th class="n">Waiting</th><th>Last changed</th></tr></thead><tbody>'+
-  g.items.map(function(i){stockOrig[i.sku]=i.qty;return '<tr><td>'+esc(i.variant||'—')+'</td><td class="sku">'+esc(i.sku)+'</td><td class="n"><input class="num" type="number" min="0" max="9999" step="1" inputmode="numeric" value="'+i.qty+'" data-sku="'+esc(i.sku)+'" aria-label="'+esc(i.label)+' on hand"></td><td data-flag="'+esc(i.sku)+'">'+flag(i.qty)+'</td>'+
-   '<td class="n">'+(i.waiting?'<span class="wait">'+i.waiting+'</span>':'<span class="muted">0</span>')+'</td><td class="muted">'+when(i.updated_at)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}).join('');
- if(!j.email&&j.groups.some(function(g){return g.items.some(function(i){return i.waiting})}))$('stock-note').textContent='Back-in-stock email is not connected yet, so requests will wait.';
- document.querySelectorAll('#stock input[data-sku]').forEach(function(i){i.oninput=stockDirty});stockDirty()}).catch(fail)}
-function stockChanges(){var out=[];document.querySelectorAll('#stock input[data-sku]').forEach(function(i){var v=i.value===''?NaN:Number(i.value);if(v!==stockOrig[i.dataset.sku])out.push({sku:i.dataset.sku,qty:v,el:i})});return out}
-function stockDirty(){var ch=stockChanges();document.querySelectorAll('#stock input[data-sku]').forEach(function(i){i.classList.remove('changed')});
- ch.forEach(function(c){c.el.classList.add('changed');var f=document.querySelector('[data-flag="'+CSS.escape(c.sku)+'"]');if(f&&Number.isInteger(c.qty))f.innerHTML=flag(c.qty)});
- $('stock-save').disabled=!ch.length;$('stock-reset').disabled=!ch.length;$('stock-save').textContent=ch.length?'Save '+ch.length+(ch.length===1?' change':' changes'):'Save changes'}
-$('stock-reset').onclick=loadStock;
-$('stock-save').onclick=function(){var ch=stockChanges(),bad=ch.filter(function(c){return !Number.isInteger(c.qty)||c.qty<0||c.qty>9999});
- if(bad.length){msg('Counts must be whole numbers from 0 to 9999.',true);bad[0].el.focus();return}
- var b=this;b.disabled=true;b.textContent='Saving…';api('/stock',{method:'PUT',body:{changes:ch.map(function(c){return{sku:c.sku,qty:c.qty}})}})
- .then(function(r){msg('Saved '+r.saved+(r.saved===1?' change.':' changes.')+(r.notified?' Sent '+r.notified+' back-in-stock email'+(r.notified===1?'':'s')+'.':'')+(r.held?' '+r.held+' waiting (email not connected yet).':'')+(r.failed?' '+r.failed+' email(s) failed; they stay waiting.':''),!!r.failed);loadStock()})
- .catch(function(e){fail(e);stockDirty()})};
-
-// Prices
-function loadPrices(){$('prices').innerHTML='<p class="muted">Loading…</p>';api('/products').then(function(j){
- var brands={};j.products.forEach(function(p){(brands[p.brand]=brands[p.brand]||[]).push(p)});
- $('prices').innerHTML=Object.keys(brands).map(function(name){var pol=(j.brands.find(function(b){return b.name===name})||{}).policy||'';
-  return '<div class="card"><h2 style="margin:0 0 12px;font-size:20px;text-transform:uppercase">'+esc(name)+'</h2><div class="scroll"><table><thead><tr><th>Product</th><th>Price</th><th>MAP price</th><th></th></tr></thead><tbody>'+
-  brands[name].map(function(p){return '<tr><td>'+esc(p.name)+'</td><td><input class="num" type="number" min="0.01" step="0.01" value="'+Number(p.price).toFixed(2)+'" data-price="'+esc(p.cart)+'" aria-label="'+esc(p.name)+' price"></td>'+
-   '<td><input class="num" type="number" min="0.01" step="0.01" value="'+(p.map==null?'':Number(p.map).toFixed(2))+'" data-map="'+esc(p.cart)+'" aria-label="'+esc(p.name)+' MAP price"></td><td><button class="go" data-psave="'+esc(p.cart)+'">Save</button></td></tr>'}).join('')+
-  '</tbody></table></div><label class="f" style="margin-top:18px">MAP policy</label><textarea data-policy="'+esc(name)+'" maxlength="1000">'+esc(pol)+'</textarea><div class="row" style="margin-top:10px"><button class="alt" data-polsave="'+esc(name)+'">Save policy</button></div></div>'}).join('');
- document.querySelectorAll('[data-psave]').forEach(function(b){b.onclick=function(){var k=b.dataset.psave,pr=document.querySelector('[data-price="'+CSS.escape(k)+'"]').value,mp=document.querySelector('[data-map="'+CSS.escape(k)+'"]').value;
-  b.disabled=true;b.textContent='Saving…';api('/products/'+encodeURIComponent(k),{method:'PUT',body:{price:pr,map:mp}}).then(function(r){msg(r.unchanged?'No change.':'Saved. The store updates in about 2 minutes.')}).catch(fail).then(function(){b.disabled=false;b.textContent='Save'})}});
- document.querySelectorAll('[data-polsave]').forEach(function(b){b.onclick=function(){var t=document.querySelector('[data-policy="'+CSS.escape(b.dataset.polsave)+'"]').value;b.disabled=true;
-  api('/brands/'+encodeURIComponent(b.dataset.polsave),{method:'PUT',body:{policy:t}}).then(function(r){msg(r.unchanged?'No change.':'Policy saved.')}).catch(fail).then(function(){b.disabled=false})}})
-}).catch(function(e){$('prices').innerHTML='';fail(e)})}
+function cents2(v){return v==null||v===''?'':Number(v).toFixed(2)}
+function loadProducts(){$('products').innerHTML='<p class="muted">Loading…</p>';$('p-note').textContent='';
+ Promise.all([api('/stock'),api('/products').catch(function(e){return {error:e.message}})]).then(function(r){var st=r[0],pr=r[1],byCart={},brands={};
+  (pr.products||[]).forEach(function(p){byCart[p.cart]=p});(pr.brands||[]).forEach(function(b){brands[b.name]=b.policy});pPolicy=brands;
+  if(pr.error)$('p-note').textContent='Prices are read-only right now: '+pr.error;
+  if(!st.email&&st.groups.some(function(g){return g.items.some(function(i){return i.waiting})}))$('p-note').textContent+=(pr.error?' ':'')+'Back-in-stock email is not connected yet, so requests will wait.';
+  P0={stock:{},price:{},map:{}};var order=[],groups={};
+  st.groups.forEach(function(g){var p=byCart[g.product]||{},brand=p.brand||'Products';if(!groups[brand]){groups[brand]=[];order.push(brand)}groups[brand].push({g:g,p:p})});
+  $('products').innerHTML=order.map(function(brand){return '<h2 class="h2" style="margin:26px 0 12px">'+esc(brand)+'</h2>'+groups[brand].map(function(x){var g=x.g,p=x.p,live=g.status==='live';
+   P0.price[g.product]=cents2(p.price);P0.map[g.product]=cents2(p.map);
+   return '<div class="card stock"><div class="row" style="align-items:flex-end;margin-bottom:12px"><h3 style="margin:0">'+esc(g.name)+(live?'':' <span class="pill">'+(g.status==='retired'?'Retired':'Coming soon')+'</span>')+'</h3>'+
+    '<div class="row right"><label class="f" style="margin:0">Price<br><input class="num" type="number" min="0.01" step="0.01" data-price="'+esc(g.product)+'" value="'+cents2(p.price)+'"'+(pr.error?' disabled':'')+'></label>'+
+    '<label class="f" style="margin:0">MAP price<br><input class="num" type="number" min="0.01" step="0.01" data-map="'+esc(g.product)+'" value="'+cents2(p.map)+'"'+(pr.error?' disabled':'')+'></label></div></div>'+
+    '<div class="scroll"><table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>'+(g.items.length>1?'Color':'Option')+'</th><th>SKU</th><th class="n">On hand</th><th></th><th class="n">Waiting</th><th>Last changed</th></tr></thead><tbody>'+
+    g.items.map(function(i){P0.stock[i.sku]=i.qty;return '<tr><td>'+esc(i.variant||'—')+'</td><td class="sku">'+esc(i.sku)+'</td><td class="n"><input class="num" type="number" min="0" max="9999" step="1" inputmode="numeric" value="'+i.qty+'" data-sku="'+esc(i.sku)+'" aria-label="'+esc(i.label)+' on hand"></td><td data-flag="'+esc(i.sku)+'">'+flag(i.qty)+'</td>'+
+     '<td class="n">'+(i.waiting?'<span class="wait">'+i.waiting+'</span>':'<span class="muted">0</span>')+'</td><td class="muted">'+when(i.updated_at)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}).join('')+
+   (brand!=='Products'&&!pr.error?'<div class="card"><label class="f" for="pol-'+esc(brand)+'">'+esc(brand)+' MAP policy</label><textarea data-policy="'+esc(brand)+'" id="pol-'+esc(brand)+'" maxlength="1000">'+esc(brands[brand]||'')+'</textarea></div>':'')}).join('');
+  document.querySelectorAll('#products input,#products textarea').forEach(function(i){i.oninput=pDirty});pDirty()}).catch(fail)}
+function pChanges(){var c={stock:[],prices:{},policy:[]};
+ document.querySelectorAll('#products input[data-sku]').forEach(function(i){var v=i.value===''?NaN:Number(i.value);if(v!==P0.stock[i.dataset.sku])c.stock.push({sku:i.dataset.sku,qty:v,el:i})});
+ document.querySelectorAll('#products input[data-price],#products input[data-map]').forEach(function(i){var k=i.dataset.price?'price':'map',id=i.dataset.price||i.dataset.map,v=i.value.trim()===''?'':cents2(i.value);
+  if(v!==P0[k][id]){(c.prices[id]=c.prices[id]||{})[k]=v;c.prices[id].els=(c.prices[id].els||[]).concat(i)}});
+ document.querySelectorAll('#products textarea[data-policy]').forEach(function(t){if(t.value!==(pPolicy[t.dataset.policy]||''))c.policy.push({brand:t.dataset.policy,policy:t.value,el:t})});return c}
+function pCount(c){return c.stock.length+Object.keys(c.prices).length+c.policy.length}
+function pDirty(){var c=pChanges(),n=pCount(c);document.querySelectorAll('#products .changed').forEach(function(e){e.classList.remove('changed')});
+ c.stock.forEach(function(x){x.el.classList.add('changed');var f=document.querySelector('[data-flag="'+CSS.escape(x.sku)+'"]');if(f&&Number.isInteger(x.qty))f.innerHTML=flag(x.qty)});
+ Object.keys(c.prices).forEach(function(k){c.prices[k].els.forEach(function(e){e.classList.add('changed')})});c.policy.forEach(function(x){x.el.classList.add('changed')});
+ $('p-save').disabled=!n;$('p-reset').disabled=!n;$('p-save').textContent=n?'Save '+n+(n===1?' change':' changes'):'Save changes'}
+$('p-reset').onclick=loadProducts;
+$('p-save').onclick=function(){var c=pChanges(),b=this,bad=c.stock.filter(function(x){return !Number.isInteger(x.qty)||x.qty<0||x.qty>9999});
+ if(bad.length){msg('Stock counts must be whole numbers from 0 to 9999.',true);bad[0].el.focus();return}
+ b.disabled=true;b.textContent='Saving…';var notes=[],errors=[];
+ var steps=Promise.resolve();
+ if(c.stock.length)steps=steps.then(function(){return api('/stock',{method:'PUT',body:{changes:c.stock.map(function(x){return{sku:x.sku,qty:x.qty}})}}).then(function(r){notes.push('Stock saved.'+(r.notified?' Sent '+r.notified+' back-in-stock email'+(r.notified===1?'':'s')+'.':'')+(r.held?' '+r.held+' waiting (email not connected yet).':''))}).catch(function(e){errors.push(e.message)})});
+ Object.keys(c.prices).forEach(function(id){steps=steps.then(function(){var x=c.prices[id],body={};if(x.price!==undefined)body.price=x.price;if(x.map!==undefined)body.map=x.map;
+  return api('/products/'+encodeURIComponent(id),{method:'PUT',body:body}).then(function(r){if(!r.unchanged)notes.push('Price saved; the store updates in about 2 minutes.')}).catch(function(e){errors.push(e.message)})})});
+ c.policy.forEach(function(x){steps=steps.then(function(){return api('/brands/'+encodeURIComponent(x.brand),{method:'PUT',body:{policy:x.policy}}).then(function(){notes.push(x.brand+' MAP policy saved.')}).catch(function(e){errors.push(e.message)})})});
+ steps.then(function(){msg(errors.length?errors.join(' '):[...new Set(notes)].join(' '),!!errors.length);loadProducts()})};
 
 var start=(location.hash||'').slice(1);show(loaders[start]?start:'dash');
 })();
