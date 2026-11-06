@@ -443,3 +443,13 @@ test('refunds: charge.refunded marks the order, takes it off the customer totals
   assert.equal((await s.webhook(refund('pi_unknown', 100))).body.result, 'unknown order');
   assert.equal(s.sqlite.prepare("SELECT qty FROM stock WHERE key = 'LTP'").get().qty, 0, 'stock is not put back automatically');
 });
+
+test('orders keep the price each item sold at and the money breakdown', async t => {
+  const s = service(t);
+  const ev = paid('cs_test_tot1', [{ s: 'LTP', q: 2 }]);
+  Object.assign(ev.data.object, { amount_subtotal: 14998, amount_total: 15898, payment_intent: 'pi_x', total_details: { amount_shipping: 0, amount_tax: 900, amount_discount: 0 } });
+  await s.webhook(ev);
+  const o = s.sqlite.prepare("SELECT items, amount_subtotal, amount_shipping, amount_tax, amount_discount, payment_intent FROM orders WHERE session_id = 'cs_test_tot1'").get();
+  assert.deepEqual(JSON.parse(o.items), [{ s: 'LTP', q: 2, u: 7499 }]);
+  assert.deepEqual([o.amount_subtotal, o.amount_shipping, o.amount_tax, o.amount_discount, o.payment_intent], [14998, 0, 900, 0, 'pi_x']);
+});

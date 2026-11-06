@@ -402,6 +402,25 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
               event: o.event_name, email: o.email, name: o.name, phone: o.phone, shipTo, total: o.amount_total, refunded: o.refunded_cents || 0, lines: names(items), status: o.status || 'new', handled: o.handled_at };
           }) });
         }
+        // One order, in full: buyer, delivery, items at the price they sold for, money breakdown, refunds and a link to Stripe.
+        if (seg[2] === 'orders' && seg[3] && seg.length === 4 && request.method === 'GET') {
+          const o = await db.prepare(`SELECT o.*, e.name AS event_name, e.starts AS event_starts, e.ends AS event_ends, e.place AS event_place, c.id AS cust_id
+            FROM orders o LEFT JOIN events e ON e.id = o.event_id LEFT JOIN customers c ON c.id = o.customer_id WHERE o.session_id = ?`).bind(decodeURIComponent(seg[3])).first();
+          if (!o) throw new APIError(404, 'Order not found.');
+          const idx = skuIndex(catalogData), byCart = Object.fromEntries(catalogData.products.filter(p => p.cart).map(p => [p.cart, p]));
+          const items = parseJSON(o.items, []).map(i => {
+            const hit = i.s ? idx[i.s] : null, p = hit ? hit.p : byCart[i.p], v = hit ? hit.v : (p ? variantsOf(p).find(x => x.name === i.c) || variantsOf(p)[0] : null);
+            const unit = Number.isFinite(i.u) ? i.u : null;
+            return { name: p ? p.name : (i.s || i.p), variant: v?.name || i.c || '', sku: v?.sku || i.s || '', qty: i.q || 1, unit, line: unit === null ? null : unit * (i.q || 1) };
+          });
+          const pi = o.payment_intent, test = !o.livemode;
+          const stripe = 'https://dashboard.stripe.com/' + (test ? 'test/' : '') + (pi ? 'payments/' + encodeURIComponent(pi) : 'search?query=' + encodeURIComponent(o.session_id));
+          return json({ order: { id: o.session_id, number: '799-' + String(o.session_id).slice(-8).toUpperCase(), created: o.created_at, live: !!o.livemode, how: o.fulfillment,
+            event: o.event_id ? { name: o.event_name || o.event_id, starts: o.event_starts, ends: o.event_ends, place: o.event_place } : null,
+            customer: { id: o.cust_id || null, name: o.name, email: o.email, phone: o.phone }, shipTo: parseJSON(o.ship_to, null), billing: parseJSON(o.billing, null),
+            items, totals: { subtotal: o.amount_subtotal, shipping: o.amount_shipping, tax: o.amount_tax, discount: o.amount_discount, total: o.amount_total, refunded: o.refunded_cents || 0 },
+            status: o.status || 'new', handled: o.handled_at, refundedAt: o.refunded_at, stripe } });
+        }
         if (seg[2] === 'orders' && seg[3] && request.method === 'PUT') {
           const status = body.status === 'done' ? 'done' : 'new';
           const r = await db.prepare('UPDATE orders SET status = ?, handled_at = ? WHERE session_id = ?').bind(status, status === 'done' ? t : null, decodeURIComponent(seg[3])).run();

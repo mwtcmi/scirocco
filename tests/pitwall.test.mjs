@@ -286,3 +286,21 @@ test('add customer by hand: in-person 799 News opt-in goes straight to Resend; d
   assert.deepEqual(calls.slice(2), [['PATCH', '/contacts/track%40fan.co/topics', [{ id: 'top_799', subscription: 'opt_out' }]], ['DELETE', '/contacts/track%40fan.co/segments/seg_799', null]]);
   assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM signups WHERE email = 'track@fan.co'").get().n, 0);
 });
+
+test('order page: one order with buyer, delivery, items at their sold price, money breakdown, refund and a Stripe link', async t => {
+  const s = setup(t);
+  s.sqlite.prepare("INSERT INTO customers (email, name, created_at, updated_at) VALUES ('pat@example.com', 'Pat Buyer', 1, 1)").run();
+  const cid = s.sqlite.prepare("SELECT id FROM customers").get().id;
+  s.sqlite.prepare(`INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, name, phone, amount_total, items, customer_id, payment_intent, amount_subtotal, amount_shipping, amount_tax, amount_discount, refunded_cents, ship_to)
+    VALUES ('cs_live_abc12345', 5, 1, 'ship', 'pat@example.com', 'Pat Buyer', '+12315550100', 7525, ?, ?, 'pi_123', 4599, 2500, 426, 0, 1000, ?)`)
+    .run(JSON.stringify([{ s: 'RUASVS20', q: 1, u: 4599 }]), cid, JSON.stringify({ name: 'Pat Buyer', address: { line1: '1 Main', city: 'TC', state: 'MI', postal_code: '49684' } }));
+  s.sqlite.prepare("INSERT INTO orders (session_id, created_at, livemode, fulfillment, amount_total, items) VALUES ('cs_test_old00001', 4, 0, 'pickup', 4599, ?)").run(JSON.stringify([{ p: 'jug', c: 'Black', q: 1 }]));
+  const o = (await s.call('/api/orders/cs_live_abc12345')).body.order;
+  assert.equal(o.number, '799-ABC12345'); assert.equal(o.customer.id, cid); assert.equal(o.shipTo.address.line1, '1 Main');
+  assert.deepEqual(o.items, [{ name: 'Tuff Jug 5 Gallon Utility Jug', variant: 'Red', sku: 'RUASVS20', qty: 1, unit: 4599, line: 4599 }]);
+  assert.deepEqual(o.totals, { subtotal: 4599, shipping: 2500, tax: 426, discount: 0, total: 7525, refunded: 1000 });
+  assert.equal(o.stripe, 'https://dashboard.stripe.com/payments/pi_123');
+  const old = (await s.call('/api/orders/cs_test_old00001')).body.order;
+  assert.equal(old.items[0].variant, 'Black'); assert.equal(old.items[0].unit, null); assert.match(old.stripe, /^https:\/\/dashboard\.stripe\.com\/test\/search\?query=cs_test_old00001$/);
+  assert.equal((await s.call('/api/orders/cs_nope')).status, 404);
+});

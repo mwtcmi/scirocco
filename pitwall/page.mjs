@@ -53,8 +53,10 @@ a.btnlink{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;
 button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
 @media(max-width:800px){.tiles{grid-template-columns:1fr 1fr}.two,.dl{grid-template-columns:1fr}}
 .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}.cgrid .card{margin:0}.cgrid .card b,.card .lbl{display:block;color:#999;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.cgrid .card div{font-size:14px;line-height:1.55}.cgrid .big2{font-size:24px;font-weight:900}
+.items td.n,.items th.n{text-align:right}.items tfoot td{border-top:0;padding-top:6px;padding-bottom:6px}.items tfoot tr:first-child td{border-top:1px solid var(--line);padding-top:14px}.items tfoot .grand td{font-size:16px;font-weight:900;color:#fff}
 .dz{display:flex;gap:16px;align-items:center;justify-content:space-between;border-color:#4a2222}.dz p{margin:0;color:#999;font-size:13px;line-height:1.5;max-width:640px}
 @media(max-width:800px){.cgrid{grid-template-columns:1fr}.dz{flex-direction:column;align-items:flex-start}}
+.orow{cursor:pointer}.orow:hover td{background:#161616}.olink{color:#fff;text-decoration:none}.olink:hover strong{color:var(--green)}
 .linkish{background:none;border:0;padding:0;margin-bottom:10px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
 .policy{color:#aaa;font-size:13px;line-height:1.5;white-space:pre-wrap}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}h1{font-size:32px}}
@@ -108,10 +110,13 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 </section>
 
 <section data-panel="orders" hidden>
+<div id="ord-list">
 <div class="kicker">Paddock Store</div><h1>Orders</h1>
-<p class="help">Newest first. Mark an order done once it's handed over or shipped. Full payment details are in Stripe.</p>
+<p class="help">Newest first. Mark an order done once it's handed over or shipped. Open an order for its full details.</p>
 <div class="row" style="margin-bottom:14px"><label class="row muted"><input type="checkbox" id="show-done"> Show done orders</label></div>
 <div id="orders"></div>
+</div>
+<div id="ord-page" hidden></div>
 </section>
 
 <section data-panel="orders" class="sub">
@@ -162,7 +167,7 @@ var loaders={dash:loadDash,orders:function(){loadOrders();loadCopies();loadEvent
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.tab)}});
 document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){show(b.dataset.go);scrollTo(0,0)}});
 function show(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});
- document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');if(tab==='customers')custList();try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
+ document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('');if(tab==='customers')custList();if(tab==='orders')ordList();try{history.replaceState(null,'','#'+tab)}catch(e){}loaders[tab]()}
 api('/me').then(function(me){$('who').textContent=me.email;if(/test/i.test(me.store))$('store').className='badge test'}).catch(function(){});
 
 // Orders
@@ -177,12 +182,13 @@ function drawOrders(){var all=$('show-done').checked,list=orders.filter(function
  if(!list.length){$('orders').innerHTML='<p class="muted">No '+(all?'':'open ')+'orders.</p>';return}
  $('orders').innerHTML=list.map(function(o){var how=o.how==='event'?'Paddock pickup: '+esc(o.event||'event'):o.how==='ship'?'Ship':o.how==='table'?'Paid at the table':o.how==='pickup'?'Traverse City pickup':esc(o.how);
   var a=o.shipTo&&o.shipTo.address,addr=a?[o.shipTo.name,a.line1,a.line2,[a.city,a.state].filter(Boolean).join(', ')+' '+(a.postal_code||'')].filter(Boolean).map(esc).join('<br>'):'';
-  return '<div class="card"><div class="row"><strong>'+o.number+'</strong>'+(fullRefund(o)?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>')+refundPill(o)+(o.live?'':'<span class="pill">Test</span>')+
+  return '<div class="card"><div class="row"><a class="olink" href="#orders/'+encodeURIComponent(o.id)+'" data-open-order="'+esc(o.id)+'"><strong>'+o.number+'</strong></a>'+(fullRefund(o)?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span>')+refundPill(o)+(o.live?'':'<span class="pill">Test</span>')+
   '<span class="muted">'+when(o.created)+'</span><span class="right"><strong>'+totalCell(o)+'</strong></span></div>'+
   '<p style="margin:10px 0 4px">'+o.lines.map(esc).join('<br>')+'</p><p class="muted" style="margin:8px 0">'+how+'</p>'+
   '<p style="margin:0 0 10px;font-size:14px">'+[esc(o.name),o.email?'<a style="color:#20C933" href="mailto:'+esc(o.email)+'">'+esc(o.email)+'</a>':'',o.phone?'<a style="color:#20C933" href="tel:'+esc(o.phone)+'">'+esc(o.phone)+'</a>':''].filter(Boolean).join(' · ')+'</p>'+
   (addr?'<p class="muted" style="margin:0 0 10px">'+addr+'</p>':'')+
-  (fullRefund(o)?'':'<div class="row"><button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button></div>')+'</div>'}).join('');
+  '<div class="row">'+(fullRefund(o)?'':'<button class="'+(o.status==='done'?'alt':'go')+'" data-order="'+esc(o.id)+'" data-status="'+(o.status==='done'?'new':'done')+'">'+(o.status==='done'?'Reopen':'Mark done')+'</button>')+'<button class="alt" type="button" data-open-order="'+esc(o.id)+'">View order</button></div></div>'}).join('');
+ document.querySelectorAll('#orders [data-open-order]').forEach(function(a){a.onclick=function(e){e.preventDefault();openOrder(a.dataset.openOrder)}});
  document.querySelectorAll('[data-order]').forEach(function(b){b.onclick=function(){b.disabled=true;api('/orders/'+encodeURIComponent(b.dataset.order),{method:'PUT',body:{status:b.dataset.status}})
   .then(function(){var o=orders.find(function(x){return x.id===b.dataset.order});o.status=b.dataset.status;drawOrders();msg(o.number+(o.status==='done'?' marked done.':' reopened.'))}).catch(function(e){b.disabled=false;fail(e)})}})}
 
@@ -214,6 +220,35 @@ function loadCustomers(){api('/customers?q='+encodeURIComponent($('cust-q').valu
  $('customers').innerHTML=j.customers.length?j.customers.map(function(c){return '<tr data-cust="'+c.id+'"><td>'+(esc(c.name)||'<span class="muted">—</span>')+'</td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(phoneText(c.phone)):'<span class="muted">—</span>')+'</td><td class="n">'+c.orders_count+'</td><td class="n">'+money(c.total_spent)+'</td><td>'+MK[c.marketing]+'</td><td class="muted">'+(c.last_order_at?when(c.last_order_at):(c.source==='notify'?'Asked to be notified':'—'))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">No customers yet.</td></tr>';
  document.querySelectorAll('[data-cust]').forEach(function(r){r.onclick=function(){openCustomer(Number(r.dataset.cust))}})}).catch(fail)}
 function addr(a){if(!a||!a.address)return '<span class="muted">—</span>';var x=a.address;return [a.name,x.line1,x.line2,[x.city,x.state].filter(Boolean).join(', ')+' '+(x.postal_code||'')].filter(function(v){return v&&String(v).trim()}).map(esc).join('<br>')}
+function panelOnly(tab){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===tab)});document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==tab});msg('')}
+// One order on its own page (#orders/<id>). The Copies and Events sections hide while it's open.
+function ordSubs(on){document.querySelectorAll('section.sub[data-panel="orders"]').forEach(function(x){x.style.display=on?'':'none'})}
+function ordList(){$('ord-page').hidden=true;$('ord-page').innerHTML='';$('ord-list').hidden=false;ordSubs(true)}
+function ordBack(){ordList();try{history.pushState(null,'','#orders')}catch(e){}loaders.orders()}
+function openOrder(id,push){if(push!==false){try{history.pushState(null,'','#orders/'+encodeURIComponent(id))}catch(e){}}
+ if($('ord-list').closest('[data-panel]').hidden)panelOnly('orders');
+ api('/orders/'+encodeURIComponent(id)).then(function(j){var o=j.order,t=o.totals,ev=o.event,cu=o.customer;
+ var full=t.refunded>0&&t.refunded>=t.total;
+ var when2=new Date(o.created).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+ var delivery=o.how==='event'?'<b>Paddock pickup</b><div>'+esc(ev?ev.name:'Event')+(ev&&ev.starts?'<br>'+esc(ev.starts===ev.ends?ev.starts:ev.starts+' to '+ev.ends):'')+(ev&&ev.place?'<br>'+esc(ev.place):'')+'</div>'
+  :o.how==='ship'?'<b>Ship to</b><div>'+addr(o.shipTo)+'</div>':o.how==='table'?'<b>Delivery</b><div>Paid and collected at the 799 table</div>':'<b>Traverse City pickup</b><div>Downtown Traverse City, by appointment</div>';
+ var rows=o.items.map(function(i){return '<tr><td>'+esc(i.name)+(i.variant?'<br><span class="muted">'+esc(i.variant)+'</span>':'')+'</td><td class="sku">'+esc(i.sku)+'</td><td class="n">'+i.qty+'</td><td class="n">'+(i.unit===null?'<span class="muted">—</span>':money(i.unit))+'</td><td class="n">'+(i.line===null?'<span class="muted">—</span>':money(i.line))+'</td></tr>'}).join('');
+ var sum=function(label,v,cls){return v===null||v===undefined?'':'<tr'+(cls?' class="'+cls+'"':'')+'><td colspan="4" class="n">'+label+'</td><td class="n">'+v+'</td></tr>'};
+ var foot=sum('Subtotal',t.subtotal===null?null:money(t.subtotal))+sum('Shipping',t.shipping===null?null:(t.shipping?money(t.shipping):'Free'))+sum('Tax',t.tax===null?null:money(t.tax))+(t.discount?sum('Discount','−'+money(t.discount)):'')+
+  sum('Total',full?'<s>'+money(t.total)+'</s>':money(t.total),'grand')+(t.refunded?sum('Refunded','−'+money(t.refunded))+sum('Kept',money(t.total-t.refunded),'grand'):'');
+ var timeline=['Placed '+day(o.created)+' at '+when2];if(o.status==='done'&&o.handled)timeline.push('Marked done '+day(o.handled));if(o.refundedAt)timeline.push((full?'Refunded ':money(t.refunded)+' refunded ')+day(o.refundedAt));
+ $('ord-list').hidden=true;ordSubs(false);$('ord-page').hidden=false;
+ $('ord-page').innerHTML='<div class="row" style="align-items:flex-end"><div><div class="kicker">Order</div><h1>'+o.number+'</h1></div><button class="alt right" type="button" id="ord-back">← All orders</button></div>'+
+  '<p class="help">'+timeline.map(esc).join(' · ')+' '+(full?'':'<span class="pill '+(o.status==='done'?'done':'on')+'">'+(o.status==='done'?'Done':'Open')+'</span> ')+refundPill({refunded:t.refunded,total:t.total})+(o.live?'':' <span class="pill">Test</span>')+'</p>'+
+  '<div class="cgrid"><div class="card"><b>Customer</b><div>'+(cu.id?'<a style="color:#fff" href="#customers/'+cu.id+'" id="ord-cust">'+(esc(cu.name)||esc(cu.email))+' →</a>':(esc(cu.name)||'<span class="muted">Details deleted</span>'))+
+   (cu.email?'<br><a style="color:#20C933" href="mailto:'+esc(cu.email)+'">'+esc(cu.email)+'</a>':'')+(cu.phone?'<br><a style="color:#20C933" href="tel:'+esc(cu.phone)+'">'+esc(phoneText(cu.phone))+'</a>':'')+'</div></div>'+
+  '<div class="card">'+delivery+'</div><div class="card"><b>Billing</b><div>'+addr(o.billing)+'</div></div></div>'+
+  '<div class="card"><span class="lbl">Items</span><div class="scroll"><table class="items"><thead><tr><th>Item</th><th>SKU</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr></thead><tbody>'+rows+'</tbody><tfoot>'+foot+'</tfoot></table></div></div>'+
+  '<div class="card"><div class="row">'+(full?'':'<button class="'+(o.status==='done'?'alt':'go')+'" type="button" id="ord-status">'+(o.status==='done'?'Reopen':'Mark done')+'</button>')+'<a class="alt btnlink" href="'+esc(o.stripe)+'" target="_blank" rel="noopener">Open in Stripe →</a><span class="muted">Refunds and receipts are handled in Stripe.</span></div></div>';
+ $('ord-back').onclick=ordBack;
+ if($('ord-cust'))$('ord-cust').onclick=function(e){e.preventDefault();openCustomer(cu.id)};
+ if($('ord-status'))$('ord-status').onclick=function(){var b=this,next=o.status==='done'?'new':'done';b.disabled=true;api('/orders/'+encodeURIComponent(o.id),{method:'PUT',body:{status:next}}).then(function(){msg(o.number+(next==='done'?' marked done.':' reopened.'));openOrder(o.id,false)}).catch(function(e){b.disabled=false;fail(e)})};
+ window.scrollTo(0,0)}).catch(fail)}
 // US numbers read as (231) 709-5546; anything else is shown as Stripe stored it.
 function phoneText(p){var d=String(p||'').replace(/[^0-9]/g,'');if(d.length===11&&d.charAt(0)==='1')d=d.slice(1);return d.length===10?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):p}
 function custList(){$('cust-page').hidden=true;$('cust-page').innerHTML='';$('cust-list').hidden=false;custOpen=null}
@@ -225,7 +260,7 @@ function newsWhy(src){src=String(src||'');if(src==='checkout')return 'Chose at c
  if(src==='notify request (default)')return 'Joined with a back-in-stock request';if(src.indexOf('unsubscribed')===0)return 'Unsubscribed from a 799 News email';
  if(src.indexOf('in person')===0)return 'Asked in person';if(src.indexOf('pitwall')===0)return 'Changed in Pitwall';return src}
 var DELIVERY={ship:'Shipped',pickup:'Traverse City pickup',table:'Paid at the 799 table'};
-function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushState(null,'','#customers/'+id)}catch(e){}}
+function openCustomer(id,push){custOpen=id;if($('cust-list').closest('[data-panel]').hidden)panelOnly('customers');if(push!==false){try{history.pushState(null,'','#customers/'+id)}catch(e){}}
  api('/customers/'+id).then(function(j){var c=j.customer;
  $('cust-list').hidden=true;$('cust-page').hidden=false;
  $('cust-page').innerHTML='<div class="row" style="align-items:flex-end"><div><div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1></div>'+
@@ -237,10 +272,11 @@ function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushStat
   '<div class="card"><b>Waiting for restock</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">Nothing</span>')+'</div></div>'+
   '<div class="card"><b>799 News</b><select id="cust-mk"><option value="opt_in">Subscribed</option><option value="opt_out">Unsubscribed</option><option value="unknown">Not asked yet</option></select><div class="muted" id="cust-mk-why" style="margin-top:6px">'+(c.marketing_source?esc(newsWhy(c.marketing_source))+' · '+day(c.marketing_at):'')+'</div></div></div>'+
   '<div class="card"><label class="f" for="cust-notes">Notes</label><textarea id="cust-notes" maxlength="2000"></textarea><div class="row" style="margin-top:10px"><button class="go" type="button" id="cust-save">Save notes</button></div></div>'+
-  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Delivery</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr><td>'+o.number+'</td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock pickup · '+esc(o.event||''):esc(DELIVERY[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):(o.status==='done'?'Done':'Open')+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
+  '<div class="card"><span class="lbl">Order history</span>'+(j.orders.length?'<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Delivery</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>'+j.orders.map(function(o){return '<tr class="orow" data-open-order="'+esc(o.id)+'"><td><strong>'+o.number+'</strong></td><td class="muted">'+when(o.created)+'</td><td>'+o.lines.map(esc).join('<br>')+'</td><td>'+(o.how==='event'?'Paddock pickup · '+esc(o.event||''):esc(DELIVERY[o.how]||o.how))+'</td><td class="n">'+totalCell(o)+'</td><td>'+(fullRefund(o)?refundPill(o):(o.status==='done'?'Done':'Open')+(o.refunded?' '+refundPill(o):''))+'</td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">No orders yet.</p>')+'</div>'+
   '<div class="card dz" style="margin-top:40px"><p><b style="color:#fff">Delete customer data.</b> Use this when someone asks you to erase their information. It removes this record, their back-in-stock requests and their 799 News subscription. Their orders stay in your records without a name, email, phone or address. Stripe keeps its own payment records.</p><button class="danger" type="button" id="cust-del">Delete customer data</button></div>';
  $('cust-mk').value=c.marketing;$('cust-notes').value=c.notes||'';
  $('cust-back').onclick=custBack;
+ document.querySelectorAll('#cust-page [data-open-order]').forEach(function(r){r.onclick=function(){openOrder(r.dataset.openOrder)}});
  $('cust-save').onclick=function(){api('/customers/'+id,{method:'PUT',body:{notes:$('cust-notes').value}}).then(function(){msg('Notes saved.')}).catch(fail)};
  // 799 News saves the moment it changes, and syncs to Resend.
  $('cust-mk').onchange=function(){var sel=this,v=sel.value;sel.disabled=true;api('/customers/'+id,{method:'PUT',body:{marketing:v}}).then(function(r){sel.disabled=false;c.marketing=v;
@@ -321,8 +357,10 @@ $('p-save').onclick=function(){var c=pChanges(),b=this,bad=c.stock.filter(functi
  steps.then(function(){msg(errors.length?errors.join(' '):[...new Set(notes)].join(' '),!!errors.length);loadProducts()})};
 
 // Addresses: #dash, #orders, #products, #customers and #customers/<id> (a customer's own page; the back button works).
-function route(){var h=(location.hash||'').slice(1),p=h.split('/'),m=p[0]==='customers'&&p.length===2&&p[1]!==''&&String(Number(p[1]))===p[1]?[h,p[1]]:null;
- if(m){if($('cust-list').closest('[data-panel]').hidden){show('customers');try{history.replaceState(null,'','#'+h)}catch(e){}}openCustomer(Number(m[1]),false);return}
+function route(){var h=(location.hash||'').slice(1),p=h.split('/');
+ if(p[0]==='orders'&&p.length===2&&p[1]){openOrder(decodeURIComponent(p[1]),false);return}
+ var m=p[0]==='customers'&&p.length===2&&p[1]!==''&&String(Number(p[1]))===p[1]?[h,p[1]]:null;
+ if(m){openCustomer(Number(m[1]),false);return}
  show(loaders[h]?h:'dash')}
 window.addEventListener('popstate',route);route();
 })();

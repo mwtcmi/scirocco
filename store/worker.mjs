@@ -226,9 +226,15 @@ async function recordOrder(db, session, now) {
   const billing = who.address ? { name: who.name || null, address: who.address } : null;
   const how = session.metadata?.fulfillment || 'unknown', email = who.email ? String(who.email).trim().toLowerCase() : null;
   const pi = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
-  const statements = [db.prepare('INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to, billing, payment_intent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(session.id, now, session.livemode ? 1 : 0, how, email, session.amount_total ?? null, JSON.stringify(items),
-      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null, billing ? JSON.stringify(billing) : null, pi)];
+  // Each item keeps the price it sold at (u, cents before tax), so the order page stays right after prices change.
+  const saved = items.map((i, k) => ({ ...i, u: lines[k].cents }));
+  const td = session.total_details || {};
+  const num = v => Number.isFinite(v) ? v : null;
+  const statements = [db.prepare(`INSERT INTO orders (session_id, created_at, livemode, fulfillment, email, amount_total, items, event_id, name, phone, ship_to, billing, payment_intent,
+      amount_subtotal, amount_shipping, amount_tax, amount_discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .bind(session.id, now, session.livemode ? 1 : 0, how, email, session.amount_total ?? null, JSON.stringify(saved),
+      session.metadata?.event_id || null, who.name || null, who.phone || null, shipTo ? JSON.stringify(shipTo) : null, billing ? JSON.stringify(billing) : null, pi,
+      num(session.amount_subtotal), num(td.amount_shipping ?? session.shipping_cost?.amount_total), num(td.amount_tax), num(td.amount_discount))];
   for (const [k, q] of Object.entries(need)) statements.push(db.prepare('UPDATE stock SET qty = MAX(qty - ?, 0), updated_at = ? WHERE key = ?').bind(q, now, k));
   if (email) statements.push(...await customerStatements(db, { email, who, shipTo, billing, how, session, now }));
   try { await db.batch(statements); return 'recorded'; }
