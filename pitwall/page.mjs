@@ -231,7 +231,7 @@ function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushStat
  $('cust-page').innerHTML='<button class="linkish" type="button" id="cust-back">← Customers</button>'+
   '<div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1>'+
   '<p class="help">Customer since '+day(c.created_at)+' · '+esc(JOINED[c.source]||c.source)+'</p>'+
-  '<div class="cgrid"><div class="card"><b>Contact</b><div>'+(c.name?esc(c.name)+'<br>':'')+'<a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(phoneText(c.phone))+'</a>':'')+'</div></div>'+
+  '<div class="cgrid"><div class="card"><b>Contact</b><div><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(phoneText(c.phone))+'</a>':'')+'</div></div>'+
   '<div class="card"><b>Shipping</b><div>'+addr(c.shipping)+'</div></div><div class="card"><b>Billing</b><div>'+addr(c.billing)+'</div></div></div>'+
   '<div class="cgrid"><div class="card"><b>Orders</b><div><span class="big2">'+c.orders_count+'</span> '+(c.orders_count===1?'order':'orders')+' · '+money(c.total_spent)+' total</div></div>'+
   '<div class="card"><b>Waiting for restock</b><div>'+(j.waiting.length?j.waiting.map(esc).join('<br>'):'<span class="muted">Nothing</span>')+'</div></div>'+
