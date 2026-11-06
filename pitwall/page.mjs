@@ -228,8 +228,8 @@ var DELIVERY={ship:'Shipped',pickup:'Traverse City pickup',table:'Paid at the 79
 function openCustomer(id,push){custOpen=id;if(push!==false){try{history.pushState(null,'','#customers/'+id)}catch(e){}}
  api('/customers/'+id).then(function(j){var c=j.customer;
  $('cust-list').hidden=true;$('cust-page').hidden=false;
- $('cust-page').innerHTML='<button class="linkish" type="button" id="cust-back">← Customers</button>'+
-  '<div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1>'+
+ $('cust-page').innerHTML='<div class="row" style="align-items:flex-end"><div><div class="kicker">Customer</div><h1>'+(esc(c.name)||esc(c.email))+'</h1></div>'+
+  '<button class="alt right" type="button" id="cust-back">← All customers</button></div>'+
   '<p class="help">Customer since '+day(c.created_at)+' · '+esc(JOINED[c.source]||c.source)+'</p>'+
   '<div class="cgrid"><div class="card"><b>Contact</b><div><a style="color:#20C933" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>'+(c.phone?'<br><a style="color:#20C933" href="tel:'+esc(c.phone)+'">'+esc(phoneText(c.phone))+'</a>':'')+'</div></div>'+
   '<div class="card"><b>Shipping</b><div>'+addr(c.shipping)+'</div></div><div class="card"><b>Billing</b><div>'+addr(c.billing)+'</div></div></div>'+
