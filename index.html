@@ -1773,5 +1773,39 @@ footer{
 <footer class="site-footer"><div class="site-footer-inner"><div>© <span class="site-footer-year">2026</span> 799 Motorsport LLC</div><div>Hill Climb | Time Trial | Track Sprint</div><div class="site-footer-links"><a href="/mountain-run/">Play Mountain Run</a><a href="https://www.instagram.com/scirocco.799/" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle></svg>@scirocco.799</a></div></div><script>document.querySelectorAll('.site-footer-year').forEach(function(e){e.textContent=new Date().getFullYear()})</script></footer>
 
 
+<!-- Photo viewer: tap a Home photo to see it full screen -->
+<style>
+.photo-grid figure img{cursor:zoom-in}
+.hv{margin:0;padding:62px 56px 30px;border:0;width:100%;height:100%;height:100dvh;max-width:none;max-height:none;background:#050505;color:#fff}
+.hv:not([open]){display:none}
+.hv[open]{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:16px}
+.hv::backdrop{background:#050505}
+.hv img{display:block;min-width:0;min-height:0;width:100%;height:100%;object-fit:contain}
+.hv button{position:absolute;width:44px;height:44px;background:#121212;border:1px solid #363636;color:#fff;font-size:28px;line-height:1;cursor:pointer}
+.hv button:focus-visible{outline:2px solid #20C933;outline-offset:4px}
+.hv-close{right:20px;top:18px}.hv-prev{left:10px;top:50%}.hv-next{right:10px;top:50%}
+.hv-info{text-align:center;font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}.hv-info span{color:#20C933;margin-left:10px}
+@media(max-width:600px){.hv{padding:68px 14px 86px}.hv-prev,.hv-next{top:auto;bottom:22px}.hv-prev{left:20px}.hv-next{right:20px}.hv-info{position:absolute;left:76px;right:76px;bottom:36px}}
+</style>
+<dialog class="hv" id="hv" aria-label="Photo viewer"><button class="hv-close" id="hv-close" aria-label="Close">&times;</button><button class="hv-prev" id="hv-prev" aria-label="Previous photo">&lsaquo;</button><img id="hv-img" alt=""><button class="hv-next" id="hv-next" aria-label="Next photo">&rsaquo;</button><div class="hv-info"><strong id="hv-cap"></strong><span id="hv-count"></span></div></dialog>
+<script>
+(function(){
+var v=document.getElementById('hv');if(!v||typeof v.showModal!=='function')return;
+var imgs=[].slice.call(document.querySelectorAll('.photo-grid figure img')),img=document.getElementById('hv-img'),cur=0,last,x0=null;
+function big(el){var best=el.currentSrc||el.src,w=0;(el.getAttribute('srcset')||'').split(',').forEach(function(c){var p=c.trim().split(/\s+/),n=parseInt(p[1],10);if(n>w){w=n;best=p[0]}});return best}
+function show(i){cur=(i+imgs.length)%imgs.length;var el=imgs[cur],tag=el.parentNode.querySelector('.photo-tag');img.src=big(el);img.alt=el.alt;document.getElementById('hv-cap').textContent=tag?tag.textContent.trim():'';document.getElementById('hv-count').textContent=(cur+1)+' / '+imgs.length}
+imgs.forEach(function(el,i){el.setAttribute('tabindex','0');el.setAttribute('role','button');el.setAttribute('aria-label','View photo: '+el.alt);
+ function open(){last=el;show(i);v.showModal();document.body.style.overflow='hidden';document.getElementById('hv-close').focus()}
+ el.addEventListener('click',open);el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
+v.addEventListener('close',function(){img.removeAttribute('src');document.body.style.overflow='';if(last)last.focus({preventScroll:true})});
+v.addEventListener('click',function(e){if(e.target===v||e.target===img)v.close()});
+v.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(cur+(e.key==='ArrowRight'?1:-1))}});
+v.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
+v.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)show(cur+(dx<0?1:-1))});
+document.getElementById('hv-close').onclick=function(){v.close()};
+document.getElementById('hv-prev').onclick=function(e){e.stopPropagation();show(cur-1)};
+document.getElementById('hv-next').onclick=function(e){e.stopPropagation();show(cur+1)};
+})();
+</script>
 </body>
 </html>
