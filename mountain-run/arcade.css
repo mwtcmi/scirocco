@@ -59,3 +59,7 @@
 .how-close:hover,.how-close:focus-visible{background:#ffd23f}
 @media (hover:none) and (pointer:coarse){.how-rules .keyboard-note{display:none!important}.how-rules .touch-note{display:block!important}}
 @media(max-width:600px){.how-to-play{padding:18px}.how-to-play h2{font-size:16px}.panel.welcome .panel-actions .how-open{font-size:9px}}
+
+/* One prompt to pick a course: the picker itself. The course picture already names the place. */
+.panel.welcome .season-picker label{justify-content:flex-end;text-align:right}
+.panel.welcome .season-picker #courseLocation{display:none}
