@@ -1,0 +1,39 @@
+/* Retro arcade skin for the Mountain Run start screen only (preview).
+   Pixel font: Press Start 2P (SIL Open Font License, see fonts/OFL.txt). */
+@font-face{font-family:'Press Start 2P';src:url('fonts/press-start-2p.woff2') format('woff2');font-display:swap}
+
+.game.menu .modal{background:#050505 radial-gradient(ellipse at 50% 40%,#0c2a12 0,#050505 70%)}
+
+/* Chunky green frame with a hard pixel shadow */
+.panel.welcome{border:4px solid #20c933!important;background:#070b08;box-shadow:8px 8px 0 #0b4313,8px 8px 0 4px #000!important}
+
+/* Pixel type */
+.panel.welcome h1,.welcome .start-kicker,.welcome .season-signature,.welcome .guide-rule b,.welcome .season-picker label,.welcome .driver-entry label,.welcome .panel-actions #start,.welcome .scene-topline,.welcome #previewVenue,.welcome .grid-id{font-family:'Press Start 2P',monospace!important;font-style:normal}
+.panel.welcome h1{font-size:clamp(26px,4.1vw,56px)!important;line-height:1.12!important;letter-spacing:0!important;color:#fff;text-shadow:4px 4px 0 #1b6e27,8px 8px 0 #000}
+.panel.welcome h1 span{color:#20c933;text-shadow:4px 4px 0 #0b4313,8px 8px 0 #000}
+.welcome .start-kicker{font-size:8px!important;letter-spacing:.08em!important;line-height:1.6;color:#ffd23f}
+.panel.welcome .start-kicker:after{content:' // 1 PLAYER';color:#20c933}
+.welcome .season-signature{font-size:8px!important;letter-spacing:.04em!important;line-height:1.6}
+.welcome .guide-rule b{font-size:7px!important;letter-spacing:.02em!important;line-height:1.5}
+.welcome .season-picker label,.welcome .driver-entry label{font-size:7px!important;letter-spacing:.04em!important}
+.welcome #previewVenue{font-size:clamp(14px,2vw,24px)!important;line-height:1.3!important;letter-spacing:0!important;text-transform:uppercase;text-shadow:3px 3px 0 #000}
+.welcome .scene-topline,.welcome .grid-id{font-size:7px!important;letter-spacing:.04em!important}
+
+/* Square, chunky inputs */
+.welcome .season-picker select,.welcome .driver-entry input{border-radius:0!important;border:3px solid #20c933!important;background:#050805!important}
+
+/* INSERT COIN / PRESS START button */
+.welcome .panel-actions #start{border-radius:0;font-size:12px!important;letter-spacing:.06em!important;background:#20c933;color:#050505;box-shadow:0 6px 0 #0b4313,0 6px 0 3px #000;transform:translateY(-3px)}
+.welcome .panel-actions #start:not(:disabled){animation:arcade-blink 1.1s steps(1) infinite}
+.welcome .panel-actions #start:not(:disabled):hover,.welcome .panel-actions #start:not(:disabled):focus-visible{animation:none;background:#ffd23f!important}
+.welcome .panel-actions #start:active{transform:translateY(3px);box-shadow:0 0 0 #0b4313!important}
+.welcome .panel-actions #start:disabled{background:#1a2a1d!important;color:#5e7a63!important;box-shadow:0 6px 0 #0d150f!important}
+@keyframes arcade-blink{50%{color:#20c933;background:#050505}}
+
+/* CRT monitor on the course picture */
+.welcome #intro{border:4px solid #20c933;border-radius:0}
+.welcome #intro:before{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;background:repeating-linear-gradient(0deg,#0000 0 2px,#0000004d 2px 4px),radial-gradient(ellipse at center,#0000 55%,#000a 100%);mix-blend-mode:multiply}
+
+@media(prefers-reduced-motion:reduce){.welcome .panel-actions #start:not(:disabled){animation:none}}
+@media(max-width:600px){.welcome #previewVenue{font-size:10px!important;white-space:nowrap}.welcome .scene-topline{font-size:6px!important}.panel.welcome{box-shadow:5px 5px 0 #0b4313!important}.panel.welcome h1{font-size:clamp(20px,6.6vw,30px)!important}.welcome .panel-actions #start{font-size:10px!important}}
+@media(max-height:590px){.panel.welcome h1{font-size:22px!important}}
