@@ -222,7 +222,7 @@ test('cancelled checkout returns to the store page the buyer came from, and only
 
 test('checkout catalog comes from store/catalog.json: every cart product priced, at or above MAP', async () => {
   const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url), 'utf8'));
-  const cart = file.products.filter(p => p.cart);
+  const cart = file.products.filter(p => p.cart && (p.status || 'live') === 'live'); // checkout sells live products only
   assert.deepEqual(Object.keys(worker.CATALOG).sort(), cart.map(p => p.cart).sort());
   for (const p of cart) {
     const c = worker.CATALOG[p.cart];

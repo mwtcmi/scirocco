@@ -2,7 +2,8 @@
   "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the category tiles on paddock.html. Prices here are what checkout charges: the store Worker builds its catalog from this file (price, map = minimum advertised price, checkoutNote = the line under the item in Stripe). A price change deploys automatically when pushed to main. Product lifecycle: optional 'status' is 'live' (default), 'coming-soon' (shown, not sold) or 'retired' (hidden from the store, page kept as no longer available; optional 'replacedBy' = slug of the replacement). Never delete a product: retire it. External products link out and never enter the cart. Product pages live at /paddock/products/<slug>/ whatever the category; when a product changes category, add the old one to 'pastCategories' so its old address keeps redirecting. Brands: products sold through the cart need a 'brand'; each brand gets a page at /paddock/brands/<brand>/ unless a category holds exactly its products, and a 'Shop by brand' row appears on paddock.html once there are two brands (optional 'blurb' and 'intro' per brand under 'brands').",
   "seller": "799 Motorsport LLC",
   "brands": {
-    "Tuff Jug": { "mapPolicy": "MAP is 15% below MSRP. It covers the website, social, email, Google Shopping, flyers, event signage and published promo codes. It does not cover prices shown only in a cart or checkout, private in-person prices, or free shipping." }
+    "Tuff Jug": { "mapPolicy": "MAP is 15% below MSRP. It covers the website, social, email, Google Shopping, flyers, event signage and published promo codes. It does not cover prices shown only in a cart or checkout, private in-person prices, or free shipping." },
+    "VIM Tools": { "mapPolicy": "MAP is listed per part in VIM's 2026 WMI price file (effective 05/01/2026), about 73% of the User (list) price. The written policy (what it covers: website, Google Shopping, events, promo codes) is still to get from the VIM rep." }
   },
   "categories": [
     { "slug": "tools", "name": "Tools", "blurb": "Hand tools, cordless tools, storage and the things that get repairs done." },
@@ -10,6 +11,8 @@
       "intro": "The fuel and transfer gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
     { "slug": "tuff-jug", "name": "Tuff Jug", "blurb": "Utility jugs, the electric transfer pump, spouts and caps we use in the 799 paddock.",
       "intro": "The Tuff Jug gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
+    { "slug": "vim-tools", "name": "VIM Tools", "blurb": "Specialty hand tools from VIM, the original mobile tool distributor, since 1931.",
+      "intro": "The VIM Tools gear in the 799 trailer. 799 is an authorized VIM Tools dealer, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
     { "slug": "tire-wheel", "name": "Tire & Wheel", "blurb": "Pressure, temperature, torque, transport and tire-management gear." },
     { "slug": "trailer-pit", "name": "Trailer & Pit", "blurb": "Loading, tie-downs, lighting, power, tables, canopy and paddock setup." },
     { "slug": "trackside", "name": "Trackside", "blurb": "The small stuff that becomes very important when you are miles from the garage." },
@@ -83,6 +86,17 @@
         { "src": "/images/optimized/tuffjug-spout-bender-open-820.webp", "src480": "/images/optimized/tuffjug-spout-bender-open-480.webp", "w": 820, "h": 820, "alt": "Tuff Jug Spout Bender showing the open channel that holds the spout hose" }
       ],
       "color": "Black", "sku": "SpoutBender", "upc": ""
+    },
+    {
+      "slug": "vim-mvrk-3-8-ratchet", "category": "vim-tools", "cart": "r6usa", "status": "coming-soon", "map": 87.30, "checkoutNote": "3/8 in drive, 90 tooth, made in USA",
+      "brand": "VIM Tools", "name": "VIM MVRK 3/8\" Drive Ratchet, Made in USA", "short": "MVRK 3/8\" Ratchet", "price": "119.05",
+      "desc": "VIM's American-made MVRK ratchet: 3/8 in drive, a 90-tooth head that needs only 4 degrees of swing, 8 in long.",
+      "about": "MVRK is VIM's made-in-USA ratchet line. The R6USA is the 3/8 in drive, fixed-head version: a fine 90-tooth gear, so it ratchets with only 4 degrees of handle swing, in an 8 in body that fits where a long ratchet won't. VIM sells a repair kit for it (R6USA-RK), so a worn mechanism gets rebuilt rather than replaced.",
+      "facts": ["3/8 in square drive, 90-tooth gear (4° swing)", "8 in overall length, fixed head", "Made in USA, VIM limited lifetime warranty"],
+      "images": [
+        { "src": "/images/optimized/vim-r6usa-placeholder-900.webp", "src480": "/images/optimized/vim-r6usa-placeholder-480.webp", "w": 900, "h": 900, "alt": "VIM Tools MVRK R6USA 3/8 in drive 90-tooth ratchet" }
+      ],
+      "sku": "R6USA", "upc": "092308861919"
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
