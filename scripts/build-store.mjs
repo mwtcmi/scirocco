@@ -66,6 +66,16 @@ function variantsOf(p) {
 }
 const defaultVariant = p => { const vs = variantsOf(p); return vs.find(v => v.name === p.defaultColor) || vs[0]; };
 const multi = p => !!p.colors;
+// "madeInUSA": true puts a small US flag over the bottom-right corner of the product's photo.
+const FLAG_SVG = (() => {
+  const stripes = Array.from({ length: 13 }, (_, i) => i % 2 ? '' : `<rect y="${(i * 100 / 13).toFixed(2)}" width="190" height="${(100 / 13).toFixed(2)}" fill="#b22234"/>`).join('');
+  const stars = [];
+  for (let r = 0; r < 9; r++) for (let c = 0; c < (r % 2 ? 5 : 6); c++) stars.push(`<circle cx="${(r % 2 ? 12.67 : 6.33) + c * 12.67}" cy="${5.38 + r * 5.38}" r="1.9"/>`);
+  return `<svg viewBox="0 0 190 100" aria-hidden="true" focusable="false"><rect width="190" height="100" fill="#fff"/>${stripes}<rect width="76" height="53.85" fill="#3c3b6e"/><g fill="#fff">${stars.join('')}</g></svg>`;
+})();
+const usaFlag = p => p.madeInUSA ? `<span class="usa-flag" role="img" aria-label="Made in USA" title="Made in USA">${FLAG_SVG}</span>` : '';
+for (const p of products) if (p.madeInUSA !== undefined && typeof p.madeInUSA !== 'boolean') throw new Error(`${p.slug}: madeInUSA must be true or false`);
+
 
 // The data the shared cart script needs on every store page.
 const clientData = {
@@ -147,7 +157,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=6">
+<link rel="stylesheet" href="/paddock-store.css?v=7">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -182,7 +192,7 @@ const notifyForm = p => `<form class="notify" data-notify="${p.cart}" hidden nov
 function card(p, lazy = true) {
   const url = prodUrl(p), link = multi(p) ? ` data-variant-link="${p.cart}"` : '';
   return `<article class="item" data-id="${p.cart}">
-  <div class="item-photo"><a href="${url}"${link} tabindex="-1" aria-hidden="true">${photoTag(p, { lazy })}</a></div>
+  <div class="item-photo"><a href="${url}"${link} tabindex="-1" aria-hidden="true">${photoTag(p, { lazy })}</a>${usaFlag(p)}</div>
   <div class="item-body">
     <span class="badge">${esc(catBySlug[p.category].name)}</span>
     <h3><a href="${url}"${link}>${esc(p.name)}</a></h3>
@@ -206,10 +216,10 @@ function tile(p) {
   const pic = `<img${multi(p) ? ` data-variant-img="${p.cart}"` : ''} src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(v.img.alt)}">`;
   const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
     : `<h3>${esc(p.name)}</h3><span class="price">Coming soon</span><span class="ext-buy">See details →</span>`;
-  if (!multi(p) || !isLive(p)) return `<a class="ext" href="${url}">${pic}<div class="ext-body">${body}</div></a>`;
+  if (!multi(p) || !isLive(p)) return `<a class="ext" href="${url}">${usaFlag(p) ? `<span class="ext-photo">${pic}${usaFlag(p)}</span>` : pic}<div class="ext-body">${body}</div></a>`;
   // Products with options: swatches sit over the bottom of the photo, so the tile keeps the same size as its
   // neighbours. paddock-store.js fills [data-options], swaps [data-variant-img] and adds ?color= to [data-variant-link].
-  return `<div class="ext ext-pick"><div class="ext-photo"><a href="${url}" data-variant-link="${p.cart}" tabindex="-1" aria-hidden="true">${pic}</a><div class="ext-colors" data-options="${p.cart}" role="group" aria-label="${esc(p.short || p.name)} color"></div></div><a class="ext-body" href="${url}" data-variant-link="${p.cart}">${body}</a></div>`;
+  return `<div class="ext ext-pick"><div class="ext-photo"><a href="${url}" data-variant-link="${p.cart}" tabindex="-1" aria-hidden="true">${pic}</a>${usaFlag(p)}<div class="ext-colors" data-options="${p.cart}" role="group" aria-label="${esc(p.short || p.name)} color"></div></div><a class="ext-body" href="${url}" data-variant-link="${p.cart}">${body}</a></div>`;
 }
 function grid(list) {
   const cartList = list.filter(p => p.cart), ext = list.filter(p => p.external);
@@ -325,7 +335,7 @@ ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
 <div class="pd-grid">
-<div><div class="pd-photo">${photoTag(p, { big: true, lazy: false })}</div>${thumbs}</div>
+<div><div class="pd-photo">${photoTag(p, { big: true, lazy: false })}${usaFlag(p)}</div>${thumbs}</div>
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>

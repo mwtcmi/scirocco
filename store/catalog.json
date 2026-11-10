@@ -97,7 +97,7 @@
         { "src": "/images/optimized/vim-fr6usa-side-900.webp", "src480": "/images/optimized/vim-fr6usa-side-480.webp", "w": 900, "h": 900, "alt": "VIM Tools MVRK FR6USA 3/8 in drive 12 in flex head ratchet, made in USA" },
         { "src": "/images/optimized/vim-fr6usa-head-900.webp", "src480": "/images/optimized/vim-fr6usa-head-480.webp", "w": 900, "h": 900, "alt": "Close-up of the MVRK FR6USA flex head with the VIM MVRK USA stamp and direction lever" }
       ],
-      "sku": "FR6USA", "upc": "092308686192"
+      "sku": "FR6USA", "upc": "092308686192", "madeInUSA": true
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
