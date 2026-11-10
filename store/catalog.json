@@ -38,7 +38,7 @@
         { "name": "Black", "hex": "#151515", "img": "black", "sku": "BLKUASVS20", "upc": "736649486331" }
       ],
       "defaultColor": "Kawi Green",
-      "idNote": "5 gallon jugs are the view-strip (VS) models."
+      "idNote": "5 gallon jugs are the view-strip (VS) models.", "madeInUSA": true
     },
     {
       "slug": "electric-transfer-pump", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "pump", "map": 63.74, "checkoutNote": "Includes Tuff Jug adapter", "featured": true,
