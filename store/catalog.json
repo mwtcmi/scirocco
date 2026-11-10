@@ -88,15 +88,16 @@
       "color": "Black", "sku": "SpoutBender", "upc": ""
     },
     {
-      "slug": "vim-mvrk-3-8-ratchet", "category": "vim-tools", "cart": "r6usa", "status": "coming-soon", "map": 87.30, "checkoutNote": "3/8 in drive, 90 tooth, made in USA",
-      "brand": "VIM Tools", "name": "VIM MVRK 3/8\" Drive Ratchet, Made in USA", "short": "MVRK 3/8\" Ratchet", "price": "119.05",
-      "desc": "VIM's American-made MVRK ratchet: 3/8 in drive, a 90-tooth head that needs only 4 degrees of swing, 8 in long.",
-      "about": "MVRK is VIM's made-in-USA ratchet line. The R6USA is the 3/8 in drive, fixed-head version: a fine 90-tooth gear, so it ratchets with only 4 degrees of handle swing, in an 8 in body that fits where a long ratchet won't. VIM sells a repair kit for it (R6USA-RK), so a worn mechanism gets rebuilt rather than replaced.",
-      "facts": ["3/8 in square drive, 90-tooth gear (4° swing)", "8 in overall length, fixed head", "Made in USA, VIM limited lifetime warranty"],
+      "slug": "vim-mvrk-3-8-flex-head-ratchet", "category": "vim-tools", "cart": "fr6usa", "status": "coming-soon", "map": 109.52, "checkoutNote": "3/8 in drive, 90 tooth flex head, made in USA",
+      "brand": "VIM Tools", "name": "VIM MVRK 3/8\" Drive Flex Head Ratchet, 12\", Made in USA", "short": "MVRK 3/8\" Flex Ratchet", "price": "149.35",
+      "desc": "VIM's American-made MVRK flex head ratchet: 3/8 in drive, a 90-tooth head that needs only 4 degrees of swing, 12 in long.",
+      "about": "MVRK is VIM's made-in-USA ratchet line. The FR6USA is the 3/8 in drive flex head version: the head pivots to reach fasteners at an angle, the fine 90-tooth gear ratchets with only 4 degrees of handle swing, and the 12 in polished chrome body gives you leverage on stubborn bolts. VIM sells a repair kit for it (R6USA-RK), so a worn mechanism gets rebuilt rather than replaced.",
+      "facts": ["3/8 in square drive, 90-tooth gear (4° swing)", "Flex head, 12 in overall length", "Made in USA, VIM limited lifetime warranty"],
       "images": [
-        { "src": "/images/optimized/vim-r6usa-placeholder-900.webp", "src480": "/images/optimized/vim-r6usa-placeholder-480.webp", "w": 900, "h": 900, "alt": "VIM Tools MVRK R6USA 3/8 in drive 90-tooth ratchet" }
+        { "src": "/images/optimized/vim-fr6usa-side-900.webp", "src480": "/images/optimized/vim-fr6usa-side-480.webp", "w": 900, "h": 900, "alt": "VIM Tools MVRK FR6USA 3/8 in drive 12 in flex head ratchet, made in USA" },
+        { "src": "/images/optimized/vim-fr6usa-head-900.webp", "src480": "/images/optimized/vim-fr6usa-head-480.webp", "w": 900, "h": 900, "alt": "Close-up of the MVRK FR6USA flex head with the VIM MVRK USA stamp and direction lever" }
       ],
-      "sku": "R6USA", "upc": "092308861919"
+      "sku": "FR6USA", "upc": "092308686192"
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
