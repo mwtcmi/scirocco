@@ -49,7 +49,7 @@ function productSpan(text, cart) {
   return [start, end];
 }
 const fmt = n => (Math.round(Number(n) * 100) / 100).toFixed(2);
-export function setPrice(text, cart, { price, map, freeShipping }) {
+export function setPrice(text, cart, { price, map, list, freeShipping }) {
   const [start, end] = productSpan(text, cart);
   let part = text.slice(start, end);
   if (price !== undefined) {
@@ -59,6 +59,11 @@ export function setPrice(text, cart, { price, map, freeShipping }) {
   if (map !== undefined) {
     if (/"map": [0-9.]+/.test(part)) part = part.replace(/"map": [0-9.]+/, '"map": ' + Number(fmt(map)));
     else part = part.replace('"cart": ' + JSON.stringify(cart) + ',', '"cart": ' + JSON.stringify(cart) + ', "map": ' + Number(fmt(map)) + ',');
+  }
+  if (list !== undefined) {
+    if (/"list": [0-9.]+/.test(part)) part = part.replace(/"list": [0-9.]+/, '"list": ' + Number(fmt(list)));
+    else if (/"map": [0-9.]+,/.test(part)) part = part.replace(/("map": [0-9.]+),/, '$1, "list": ' + Number(fmt(list)) + ',');
+    else part = part.replace('"cart": ' + JSON.stringify(cart) + ',', '"cart": ' + JSON.stringify(cart) + ', "list": ' + Number(fmt(list)) + ',');
   }
   if (freeShipping !== undefined) {
     const v = freeShipping === true;
@@ -101,9 +106,19 @@ async function readCatalog(env, ghFetch) {
 }
 function productList(data) {
   const brands = data.brands || {};
-  return data.products.filter(p => p.cart && (p.status || 'live') !== 'retired').map(p => ({ cart: p.cart, status: p.status || 'live', name: p.name, brand: p.brand, price: Number(p.price), map: p.map ?? null,
+  return data.products.filter(p => p.cart && (p.status || 'live') !== 'retired').map(p => ({ cart: p.cart, status: p.status || 'live', name: p.name, brand: p.brand, price: Number(p.price), map: p.map ?? null, list: p.list ?? null,
     freeShipping: p.freeShipping === true, category: p.category }))
     .map(p => ({ ...p, policy: brands[p.brand]?.mapPolicy || "" }));
+}
+
+// ---- Dealer cost (private, in D1) ----
+async function costMap(db) {
+  try { const { results } = await db.prepare('SELECT cart, cents FROM product_costs').all(); return Object.fromEntries(results.map(r => [r.cart, r.cents / 100])); }
+  catch { return {}; } // table not migrated yet
+}
+async function saveCost(db, cart, cents, t) {
+  if (cents === null) return db.prepare('DELETE FROM product_costs WHERE cart = ?').bind(cart).run();
+  return db.prepare('INSERT INTO product_costs (cart, cents, updated_at) VALUES (?, ?, ?) ON CONFLICT (cart) DO UPDATE SET cents = excluded.cents, updated_at = excluded.updated_at').bind(cart, cents, t).run();
 }
 
 // ---- Data helpers ----
@@ -527,24 +542,37 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
 
         // Prices (saved to store/catalog.json in GitHub; the push redeploys the pages and checkout)
         if (path === '/api/products' && request.method === 'GET') {
-          const c = await readCatalog(env, ghFetch);
-          return json({ products: productList(c.data), brands: Object.entries(c.data.brands || {}).map(([name, b]) => ({ name, policy: b.mapPolicy || '' })) });
+          const c = await readCatalog(env, ghFetch), costs = await costMap(db);
+          return json({ products: productList(c.data).map(p => ({ ...p, cost: costs[p.cart] ?? null })), brands: Object.entries(c.data.brands || {}).map(([name, b]) => ({ name, policy: b.mapPolicy || '' })) });
         }
         if (seg[2] === 'products' && seg[3] && request.method === 'PUT') {
-          const cart = decodeURIComponent(seg[3]), change = {};
-          for (const k of ['price', 'map']) if (body[k] !== undefined && body[k] !== null && body[k] !== '') {
+          const cart = decodeURIComponent(seg[3]), change = {}, label = { price: 'Price', map: 'MAP', list: 'List price' };
+          for (const k of ['price', 'map', 'list']) if (body[k] !== undefined && body[k] !== null && body[k] !== '') {
             const v = Number(body[k]);
-            if (!Number.isFinite(v) || v <= 0 || v > 100000) throw new APIError(400, (k === 'price' ? 'Price' : 'MAP') + ' must be a number above 0.');
+            if (!Number.isFinite(v) || v <= 0 || v > 100000) throw new APIError(400, label[k] + ' must be a number above 0.');
             change[k] = v;
           }
           if (typeof body.freeShipping === 'boolean') change.freeShipping = body.freeShipping;
-          if (!Object.keys(change).length) throw new APIError(400, 'Nothing to change.');
+          // Cost is private: it is saved in the database, never in catalog.json (the repo is public). '' or null clears it.
+          let cost;
+          if (body.cost !== undefined) {
+            if (body.cost === null || body.cost === '') cost = null;
+            else { const v = Number(body.cost); if (!Number.isFinite(v) || v < 0 || v > 100000) throw new APIError(400, 'Cost must be a number, 0 or more.'); cost = Math.round(v * 100); }
+          }
+          if (!Object.keys(change).length && cost === undefined) throw new APIError(400, 'Nothing to change.');
+          if (!Object.keys(change).length) {
+            if (!catalogData.products.some(x => x.cart === cart)) throw new APIError(404, 'Unknown product.');
+            await saveCost(db, cart, cost, t);
+            return json({ saved: true, cost: cost === null ? null : cost / 100 });
+          }
           const c = await readCatalog(env, ghFetch), p = c.data.products.find(x => x.cart === cart);
           if (!p) throw new APIError(404, 'Unknown product.');
+          if (cost !== undefined) await saveCost(db, cart, cost, t);
           const text = setPrice(c.text, cart, change);
           JSON.parse(text);
-          if (text === c.text) return json({ unchanged: true });
+          if (text === c.text) return json(cost !== undefined ? { saved: true } : { unchanged: true });
           const what = [change.price !== undefined ? 'price $' + p.price + ' → $' + fmt(change.price) : '', change.map !== undefined ? 'MAP $' + fmt(p.map ?? 0) + ' → $' + fmt(change.map) : '',
+            change.list !== undefined ? 'list $' + fmt(p.list ?? 0) + ' → $' + fmt(change.list) : '',
             change.freeShipping !== undefined && change.freeShipping !== (p.freeShipping === true) ? 'free shipping ' + (change.freeShipping ? 'on' : 'off') : ''].filter(Boolean).join(', ');
           const r = await gh(env, ghFetch, 'PUT', { message: 'Pitwall: ' + p.name + ' ' + what + ' (' + user.email + ')', content: toB64(text), sha: c.sha, branch: env.GITHUB_BRANCH,
             committer: { name: 'Pitwall', email: 'pitwall@799motorsport.com' }, author: { name: user.email, email: user.email } });

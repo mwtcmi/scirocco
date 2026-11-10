@@ -1,5 +1,5 @@
 {
-  "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the category tiles on paddock.html. Prices here are what checkout charges: the store Worker builds its catalog from this file (price, map = minimum advertised price, checkoutNote = the line under the item in Stripe). A price change deploys automatically when pushed to main. Product lifecycle: optional 'status' is 'live' (default), 'coming-soon' (shown, not sold) or 'retired' (hidden from the store, page kept as no longer available; optional 'replacedBy' = slug of the replacement). Never delete a product: retire it. External products link out and never enter the cart. Product pages live at /paddock/products/<slug>/ whatever the category; when a product changes category, add the old one to 'pastCategories' so its old address keeps redirecting. Brands: products sold through the cart need a 'brand'; each brand gets a page at /paddock/brands/<brand>/ unless a category holds exactly its products, and a 'Shop by brand' row appears on paddock.html once there are two brands (optional 'blurb' and 'intro' per brand under 'brands').",
+  "_readme": "The Paddock store's product list. Run `node scripts/build-store.mjs` after any change: it writes the category and product pages and the category tiles on paddock.html. Prices here are what checkout charges: the store Worker builds its catalog from this file (price = site price, map = minimum advertised price, list = the maker's list price/MSRP, for reference only; checkoutNote = the line under the item in Stripe). Dealer cost never goes in this file (the repo is public): it lives in the store database, set in Pitwall -> Products. A price change deploys automatically when pushed to main. Product lifecycle: optional 'status' is 'live' (default), 'coming-soon' (shown, not sold) or 'retired' (hidden from the store, page kept as no longer available; optional 'replacedBy' = slug of the replacement). Never delete a product: retire it. External products link out and never enter the cart. Product pages live at /paddock/products/<slug>/ whatever the category; when a product changes category, add the old one to 'pastCategories' so its old address keeps redirecting. Brands: products sold through the cart need a 'brand'; each brand gets a page at /paddock/brands/<brand>/ unless a category holds exactly its products, and a 'Shop by brand' row appears on paddock.html once there are two brands (optional 'blurb' and 'intro' per brand under 'brands').",
   "seller": "799 Motorsport LLC",
   "brands": {
     "Tuff Jug": { "mapPolicy": "MAP is 15% below MSRP. It covers the website, social, email, Google Shopping, flyers, event signage and published promo codes. It does not cover prices shown only in a cart or checkout, private in-person prices, or free shipping." },
@@ -23,7 +23,7 @@
   ],
   "products": [
     {
-      "slug": "tuff-jug-5-gallon", "variantImage": "/images/optimized/tuffjug-5gal-{img}-spout", "variantAlt": "{name} in {variant} with Auto-Stop Spout", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "jug", "map": 39.09, "checkoutNote": "Auto-Stop Spout, view strip", "featured": true,
+      "slug": "tuff-jug-5-gallon", "variantImage": "/images/optimized/tuffjug-5gal-{img}-spout", "variantAlt": "{name} in {variant} with Auto-Stop Spout", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "jug", "map": 39.09, "list": 45.99, "checkoutNote": "Auto-Stop Spout, view strip", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug 5 Gallon Utility Jug", "short": "Tuff Jug 5 Gallon", "price": "45.99",
       "desc": "Five gallons with the Auto-Stop Spout, internal venting and a clear view strip for fast, controlled pours.",
       "about": "The 5 gallon Tuff Jug is the jug in the 799 trailer: multi-layer HDPE, a 1 in NPT spout thread and a clear view strip so you can see the level without opening it. It comes with the Auto-Stop Spout, which vents internally and stops the pour when the tank is full. Swap in the Black Ripper Cap for maximum flow, or the flexible Tuff Spout for awkward fillers.",
@@ -41,7 +41,7 @@
       "idNote": "5 gallon jugs are the view-strip (VS) models.", "madeInUSA": true
     },
     {
-      "slug": "electric-transfer-pump", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "pump", "map": 63.74, "checkoutNote": "Includes Tuff Jug adapter", "featured": true,
+      "slug": "electric-transfer-pump", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "pump", "map": 63.74, "list": 74.99, "checkoutNote": "Includes Tuff Jug adapter", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug Electric Transfer Pump", "short": "Electric Transfer Pump", "price": "74.99",
       "desc": "Hands-free transfer with one button and automatic shutoff. Includes the Tuff Jug adapter. Fits current Tuff Jugs.",
       "about": "Battery electric transfer pump with automatic shutoff, so you can fill without lifting a full jug over the car. One button to run, and it stops itself when the tank is full. Includes the Tuff Jug adapter and fits current Tuff Jugs.",
@@ -53,7 +53,7 @@
       "color": "Red", "sku": "LTP", "upc": "790019889672"
     },
     {
-      "slug": "black-ripper-cap", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "ripper", "map": 23.33, "checkoutNote": "Fits 5 gallon Tuff Jugs", "featured": true,
+      "slug": "black-ripper-cap", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "ripper", "map": 23.33, "list": 27.45, "checkoutNote": "Fits 5 gallon Tuff Jugs", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug Black Ripper Cap, 5 Gallon", "short": "Black Ripper Cap", "price": "27.45",
       "desc": "Tuff Jug's maximum-flow pour cap. Swaps onto any 5 gallon Tuff Jug in place of the Auto-Stop Spout.",
       "about": "The Ripper Cap is Tuff Jug's maximum-flow pour cap. It threads onto any 5 gallon Tuff Jug in place of the Auto-Stop Spout when you want the jug empty fast.",
@@ -64,7 +64,7 @@
       "color": "Black", "sku": "BLKR20", "upc": "735345298644"
     },
     {
-      "slug": "tuff-spout", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "tuffspout", "map": 21.24, "checkoutNote": "Stays flexible from -22°F to 200°F", "featured": true,
+      "slug": "tuff-spout", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "tuffspout", "map": 21.24, "list": 24.99, "checkoutNote": "Stays flexible from -22°F to 200°F", "featured": true,
       "brand": "Tuff Jug", "name": "Tuff Jug Tuff Spout with Auto Stop, 5 Gallon", "short": "Tuff Spout", "price": "24.99",
       "desc": "Flexible hose spout with Auto Stop. Stays flexible from −22°F to 200°F and won't yellow, harden or crack.",
       "about": "A flexible hose spout with Auto Stop for 5 gallon Tuff Jugs, for fillers the stock spout can't reach. It stays flexible from −22°F to 200°F, with a nitrile inner layer, a UV and weather resistant outer layer, internal venting and a multi O-ring seal.",
@@ -76,7 +76,7 @@
       "color": "Black", "sku": "TUFFSPOUT", "upc": "790019889733"
     },
     {
-      "slug": "spout-bender", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "spoutbender", "map": 7.99, "checkoutNote": "Holds the Tuff Spout in a bend",
+      "slug": "spout-bender", "category": "tuff-jug", "pastCategories": ["fuel-fluids"], "cart": "spoutbender", "map": 7.99, "list": 7.99, "checkoutNote": "Holds the Tuff Spout in a bend",
       "brand": "Tuff Jug", "name": "Tuff Jug Spout Bender", "short": "Spout Bender", "price": "7.99",
       "desc": "A curved clip that holds the flexible Tuff Spout in a bend, so the pour lands where the filler is.",
       "about": "The Spout Bender is a rigid curved clip from Tuff Jug. Press the flexible Tuff Spout into its open channel and it holds the hose in a set bend, for fillers that sit at an awkward angle.",
@@ -88,7 +88,7 @@
       "color": "Black", "sku": "SpoutBender", "upc": ""
     },
     {
-      "slug": "vim-mvrk-3-8-flex-head-ratchet", "category": "vim-tools", "cart": "fr6usa", "status": "coming-soon", "map": 109.52, "checkoutNote": "3/8 in drive, 90 tooth flex head, made in USA",
+      "slug": "vim-mvrk-3-8-flex-head-ratchet", "category": "vim-tools", "cart": "fr6usa", "status": "coming-soon", "map": 109.52, "list": 149.35, "checkoutNote": "3/8 in drive, 90 tooth flex head, made in USA",
       "brand": "VIM Tools", "name": "VIM MVRK 3/8\" Drive Flex Head Ratchet, 12\", Made in USA", "short": "MVRK 3/8\" Flex Ratchet", "price": "149.35",
       "desc": "VIM's American-made MVRK flex head ratchet: 3/8 in drive, a 90-tooth head that needs only 4 degrees of swing, 12 in long.",
       "about": "MVRK is VIM's made-in-USA ratchet line. The FR6USA is the 3/8 in drive flex head version: the head pivots to reach fasteners at an angle, the fine 90-tooth gear ratchets with only 4 degrees of handle swing, and the 12 in polished chrome body gives you leverage on stubborn bolts. VIM sells a repair kit for it (R6USA-RK), so a worn mechanism gets rebuilt rather than replaced.",

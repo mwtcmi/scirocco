@@ -38,7 +38,7 @@ td input.num{width:110px}
 .sub{margin-top:56px;padding-top:40px;border-top:1px solid #292929}.h2{margin:0 0 6px;font-size:30px;line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
 .savebar{position:sticky;top:0;z-index:5;background:var(--black);padding:12px 0;margin-bottom:6px}
 .stock th.n,.stock td.n{text-align:right}.stock td.n{width:120px}.stock input.num{width:112px;text-align:right;font-weight:400;letter-spacing:0}input.num{-moz-appearance:textfield;appearance:textfield}input.num::-webkit-inner-spin-button,input.num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.pf{display:flex;flex-direction:column;gap:6px}.pf label.f{margin:0}.money{position:relative;display:block}.money:before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;font-size:15px;pointer-events:none}.stock .money input.num{padding-left:26px}.prices{gap:14px;align-items:flex-end}.lbl2{display:block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#aaa}.freebox{display:flex;align-items:center;gap:10px;width:112px;box-sizing:border-box;min-height:44px;padding:0 14px;border:1px solid #444;background:#0b0b0b;font-size:15px;cursor:pointer}.freebox.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}.stock input.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.pf{display:flex;flex-direction:column;gap:6px}.pf label.f{margin:0}.money{position:relative;display:block}.money:before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;font-size:15px;pointer-events:none}.stock .money input.num{padding-left:26px}.prices{gap:14px;align-items:flex-end}.lbl2{display:block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#aaa}.freebox{display:flex;align-items:center;gap:10px;width:112px;box-sizing:border-box;min-height:44px;padding:0 14px;border:1px solid #444;background:#0b0b0b;font-size:15px;cursor:pointer}.margins{margin:-2px 0 12px;font-size:13px;color:#bbb;text-align:right}@media(max-width:700px){.margins{text-align:left}}.margins b{color:#fff}.margins .warn{color:#ff6b5b;font-weight:700}.prices .pf input.num{width:104px}.freebox.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}.stock input.changed{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
 .stock .sku{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#bbb}.flag{display:inline-block;min-width:44px;padding:3px 8px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;text-align:center}
 .flag.out{border:1px solid var(--red);color:var(--red)}.flag.low{border:1px solid #f2d600;color:#f2d600}.flag.ok{border:1px solid #444;color:#777}.wait{color:var(--green);font-weight:700}
 .stock table{table-layout:fixed;min-width:640px}.stock col.c1{width:26%}.stock col.c2{width:20%}.stock col.c3{width:16%}.stock col.c4{width:10%}.stock col.c5{width:10%}.stock col.c6{width:18%}.stock th.n,.stock td.n{padding-right:24px}
@@ -149,7 +149,7 @@ button.danger{min-height:44px;padding:0 18px;border:1px solid var(--red);backgro
 
 <section data-panel="products" hidden>
 <div class="kicker">Paddock Store</div><h1>Products</h1>
-<p class="help">Price, MAP and stock for everything in the store. Stock saves right away; anyone waiting for an item gets one "It's back" email when you bring it above 0. Price changes update the store pages, Google's product info and checkout together about 2 minutes later, and are recorded in GitHub with your email.</p>
+<p class="help">Cost, MAP, list price, site price and stock for everything in the store. Cost is private: it saves right away to the store database and never shows on the website. Stock saves right away; anyone waiting for an item gets one "It's back" email when you bring it above 0. Price changes update the store pages, Google's product info and checkout together about 2 minutes later, and are recorded in GitHub with your email.</p>
 <div class="row savebar"><button class="go" id="p-save" disabled>Save changes</button><button class="alt" id="p-reset" disabled>Undo</button><span class="muted" id="p-note"></span></div>
 <div id="products"></div>
 </section>
@@ -357,35 +357,44 @@ $('event-form').onsubmit=function(ev){ev.preventDefault();var b={name:$('e-name'
  $('e-save').disabled=true;api(editing?'/events/'+encodeURIComponent(editing):'/events',{method:editing?'PUT':'POST',body:b}).then(function(){msg(editing?'Event saved.':'Event added.');resetEvent();loadEvents()}).catch(fail).then(function(){$('e-save').disabled=false})};
 
 // Products: one card per product with price, MAP and a row per SKU for stock. One save for everything.
-var P0={stock:{},price:{},map:{},free:{}},pPolicy={};
+var P0={stock:{},price:{},map:{},list:{},cost:{},free:{}},pPolicy={};
 function flag(q){return q<1?'<span class="flag out">Out</span>':q<2?'<span class="flag low">Low</span>':'<span class="flag ok">OK</span>'}
 function cents2(v){return v==null||v===''?'':Number(v).toFixed(2)}
+// One money field on a product card: data-<kind>="<cart>". Cost is private (saved in the database, not on the site).
+function mf(kind,id,label,v,off,min){return '<div class="pf"><label class="f" for="'+kind+'-'+esc(id)+'">'+label+'</label><span class="money"><input class="num" id="'+kind+'-'+esc(id)+'" type="number" min="'+(min||'0.01')+'" step="0.01" inputmode="decimal" data-'+kind+'="'+esc(id)+'" value="'+cents2(v)+'"'+(off?' disabled':'')+'></span></div>'}
+// The line under the price fields: what you keep at the site price, at MAP and at list, and a warning below MAP.
+function pct(price,cost){return Math.round((price-cost)/price*100)+'%'}
+function margins(){document.querySelectorAll('#products [data-margin]').forEach(function(el){var id=el.dataset.margin,v=function(k){var i=document.getElementById(k+'-'+id);return i&&i.value!==''?Number(i.value):NaN};
+ var cost=v('cost'),price=v('price'),map=v('map'),list=v('list'),out=[];
+ if(price>0&&map>0&&price<map)out.push('<span class="warn">Site price is below MAP</span>');
+ if(cost>=0&&price>0){out.unshift('Margin at site price <b>$'+(price-cost).toFixed(2)+' ('+pct(price,cost)+')</b>');if(map>0)out.push('at MAP '+pct(map,cost));if(list>0)out.push('at list '+pct(list,cost))}
+ else if(price>0)out.unshift('<span class="muted">Add your cost to see margins.</span>');
+ el.innerHTML=out.join(' · ')})}
 function loadProducts(){$('products').innerHTML='<p class="muted">Loading…</p>';$('p-note').textContent='';
  Promise.all([api('/stock'),api('/products').catch(function(e){return {error:e.message}})]).then(function(r){var st=r[0],pr=r[1],byCart={},brands={};
   (pr.products||[]).forEach(function(p){byCart[p.cart]=p});(pr.brands||[]).forEach(function(b){brands[b.name]=b.policy});pPolicy=brands;
   if(pr.error)$('p-note').textContent='Prices are read-only right now: '+pr.error;
   if(!st.email&&st.groups.some(function(g){return g.items.some(function(i){return i.waiting})}))$('p-note').textContent+=(pr.error?' ':'')+'Back-in-stock email is not connected yet, so requests will wait.';
-  P0={stock:{},price:{},map:{},free:{}};var order=[],groups={};
+  P0={stock:{},price:{},map:{},list:{},cost:{},free:{}};var order=[],groups={};
   st.groups.forEach(function(g){var p=byCart[g.product]||{},brand=p.brand||'Products';if(!groups[brand]){groups[brand]=[];order.push(brand)}groups[brand].push({g:g,p:p})});
   $('products').innerHTML=order.map(function(brand){return '<h2 class="h2" style="margin:26px 0 12px">'+esc(brand)+'</h2>'+groups[brand].map(function(x){var g=x.g,p=x.p,live=g.status==='live';
-   P0.price[g.product]=cents2(p.price);P0.map[g.product]=cents2(p.map);P0.free[g.product]=!!p.freeShipping;
+   P0.price[g.product]=cents2(p.price);P0.map[g.product]=cents2(p.map);P0.list[g.product]=cents2(p.list);P0.cost[g.product]=cents2(p.cost);P0.free[g.product]=!!p.freeShipping;
    return '<div class="card stock"><div class="row" style="align-items:flex-end;margin-bottom:12px"><h3 style="margin:0">'+esc(g.name)+(live?'':' <span class="pill">'+(g.status==='retired'?'Retired':'Coming soon')+'</span>')+'</h3>'+
-    '<div class="row right prices"><div class="pf"><label class="f" for="pr-'+esc(g.product)+'">Price</label><span class="money"><input class="num" id="pr-'+esc(g.product)+'" type="number" min="0.01" step="0.01" inputmode="decimal" data-price="'+esc(g.product)+'" value="'+cents2(p.price)+'"'+(pr.error?' disabled':'')+'></span></div>'+
-    '<div class="pf"><label class="f" for="map-'+esc(g.product)+'">MAP price</label><span class="money"><input class="num" id="map-'+esc(g.product)+'" type="number" min="0.01" step="0.01" inputmode="decimal" data-map="'+esc(g.product)+'" value="'+cents2(p.map)+'"'+(pr.error?' disabled':'')+'></span></div>'+
+    '<div class="row right prices">'+mf('cost',g.product,'Cost',p.cost,pr.error,'0')+mf('map',g.product,'MAP',p.map,pr.error)+mf('list',g.product,'List',p.list,pr.error)+mf('price',g.product,'Site price',p.price,pr.error)+
     '<div class="pf"><span class="f lbl2">Shipping</span><label class="freebox"><input type="checkbox" data-free="'+esc(g.product)+'"'+(p.freeShipping?' checked':'')+(pr.error?' disabled':'')+'> Free</label></div></div></div>'+
-    '<div class="scroll"><table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>'+(g.items.length>1?'Color':'Option')+'</th><th>SKU</th><th class="n">On hand</th><th></th><th class="n">Waiting</th><th>Last changed</th></tr></thead><tbody>'+
+    '<div class="margins" data-margin="'+esc(g.product)+'"></div><div class="scroll"><table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>'+(g.items.length>1?'Color':'Option')+'</th><th>SKU</th><th class="n">On hand</th><th></th><th class="n">Waiting</th><th>Last changed</th></tr></thead><tbody>'+
     g.items.map(function(i){P0.stock[i.sku]=i.qty;return '<tr><td>'+esc(i.variant||'—')+'</td><td class="sku">'+esc(i.sku)+'</td><td class="n"><input class="num" type="number" min="0" max="9999" step="1" inputmode="numeric" value="'+i.qty+'" data-sku="'+esc(i.sku)+'" aria-label="'+esc(i.label)+' on hand"></td><td data-flag="'+esc(i.sku)+'">'+flag(i.qty)+'</td>'+
      '<td class="n">'+(i.waiting?'<span class="wait">'+i.waiting+'</span>':'<span class="muted">0</span>')+'</td><td class="muted">'+when(i.updated_at)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}).join('')+
    (brand!=='Products'&&!pr.error?'<div class="card"><label class="f" for="pol-'+esc(brand)+'">'+esc(brand)+' MAP policy</label><textarea data-policy="'+esc(brand)+'" id="pol-'+esc(brand)+'" maxlength="1000">'+esc(brands[brand]||'')+'</textarea></div>':'')}).join('');
   document.querySelectorAll('#products input,#products textarea').forEach(function(i){i.oninput=pDirty;i.onchange=pDirty});pDirty()}).catch(fail)}
 function pChanges(){var c={stock:[],prices:{},policy:[]};
  document.querySelectorAll('#products input[data-sku]').forEach(function(i){var v=i.value===''?NaN:Number(i.value);if(v!==P0.stock[i.dataset.sku])c.stock.push({sku:i.dataset.sku,qty:v,el:i})});
- document.querySelectorAll('#products input[data-price],#products input[data-map]').forEach(function(i){var k=i.dataset.price?'price':'map',id=i.dataset.price||i.dataset.map,v=i.value.trim()===''?'':cents2(i.value);
+ document.querySelectorAll('#products input[data-price],#products input[data-map],#products input[data-list],#products input[data-cost]').forEach(function(i){var k=['price','map','list','cost'].filter(function(x){return i.dataset[x]!==undefined})[0],id=i.dataset[k],v=i.value.trim()===''?'':cents2(i.value);
   if(v!==P0[k][id]){(c.prices[id]=c.prices[id]||{})[k]=v;c.prices[id].els=(c.prices[id].els||[]).concat(i)}});
  document.querySelectorAll('#products input[data-free]').forEach(function(i){var id=i.dataset.free;if(i.checked!==P0.free[id]){(c.prices[id]=c.prices[id]||{}).freeShipping=i.checked;c.prices[id].els=(c.prices[id].els||[]).concat(i.parentNode)}});
  document.querySelectorAll('#products textarea[data-policy]').forEach(function(t){if(t.value!==(pPolicy[t.dataset.policy]||''))c.policy.push({brand:t.dataset.policy,policy:t.value,el:t})});return c}
 function pCount(c){return c.stock.length+Object.keys(c.prices).length+c.policy.length}
-function pDirty(){var c=pChanges(),n=pCount(c);document.querySelectorAll('#products .changed').forEach(function(e){e.classList.remove('changed')});
+function pDirty(){margins();var c=pChanges(),n=pCount(c);document.querySelectorAll('#products .changed').forEach(function(e){e.classList.remove('changed')});
  c.stock.forEach(function(x){x.el.classList.add('changed');var f=document.querySelector('[data-flag="'+CSS.escape(x.sku)+'"]');if(f&&Number.isInteger(x.qty))f.innerHTML=flag(x.qty)});
  Object.keys(c.prices).forEach(function(k){c.prices[k].els.forEach(function(e){e.classList.add('changed')})});c.policy.forEach(function(x){x.el.classList.add('changed')});
  $('p-save').disabled=!n;$('p-reset').disabled=!n;$('p-save').textContent=n?'Save '+n+(n===1?' change':' changes'):'Save changes'}
@@ -395,8 +404,8 @@ $('p-save').onclick=function(){var c=pChanges(),b=this,bad=c.stock.filter(functi
  b.disabled=true;b.textContent='Saving…';var notes=[],errors=[];
  var steps=Promise.resolve();
  if(c.stock.length)steps=steps.then(function(){return api('/stock',{method:'PUT',body:{changes:c.stock.map(function(x){return{sku:x.sku,qty:x.qty}})}}).then(function(r){notes.push('Stock saved.'+(r.notified?' Sent '+r.notified+' back-in-stock email'+(r.notified===1?'':'s')+'.':'')+(r.held?' '+r.held+' waiting (email not connected yet).':''))}).catch(function(e){errors.push(e.message)})});
- Object.keys(c.prices).forEach(function(id){steps=steps.then(function(){var x=c.prices[id],body={};if(x.price!==undefined)body.price=x.price;if(x.map!==undefined)body.map=x.map;if(x.freeShipping!==undefined)body.freeShipping=x.freeShipping;
-  return api('/products/'+encodeURIComponent(id),{method:'PUT',body:body}).then(function(r){if(!r.unchanged)notes.push('Saved; the store updates in about 2 minutes.')}).catch(function(e){errors.push(e.message)})})});
+ Object.keys(c.prices).forEach(function(id){steps=steps.then(function(){var x=c.prices[id],body={};if(x.price!==undefined)body.price=x.price;if(x.map!==undefined)body.map=x.map;if(x.list!==undefined)body.list=x.list;if(x.cost!==undefined)body.cost=x.cost;if(x.freeShipping!==undefined)body.freeShipping=x.freeShipping;
+  return api('/products/'+encodeURIComponent(id),{method:'PUT',body:body}).then(function(r){if(!r.unchanged)notes.push(Object.keys(body).length===1&&body.cost!==undefined?'Cost saved.':'Saved; the store updates in about 2 minutes.')}).catch(function(e){errors.push(e.message)})})});
  c.policy.forEach(function(x){steps=steps.then(function(){return api('/brands/'+encodeURIComponent(x.brand),{method:'PUT',body:{policy:x.policy}}).then(function(){notes.push(x.brand+' MAP policy saved.')}).catch(function(e){errors.push(e.message)})})});
  steps.then(function(){msg(errors.length?errors.join(' '):[...new Set(notes)].join(' '),!!errors.length);loadProducts()})};
 

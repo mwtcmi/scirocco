@@ -354,3 +354,39 @@ test('shipments: partial shipping, several boxes, edits, removal, status and the
   assert.equal(d.body.status, 'partial'); assert.equal(mail.length, 2);
   assert.equal((await call(P + '/999', 'DELETE')).status, 404);
 });
+
+test('prices: list price saves to catalog.json; dealer cost saves to the database only, never to GitHub', async t => {
+  const s = setup(t);
+  let fr = (await s.call('/api/products')).body.products.find(p => p.cart === 'fr6usa');
+  assert.equal(fr.list, 149.35); assert.equal(fr.cost, null);
+  // Cost alone: no commit, and it never appears in catalog.json.
+  const r = await s.call('/api/products/fr6usa', { method: 'PUT', data: { cost: '81.18' } });
+  assert.equal(r.status, 200); assert.equal(r.body.cost, 81.18);
+  assert.equal(s.commits.length, 0);
+  assert.doesNotMatch(s.file(), /81\.18/);
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'fr6usa'").get().cents, 8118);
+  fr = (await s.call('/api/products')).body.products.find(p => p.cart === 'fr6usa');
+  assert.equal(fr.cost, 81.18);
+  // List with cost: list goes to GitHub, cost to the database.
+  const r2 = await s.call('/api/products/fr6usa', { method: 'PUT', data: { list: '155', cost: '80' } });
+  assert.equal(r2.status, 200);
+  assert.equal(JSON.parse(s.file()).products.find(p => p.cart === 'fr6usa').list, 155);
+  assert.match(s.commits[0].message, /list \$149\.35 → \$155\.00/);
+  assert.doesNotMatch(s.commits[0].message + s.file(), /\b80\.00\b|"cost"/);
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'fr6usa'").get().cents, 8000);
+  // Clearing the cost, bad values, unknown products.
+  assert.equal((await s.call('/api/products/fr6usa', { method: 'PUT', data: { cost: '' } })).status, 200);
+  assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM product_costs").get().n, 0);
+  assert.equal((await s.call('/api/products/fr6usa', { method: 'PUT', data: { cost: '-1' } })).status, 400);
+  assert.equal((await s.call('/api/products/fr6usa', { method: 'PUT', data: { list: '0' } })).status, 400);
+  assert.equal((await s.call('/api/products/nope', { method: 'PUT', data: { cost: '5' } })).status, 404);
+});
+
+test('setPrice adds a list price after MAP when a product has none, and edits it in place after', () => {
+  const text = CATALOG.replace(/("cart": "pump", "map": [0-9.]+), "list": [0-9.]+,/, '$1,');
+  assert.equal(JSON.parse(text).products.find(p => p.cart === 'pump').list, undefined);
+  const out = setPrice(text, 'pump', { list: 80 });
+  assert.match(out, /"cart": "pump", "map": 63\.74, "list": 80,/);
+  assert.equal(JSON.parse(setPrice(out, 'pump', { list: 81.5 })).products.find(p => p.cart === 'pump').list, 81.5);
+  assert.equal(JSON.parse(out).products.find(p => p.cart === 'jug').list, 45.99);
+});
