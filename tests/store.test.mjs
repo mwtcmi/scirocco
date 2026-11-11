@@ -203,8 +203,8 @@ test('sample emails go to Mike only, and only while SAMPLE_EMAILS is on', async 
   assert.equal((await s.call('/api/sample-emails')).status, 404); assert.equal(s.mail.length, 0);
   s.env.SAMPLE_EMAILS = 'on';
   const r = await s.call('/api/sample-emails');
-  assert.equal(r.status, 200); assert.deepEqual(r.body.results, ['sent', 'sent', 'sent']);
-  assert.equal(s.mail.length, 3);
+  assert.equal(r.status, 200); assert.deepEqual(r.body.results, ['sent', 'sent', 'sent', 'sent']);
+  assert.equal(s.mail.length, 4); assert.match(s.mail[3].body.subject, /You're on the list/);
   for (const m of s.mail) { assert.deepEqual(m.body.to, ['mike@scirocco799.com']); assert.equal(m.body.bcc, undefined); assert.match(m.body.subject, /^\[Sample\] /); }
   assert.match(s.mail[1].body.html, /Columbus, OH 43215/); assert.match(s.mail[1].body.html, /Discount/);
   assert.equal((await s.call('/api/stock')).status, 404);
@@ -324,6 +324,23 @@ test('SKU carts: lines by SKU, stock by SKU, orders stored by SKU; older carts a
   await s.webhook(paid('cs_test_old1', [{ p: 'pump', q: 1 }]));
   const after = (await s.call('/api/catalog')).body.stock;
   assert.equal(after.KUASVS20, 0); assert.equal(after['jug/color/Kawi Green'], 0); assert.equal(after.LTP, 1);
+});
+
+test('notify me: one zine-style "You\'re on the list" email per address while it waits, with the ratchet and a story', async t => {
+  const s = service(t); s.env.RESEND_API_KEY = 're_test';
+  await s.call('/api/notify', { method: 'POST', data: { sku: 'FR6USA', email: 'pat@example.com' } });
+  await s.call('/api/notify', { method: 'POST', data: { sku: 'R6USA', email: 'pat@example.com' } }); // a second pick: no second email
+  assert.equal(s.mail.length, 1);
+  const m = s.mail[0].body;
+  assert.deepEqual(m.to, ['pat@example.com']); assert.equal(m.from, '799 Motorsport Paddock <paddock@799motorsport.com>');
+  assert.equal(m.subject, 'You\'re on the list: VIM MVRK 3/8" Drive Flex Head Ratchet, 12"');
+  assert.match(m.html, /vim-mvrk-ratchets\/\?sku=FR6USA/); assert.match(m.html, /Named after a wind/); assert.match(m.html, /\/scirocco-history/);
+  assert.match(m.html, /meta charset="utf-8"/); assert.match(m.text, /Osnabrück/);
+  s.sqlite.prepare("UPDATE restock_requests SET notified_at = 5").run(); // after the restock email, a new request confirms again
+  await s.call('/api/notify', { method: 'POST', data: { sku: 'FR6USA', email: 'pat@example.com' } });
+  assert.equal(s.mail.length, 2);
+  const bad = service(t, { emailStatus: 500 }); bad.env.RESEND_API_KEY = 're_test'; // a mail failure never blocks the request
+  assert.equal((await bad.call('/api/notify', { method: 'POST', data: { sku: 'LTP', email: 'q@example.com' } })).status, 200);
 });
 
 test('notify me: saves one request per SKU and email, refuses bad input, ignores bots, re-arms after a notice', async t => {

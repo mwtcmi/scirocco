@@ -9,6 +9,7 @@ import { PAGE } from './page.mjs';
 import bundledCatalog from '../store/catalog.json' with { type: 'json' };
 import { backInStockEmail, shippedEmail, carrierName, trackingUrl, CARRIERS, FROM, REPLY_TO, SITE } from '../store/emails.mjs';
 import { syncNews, forgetNews, newsReady } from '../store/resend.mjs';
+import { skuInfo } from '../store/feed.mjs';
 
 const CATALOG_PATH = 'store/catalog.json';
 class APIError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -182,6 +183,11 @@ export function restockMessage(data, sku) {
   const hit = skuIndex(data)[sku];
   if (!hit) return null;
   const { p, v } = hit;
+  if (p.variants) { // an option (MVRK): its own title, photo, price and ?sku= link, same as its Shopping listing
+    const i = skuInfo(data, sku, SITE);
+    if (!i) return null;
+    return backInStockEmail({ title: i.title, link: i.link, cents: i.cents, image: i.image_link, imageAlt: i.image_alt });
+  }
   const base = p.variantImage && v.img ? p.variantImage.replace('{img}', v.img) : null;
   const image = base ? SITE + base + '-900.webp' : p.images?.[0]?.src ? SITE + p.images[0].src : '';
   const alt = p.variantAlt ? p.variantAlt.replace('{name}', p.name).replace('{variant}', v.name) : p.images?.[0]?.alt || p.name;

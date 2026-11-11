@@ -9,7 +9,7 @@ export const money = c => '$' + (Number(c || 0) / 100).toFixed(2);
 
 // The frame every email shares: black 799 Motorsport header, white body, black footer.
 export function frame({ preheader = '', kicker = 'Paddock Store', body }) {
-  return '<!doctype html><html><head><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"></head>' +
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"></head>' +
     '<body style="margin:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif">' +
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + esc(preheader) + '</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:24px 12px"><tr><td align="center">' +
@@ -29,9 +29,10 @@ export function button(href, label) {
 }
 
 // "It's back": one email per request, with the photo, price and a button to the product (with its option picked).
-export function backInStockEmail({ name, variant = '', cents, image = '', url, imageAlt = '' }) {
-  const full = name + (variant ? ', ' + variant : '');
-  const link = url + (variant ? (url.includes('?') ? '&' : '?') + 'color=' + encodeURIComponent(variant) : '');
+// Pass "title" and "link" (from skuInfo in feed.mjs); name/variant/url are the older way, kept for colors.
+export function backInStockEmail({ name, variant = '', title = '', link: to = '', cents, image = '', url, imageAlt = '' }) {
+  const full = title || name + (variant ? ', ' + variant : '');
+  const link = to || url + (variant ? (url.includes('?') ? '&' : '?') + 'color=' + encodeURIComponent(variant) : '');
   const body =
     '<h1 style="margin:0 0 6px;font-size:24px;line-height:1.15;color:#050505">It\'s back in stock.</h1>' +
     '<p style="margin:0 0 20px;color:#555;font-size:15px;line-height:1.5">You asked us to let you know. ' + esc(full) + ' is back in the 799 Paddock Store.</p>' +
@@ -45,6 +46,41 @@ export function backInStockEmail({ name, variant = '', cents, image = '', url, i
   const text = ['It\'s back in stock.', '', 'You asked us to let you know. ' + full + ' is back in the 799 Paddock Store (' + money(cents) + ').', '', 'Get it now: ' + link, '',
     'Stock is limited, and this email doesn\'t hold one for you.', 'This is the only email you\'ll get about this request. Questions? Just reply.'].join('\n');
   return { subject: 'It\'s back: ' + full, html: frame({ preheader: full + ' is back in stock.', body }), text };
+}
+
+// Short stories tucked into the "You're on the list" email, each with a link back to the site. Add more here;
+// each person gets one picked from their email address, so the same person sees the same story.
+export const STORIES = Object.freeze([
+  { kicker: '799 Zine · No. 01', title: 'Named after a wind.',
+    text: 'In 1974 Volkswagen needed a coupe. Giugiaro drew one on the Golf\'s bones, Karmann built it in Osnabrück, and it beat the Golf to market by a few months. They named it Scirocco, after the hot Mediterranean wind. Two years later VW took it racing. 799 is a 1976 car from that first racing year, and fifty years on it\'s still climbing hills.',
+    image: SITE + '/images/optimized/empire-799-email-900.jpg', imageAlt: 'Scirocco 799, a green 1976 Volkswagen Scirocco, at speed on a hill climb', credit: 'Photo: Nate Bronkema',
+    link: SITE + '/scirocco-history', linkText: 'Read the Scirocco story' }
+]);
+export function pickStory(seed = '') { let h = 0; for (const c of String(seed)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return STORIES[h % STORIES.length]; }
+
+// "You're on the list": sent once when someone asks to hear about a restock, with a short story and a link to the site.
+// Styled like a 90s skate mag / zine: blocky caps, typewriter text, a black page with a green tape label, square corners.
+const BLOCK = "font-family:Impact,'Arial Black','Helvetica Neue',Arial,sans-serif;font-weight:900;text-transform:uppercase";
+const TYPE = "font-family:'Courier New',Courier,monospace";
+export function restockConfirmEmail({ title, image = '', imageAlt = '', link, story = STORIES[0] }) {
+  const body =
+    '<h1 style="margin:0;font-size:38px;line-height:.95;letter-spacing:-.01em;color:#050505;' + BLOCK + '">You\'re on<br>the list.</h1>' +
+    '<p style="margin:12px 0 20px;color:#333;font-size:14px;line-height:1.5;' + TYPE + '">We\'ll email you once when it\'s back. That\'s it.</p>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:3px solid #050505"><tr>' +
+    (image ? '<td width="96" style="padding:10px;border-right:3px solid #050505"><a href="' + esc(link) + '"><img src="' + esc(image) + '" width="76" alt="' + esc(imageAlt || title) + '" style="display:block;width:76px;height:auto;border:0"></a></td>' : '') +
+    '<td style="padding:10px 14px;font-size:16px;line-height:1.15;color:#050505;' + BLOCK + '"><a href="' + esc(link) + '" style="color:#050505;text-decoration:none">' + esc(title) + '</a></td></tr></table>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:30px;background:#050505"><tr><td style="padding:26px 24px 28px">' +
+    '<span style="display:inline-block;background:#20C933;color:#050505;padding:5px 10px;font-size:12px;letter-spacing:.16em;' + BLOCK + '">' + esc(story.kicker) + '</span>' +
+    '<h2 style="margin:14px 0 18px;font-size:44px;line-height:.9;letter-spacing:-.01em;color:#fff;' + BLOCK + '">' + esc(story.title) + '</h2>' +
+    (story.image ? '<a href="' + esc(story.link) + '"><img src="' + esc(story.image) + '" width="444" alt="' + esc(story.imageAlt) + '" style="display:block;width:100%;max-width:444px;height:auto;border:6px solid #fff"></a>' : '') +
+    (story.credit ? '<div style="margin:6px 0 0;color:#888;font-size:11px;letter-spacing:.08em;text-transform:uppercase;' + TYPE + '">' + esc(story.credit) + '</div>' : '') +
+    '<p style="margin:18px 0 0;color:#ddd;font-size:14px;line-height:1.65;' + TYPE + '">' + esc(story.text) + '</p>' +
+    '<p style="margin:20px 0 0"><a href="' + esc(story.link) + '" style="color:#20C933;font-size:15px;letter-spacing:.06em;text-decoration:none;border-bottom:3px solid #20C933;' + BLOCK + '">' + esc(story.linkText) + ' &rarr;</a></p>' +
+    '</td></tr></table>' +
+    '<p style="margin:22px 0 0;color:#888;font-size:12px;line-height:1.6;' + TYPE + '">You asked at 799motorsport.com. You\'ll also get occasional 799 News, and every one has an unsubscribe link. Didn\'t ask? Just reply and we\'ll take you off.</p>';
+  const text = ["You're on the list.", '', "We'll email you once when it's back: " + title, link, '', story.kicker.toUpperCase(), story.title, '', story.text, '',
+    story.linkText + ': ' + story.link, '', "You asked at 799motorsport.com. You'll also get occasional 799 News, and every one has an unsubscribe link. Didn't ask? Just reply and we'll take you off."].join('\n');
+  return { subject: "You're on the list: " + title, html: frame({ preheader: "We'll email you once when it's back.", body }), text };
 }
 
 // Double opt-in for site sign-ups: one button, nothing else.

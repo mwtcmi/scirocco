@@ -8,9 +8,9 @@
 // ---- Catalog: built from store/catalog.json, the one product list for the site and checkout. ----
 // Prices in cents. map = minimum advertised price (Tuff Jug policy: MSRP - 15%).
 import catalogFile from './catalog.json' with { type: 'json' };
-import { frame, FROM as PADDOCK_FROM, REPLY_TO, newsConfirmEmail } from './emails.mjs';
+import { frame, FROM as PADDOCK_FROM, REPLY_TO, newsConfirmEmail, restockConfirmEmail, pickStory } from './emails.mjs';
 import { syncNews, newsStatus, newsReady } from './resend.mjs';
-import { feedXml } from './feed.mjs';
+import { feedXml, skuInfo } from './feed.mjs';
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
@@ -407,6 +407,18 @@ export const SAMPLE_ORDERS = [
     collected_information: { shipping_details: { name: 'Sam Sample', address: { line1: '400 Front Street', city: 'Traverse City', state: 'MI', postal_code: '49684' } } } }
 ];
 
+function restockConfirmFor(env, sku, seed) {
+  const site = (env.SITE_URL || 'https://799motorsport.com').replace(/\/$/, ''), i = skuInfo(catalogFile, sku, site);
+  return i && restockConfirmEmail({ title: i.title, image: i.image_link, imageAlt: i.image_alt, link: i.link, story: pickStory(seed) });
+}
+async function sendRestockConfirm(env, emailFetch, email, sku, stamp) {
+  const mail = restockConfirmFor(env, sku, email);
+  if (!mail) return;
+  const res = await emailFetch('https://api.resend.com/emails', { method: 'POST',
+    headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'restock-confirm-' + sku + '-' + email + '-' + Math.floor(stamp / 60000) },
+    body: JSON.stringify({ from: env.ORDER_FROM || ORDER_FROM, to: [email], reply_to: REPLY_TO, subject: mail.subject, html: mail.html, text: mail.text }) });
+  if (!res.ok) console.log('Resend error', res.status, (await res.text().catch(() => '')).slice(0, 200));
+}
 async function sendSamples(env, emailFetch, stamp) {
   const results = [];
   for (const order of SAMPLE_ORDERS) {
@@ -417,6 +429,12 @@ async function sendSamples(env, emailFetch, stamp) {
       .catch(e => ({ ok: false, status: 0, text: async () => String(e?.message || e) }));
     results.push(res.ok ? 'sent' : 'failed ' + res.status + ' ' + (await res.text().catch(() => '')).slice(0, 200));
   }
+  const mail = restockConfirmFor(env, 'FR6USA', OWNER_EMAIL); // the "You're on the list" email, with its story
+  if (mail) { const res = await emailFetch('https://api.resend.com/emails', { method: 'POST',
+      headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': 'sample-restock-confirm-' + stamp },
+      body: JSON.stringify({ from: env.ORDER_FROM || ORDER_FROM, to: [OWNER_EMAIL], reply_to: OWNER_EMAIL, subject: '[Sample] ' + mail.subject, html: mail.html, text: mail.text }) })
+      .catch(e => ({ ok: false, status: 0, text: async () => String(e?.message || e) }));
+    results.push(res.ok ? 'sent' : 'failed ' + res.status); }
   return results;
 }
 
@@ -579,6 +597,8 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
                 marketing_at = CASE WHEN marketing = 'unknown' THEN excluded.marketing_at ELSE marketing_at END,
                 marketing_source = CASE WHEN marketing = 'unknown' THEN excluded.marketing_source ELSE marketing_source END, updated_at = excluded.updated_at`).bind(email, now(), now(), now())]);
           await pushNews(env, db, newsFetch, email, now());
+          // "You're on the list", once per address while it has requests waiting (more picks don't send more emails).
+          if (!(waiting?.n) && env.RESEND_API_KEY) await sendRestockConfirm(env, emailFetch, email, sku, now()).catch(e => console.log('Restock confirm failed', String(e?.message || e)));
           return json({ ok: true });
         }
 

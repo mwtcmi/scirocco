@@ -103,6 +103,19 @@ test('stock: grouped by product with SKUs and waiting counts; saving several at 
   assert.equal((await s.call('/api/stock', { method: 'PUT', data: { changes: [] } })).status, 400);
 });
 
+test('back in stock: a ratchet gets its own title, photo, price and ?sku= link', async t => {
+  const s = setup(t); const mail = [];
+  _resetCertCache();
+  const app = createPitwall({ now: () => 1800000000000, fetchCerts, mailFetch: async (url, init) => { mail.push(JSON.parse(init.body)); return new Response('{"id":"em"}'); } });
+  s.env.RESEND_API_KEY = 're_test';
+  s.sqlite.prepare("INSERT INTO restock_requests (sku, email, created_at) VALUES ('FR6USA', 'a@b.co', 1)").run();
+  const r = await app.fetch(new Request('https://pitwall.example/api/stock', { method: 'PUT', headers: { 'content-type': 'application/json', 'cf-access-jwt-assertion': token() }, body: JSON.stringify({ changes: [{ sku: 'FR6USA', qty: 2 }] }) }), s.env).then(r => r.json());
+  assert.equal(r.notified, 1);
+  assert.equal(mail[0].subject, 'It\'s back: VIM MVRK 3/8" Drive Flex Head Ratchet, 12"');
+  assert.match(mail[0].html, /vim-mvrk-ratchets\/\?sku=FR6USA/); assert.match(mail[0].html, /\$149\.99/); assert.match(mail[0].html, /vim-fr6usa-side-900\.webp/);
+  assert.doesNotMatch(mail[0].html, /color=/);
+});
+
 test('back in stock: raising stock above 0 emails everyone waiting once, from paddock@799motorsport.com', async t => {
   const s = setup(t); const mail = [];
   _resetCertCache();

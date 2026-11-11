@@ -38,23 +38,27 @@ export function feedItems(catalog, stock, site) {
         const own = imgs.filter(i => i.sku === v.sku), shared = imgs.filter(i => i.skus && i.skus.includes(v.sku));
         const all = [...own, ...shared], pics = [...all.filter(i => !/-dim-/.test(i.src)), ...all.filter(i => /-dim-/.test(i.src))].map(i => abs(i.src)); // main image: a plain photo; the measured shot (text on it) goes after
         items.push({ ...base, id: v.sku, item_group_id: p.slug, title: optionTitle(p, v), link: `${page}?sku=${encodeURIComponent(v.sku)}`,
-          image_link: pics[0], additional_image_link: pics.slice(1, 11), price: money(v.price), sku: v.sku, gtin: v.upc, ...(v.size ? { size: optionName(v) } : {}) });
+          image_link: pics[0], image_alt: (all.find(i => abs(i.src) === pics[0]) || {}).alt, additional_image_link: pics.slice(1, 11), price: money(v.price), cents: Math.round(v.price * 100), sku: v.sku, gtin: v.upc, ...(v.size ? { size: optionName(v) } : {}) });
       }
     } else if (p.colors) {
       for (const c of p.colors) {
         const img = p.variantImage ? abs(p.variantImage.replace('{img}', c.img) + '-900.webp') : imgs[0] && abs(imgs[0].src);
         items.push({ ...base, id: c.sku, item_group_id: p.slug, title: `${p.name}, ${c.name}`, link: `${page}?color=${encodeURIComponent(c.name)}`,
-          image_link: img, additional_image_link: [], price: money(p.price), sku: c.sku, gtin: c.upc, color: c.name });
+          image_link: img, image_alt: (p.variantAlt || '{name}, {variant}').replace('{name}', p.name).replace('{variant}', c.name), additional_image_link: [], price: money(p.price), cents: Math.round(p.price * 100), sku: c.sku, gtin: c.upc, color: c.name });
       }
     } else {
       if (!p.sku) continue;
       const pics = imgs.map(i => abs(i.src));
-      items.push({ ...base, id: p.sku, title: p.name, link: page, image_link: pics[0], additional_image_link: pics.slice(1, 11),
-        price: money(p.price), sku: p.sku, gtin: p.upc, ...(p.color ? { color: p.color } : {}) });
+      items.push({ ...base, id: p.sku, title: p.name, link: page, image_link: pics[0], image_alt: imgs[0]?.alt, additional_image_link: pics.slice(1, 11),
+        price: money(p.price), cents: Math.round(p.price * 100), sku: p.sku, gtin: p.upc, ...(p.color ? { color: p.color } : {}) });
     }
   }
   return items.filter(i => i.image_link).map(i => ({ ...i, availability: (stock[i.sku] ?? 0) > 0 ? 'in_stock' : 'out_of_stock' }));
 }
+
+// One SKU's title, link (with its option picked), main photo and price: the same as its Shopping listing.
+// Used by the store emails so a customer sees one name for one thing everywhere.
+export function skuInfo(catalog, sku, site) { return feedItems(catalog, {}, site).find(i => i.id === sku) || null; }
 
 export function feedXml(catalog, stock, site) {
   const tag = (k, v) => (v === undefined || v === null || v === '' ? '' : `<g:${k}>${xml(v)}</g:${k}>`);
