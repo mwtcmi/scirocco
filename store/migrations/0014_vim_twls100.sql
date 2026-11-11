@@ -1,1 +1,0 @@
-INSERT OR IGNORE INTO stock (key, qty) VALUES ('TWLS100', 0);

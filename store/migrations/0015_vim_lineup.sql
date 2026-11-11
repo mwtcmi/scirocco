@@ -1,1 +1,0 @@
-INSERT OR IGNORE INTO stock (key, qty) VALUES ('R6USA', 0), ('ILEX600USA', 0), ('R6USA-RK', 0), ('V387G', 0), ('V423', 0), ('XZNS412', 0), ('HCT1050A', 0), ('VSE616', 0), ('HSC100', 0), ('HSC200', 0);
