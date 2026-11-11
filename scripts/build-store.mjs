@@ -160,7 +160,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=20"></script>`;
+<script src="/paddock-store.js?v=21"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -218,7 +218,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=18">
+<link rel="stylesheet" href="/paddock-store.css?v=19">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -413,7 +413,7 @@ for (const p of cartProducts) {
   const dv = picker(p) ? defaultVariant(p) : null, fits = (i, v) => !forOf(i).length || forOf(i).some(k => v.shows.includes(k));
   const pics = picker(p) ? [...p.images.filter(i => i.sku && fits(i, dv)), ...p.images.filter(i => !i.sku && fits(i, dv))] : p.images;
   const ordered = picker(p) ? [...p.images.filter(i => i.sku), ...p.images.filter(i => !i.sku)] : p.images;
-  const thumbs = picker(p) ? `<div class="thumbs" data-thumbs="${p.cart}"${p.images.length > 1 ? '' : ' hidden'}>${ordered.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${forOf(i).length ? ` data-for="${forOf(i).join(' ')}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
+  const thumbs = picker(p) ? `<div class="thumbs${p.pick === 'many' ? ' one-row' : ''}" data-thumbs="${p.cart}"${p.pick === 'many' ? ' data-keep="1"' : p.images.length > 1 ? '' : ' hidden'}>${ordered.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${forOf(i).length ? ` data-for="${forOf(i).join(' ')}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
     : !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
   const related = inCat(p.category).filter(x => x.cart && x !== p && isLive(x));
   const gone = isRetired(p), soon = status(p) === 'coming-soon';

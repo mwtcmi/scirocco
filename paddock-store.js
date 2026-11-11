@@ -60,7 +60,7 @@ var gsel={};IDS.forEach(function(id){if(PRODUCTS[id].pick==='many'){var v=wantSk
 function gridSet(id){var pick=gsel[id].slice().sort().join(' ');return pick.indexOf(' ')<0?null:PRODUCTS[id].variants.filter(function(x){return x.includes&&x.includes.slice().sort().join(' ')===pick})[0]||null}
 function gridLines(id){var st=gridSet(id);return st?[st.sku]:gsel[id].slice()}
 function drawThumbs(id,v){all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
- box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
+ if(box.dataset.keep){box.hidden=false;box.style.visibility=shown<2?'hidden':''}else box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
 // The photo area as a lineup of every ratchet to scale (same-scale cut-outs, "cut" + "inches"), grouped by the second
 // option (Fixed, Flex). Nothing picked: all of them as light silhouettes under "Tap to build your set". Two or more
 // picked: the picked ones in full chrome, the rest as silhouettes, so the picture builds as you pick. One picked: that
@@ -85,9 +85,9 @@ function drawGrid(id){var p=PRODUCTS[id],pick=gsel[id],st=gridSet(id),v=st&&bySk
  all(attr('data-quick',id)).forEach(function(b){var k=b.dataset.skus;b.setAttribute('aria-pressed',!!k&&pick.slice().sort().join(' ')===k.split(' ').sort().join(' '));
   if(!b.onclick)b.onclick=function(){lineupOff[id]=false;gsel[id]=k?k.split(' '):[];if(gsel[id].length)sel[id]=bySku(id,gsel[id][gsel[id].length-1]).name;draw()}});
  if(v.img)all(attr('data-variant-img',id)).forEach(function(img){if(img.dataset.sku!==v.sku){img.dataset.sku=v.sku;img.src=v.img.src;if(v.img.srcset)img.srcset=v.img.srcset;img.alt=v.img.alt}});
- drawThumbs(id,v);if(!pick.length)all(attr('data-thumbs',id)).forEach(function(t){t.hidden=true});drawLineup(id);
+ drawThumbs(id,v);if(!pick.length)all(attr('data-thumbs',id)).forEach(function(t){t.style.visibility='hidden'});drawLineup(id);
  var total=lines.reduce(function(t,k){return t+skuPrice(k)},0),n=pick.length;
- all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'';e.hidden=!n});
+ all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'\u00a0';e.style.visibility=n?'':'hidden'});
  all(attr('data-grid-count',id)).forEach(function(e){e.textContent=n?n+' picked':''});
  all(attr('data-grid-sum',id)).forEach(function(e){e.textContent=st?(bySku(id,st.sku).name+'. Priced as a set.'):n?pick.map(function(k){return bySku(id,k).name}).join(' · '):'Tap the ratchets you want.'});
  all(attr('data-variant-ids',id)).forEach(function(e){e.textContent=n?'SKU '+(st?st.sku:pick.join(' · ')):''});
@@ -100,7 +100,7 @@ function drawProduct(id){if(PRODUCTS[id].pick==='many'){drawGrid(id);return}var 
  if(v.opts){all(attr('data-pick',id)).forEach(function(b){var i=+b.dataset.opt;b.setAttribute('aria-pressed',v.opts[i]===b.dataset.val);if(!b.onclick)b.onclick=function(){pickTo(id,i,b.dataset.val)}});
   all(attr('data-pick-name',id)).forEach(function(e){e.textContent=v.opts[+e.dataset.opt]+(+e.dataset.opt===v.opts.length-1&&v.size?', '+v.size:'')});
   all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
-   box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
+   if(box.dataset.keep){box.hidden=false;box.style.visibility=shown<2?'hidden':''}else box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
  all(attr('data-options',id)).forEach(function(box){box.innerHTML='';p.variants.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='sw'+(online&&have(x.sku)<1?' out':'');b.style.background=x.hex||'#777';b.title=x.name;
   b.setAttribute('aria-label',x.name+(online&&have(x.sku)<1?' (out of stock)':''));b.setAttribute('aria-pressed',sel[id]===x.name);b.onclick=function(){sel[id]=x.name;draw()};box.appendChild(b)})});
  all(attr('data-option-name',id)).forEach(function(e){e.textContent=v.name});
