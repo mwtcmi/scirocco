@@ -71,6 +71,21 @@ test('merchant feed lists every live SKU with live stock and price', async t => 
   assert.ok(!r.body.includes('MVRK-SET')); // only real SKUs
 });
 
+test('paddock kit: each part is its own Stripe line under its full name and price; parts without photos wait for the Google feed', async t => {
+  const s = service(t);
+  s.sqlite.prepare("UPDATE stock SET qty = 3 WHERE key IN ('SMS610', 'V421', 'R6USA')").run();
+  const r = await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: 'R6USA', qty: 1 }, { sku: 'SMS610', qty: 2 }, { sku: 'V421', qty: 1 }] } });
+  assert.equal(r.status, 200);
+  const p = s.sent[0].params;
+  assert.equal(p.get('line_items[1][price_data][product_data][name]'), 'VIM 10mm 6-Point 3/8" Drive Socket');
+  assert.equal(p.get('line_items[1][price_data][unit_amount]'), '699'); assert.equal(p.get('line_items[1][quantity]'), '2');
+  assert.match(p.get('line_items[1][price_data][product_data][description]'), /\(SMS610\)/);
+  assert.equal(p.get('line_items[2][price_data][product_data][name]'), 'VIM 3/8" Socket Rail, 16 Clips');
+  assert.equal((await s.call('/api/checkout', { method: 'POST', data: { fulfillment: 'pickup', items: [{ sku: 'SAR110', qty: 1 }] } })).status, 409); // stock starts at 0
+  const feed = (await s.call('/api/merchant-feed.xml', { origin: null })).body;
+  assert.ok(!feed.includes('<g:id>SMS610<')); // no photo yet
+});
+
 test('other origins are refused', async t => {
   const s = service(t);
   assert.equal((await s.call('/api/catalog', { origin: 'https://evil.example' })).status, 403);

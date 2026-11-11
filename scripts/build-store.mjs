@@ -43,14 +43,15 @@ for (const p of products.filter(p => p.variants)) {
   if (!Array.isArray(p.options) || !p.options.length) throw new Error(`${p.slug}: "variants" needs "options"`);
   if (p.colors) throw new Error(`${p.slug}: use "colors" or "variants", not both`);
   const seen = new Set(), combos = new Set();
-  if (p.pick && p.pick !== 'many') throw new Error(`${p.slug}: "pick" can only be "many"`);
+  if (p.pick && !['many', 'kit'].includes(p.pick)) throw new Error(`${p.slug}: "pick" can only be "many" or "kit"`);
   if (p.pick === 'many' && p.options.length !== 2) throw new Error(`${p.slug}: "pick": "many" needs exactly two options (columns and rows)`);
   for (const v of p.variants) {
     if (!v.sku || seen.has(v.sku)) throw new Error(`${p.slug}: every variant needs its own SKU`);
     seen.add(v.sku);
     if (v.includes) { if (!v.label && !v.opts) throw new Error(`${p.slug} ${v.sku}: a set needs a "label"`); if (!v.opts) { if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`); continue; } }
     if (!Array.isArray(v.opts) || v.opts.length !== p.options.length || v.opts.some((x, i) => !p.options[i].values.includes(x))) throw new Error(`${p.slug} ${v.sku}: "opts" must give one listed value per option`);
-    if (combos.has(v.opts.join('|'))) throw new Error(`${p.slug}: two variants are ${v.opts.join(' ')}`);
+    if (p.pick !== 'kit' && combos.has(v.opts.join('|'))) throw new Error(`${p.slug}: two variants are ${v.opts.join(' ')}`); // a kit's parts share a section
+    if (p.pick === 'kit' && !(v.label && v.chip && v.title)) throw new Error(`${p.slug} ${v.sku}: a kit part needs a "label", "chip" and "title"`);
     combos.add(v.opts.join('|'));
     if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`);
     if (v.status && !['live', 'coming-soon'].includes(v.status)) throw new Error(`${p.slug} ${v.sku}: status must be live or coming-soon`);
@@ -65,6 +66,22 @@ for (const p of products.filter(p => p.variants)) {
   if (p.defaultSku && !seen.has(p.defaultSku)) throw new Error(`${p.slug}: defaultSku ${p.defaultSku} is not a variant`);
   const forSale = p.variants.filter(v => (v.status || 'live') === 'live');
   p.price = Math.min(...(forSale.length ? forSale : p.variants).map(v => Number(v.price))).toFixed(2);
+}
+// "pick": "kit" (the VIM Paddock Kit): sections of parts to tap, any mix. "options" has one option whose values are the
+// sections; each part's "opts" names its section, with "row" (a line within the section), "chip" (the short button text),
+// "label" and "title" (the full name for Stripe, orders and Google). "kit": {groups: [{name, note, also: SKUs of other
+// products (the MVRK ratchets), rail: a SKU that comes automatically with the section's parts, quick: [{label, skus}]}],
+// quick: [{label, skus}]}. Every part is its own SKU and its own cart line.
+const allSkus = new Set(products.flatMap(p => p.variants ? p.variants.map(v => v.sku) : p.colors ? p.colors.map(c => c.sku) : p.sku ? [p.sku] : []));
+for (const p of products.filter(p => p.pick === 'kit')) {
+  const k = p.kit, names = p.options[0].values;
+  if (!k || !Array.isArray(k.groups) || k.groups.map(g => g.name).join('|') !== names.join('|')) throw new Error(`${p.slug}: "kit.groups" must list the sections in the same order as the option values`);
+  const own = new Set(p.variants.map(v => v.sku));
+  for (const g of k.groups) {
+    for (const x of g.also || []) if (!allSkus.has(x) || own.has(x)) throw new Error(`${p.slug}: "also" SKU ${x} must belong to another product`);
+    if (g.rail && !p.variants.some(v => v.sku === g.rail && v.opts[0] === g.name)) throw new Error(`${p.slug}: rail ${g.rail} must be a part in ${g.name}`);
+  }
+  for (const q of [...(k.quick || []), ...k.groups.flatMap(g => g.quick || [])]) if (!q.label || !q.skus?.length || q.skus.some(x => !allSkus.has(x))) throw new Error(`${p.slug}: every kit shortcut needs a label and known SKUs`);
 }
 const status = p => p.status || 'live';
 for (const p of products) if (!STATUSES.includes(status(p))) throw new Error(`${p.slug}: status must be ${STATUSES.join(', ')}`);
@@ -102,7 +119,8 @@ function variantsOf(p) {
     const shows = (p.images || []).some(i => i.sku === v.sku) ? [v.sku] : v.includes || [v.sku];
     const imgs = p.images || [], own = imgs.filter(i => shows.includes(i.sku)).concat(imgs.filter(i => i.skus && i.skus.some(k => shows.includes(k)))), name = optionName(v);
     return { name, sku: v.sku, upc: v.upc || '', opts: v.opts, size: v.size || '', ...(v.cut ? { cut: v.cut, inches: v.inches } : {}), cents: Math.round(Number(v.price) * 100), soon: (v.status || 'live') !== 'live', shows,
-      ...(v.includes ? { includes: v.includes } : {}), img: imgOf(own[0] || { ...PLACEHOLDER, alt: `${p.name}, ${name} (photo coming soon)` }) };
+      ...(v.includes ? { includes: v.includes } : {}), ...(p.pick === 'kit' ? { group: v.opts[0], row: v.row || '', chip: v.chip, title: v.title, ...(v.usa ? { usa: true } : {}) } : {}),
+      img: imgOf(own[0] || { ...PLACEHOLDER, alt: `${p.name}, ${name} (photo coming soon)` }) };
   });
   if (!p.colors) { const i = p.images?.[0]; return [{ name: '', sku: p.sku || '', upc: p.upc || '', img: i ? { src: i.src, srcset: i.src480 ? `${i.src480} 480w,${i.src} ${i.w}w` : '', alt: i.alt } : null }]; }
   return p.colors.map(c => {
@@ -134,7 +152,7 @@ for (const p of products) if (p.madeInUSA !== undefined && typeof p.madeInUSA !=
 const onPage = cartProducts.filter(p => isLive(p) || (picker(p) && !isRetired(p))); // a coming-soon configurator still lets you pick
 const clientData = {
   products: Object.fromEntries(onPage.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: p.colors ? 'Color' : picker(p) ? 'Option' : null, freeShipping: p.freeShipping === true,
-    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name), ...(p.pick ? { pick: p.pick } : {}) } : {}) }])),
+    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name), ...(p.pick ? { pick: p.pick } : {}) } : {}), ...(p.kit ? { kit: p.kit } : {}) }])),
   fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
 
@@ -161,7 +179,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=25"></script>`;
+<script src="/paddock-store.js?v=26"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -224,7 +242,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=21">
+<link rel="stylesheet" href="/paddock-store.css?v=22">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -262,7 +280,28 @@ ${rows.values.map(r => `<span class="gp-row">${esc(r)}</span>${cols.values.map(c
 ${quick.length ? `<div class="gp-quick">${quick.map(q => `<button type="button" data-quick="${p.cart}" data-skus="${q.skus.join(' ')}" data-label="${esc(q.label)}">${esc(q.label)}</button>`).join('')}<button type="button" data-quick="${p.cart}" data-skus="">Clear</button></div>` : ''}
 <p class="gp-sum" data-grid-sum="${p.cart}"></p></fieldset>`;
 };
-const options = p => p.pick === 'many' ? grid2(p) : picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
+// "pick": "kit": every section as a row of parts to tap; paddock-store.js keeps the picks, the total and the kit board.
+const bySkuAll = sku => { for (const p of products) for (const v of p.variants ? variantsOf(p) : []) if (v.sku === sku) return { p, v }; return null; };
+const kitPicker = p => {
+  const parts = variantsOf(p), mini = `<span class="kit-usa" aria-label="Made in USA">${FLAG_SVG}</span>`;
+  const chip = (sku, text, cents, label, usa) => `<button type="button" class="kit-chip" data-kit-sku="${esc(sku)}" aria-pressed="false" aria-label="${esc(label)}"><b>${esc(text)}</b><small>${money((cents / 100).toFixed(2))}</small>${usa ? mini : ''}</button>`;
+  const quick = (list, extra = '') => list?.length ? `<div class="gp-quick kit-quick">${list.map(q => `<button type="button" data-kit-quick="${p.cart}" data-skus="${q.skus.join(' ')}" data-label="${esc(q.label)}"${extra}>${esc(q.label)}</button>`).join('')}</div>` : '';
+  const groups = p.kit.groups.map(g => {
+    const mine = parts.filter(v => v.group === g.name && v.sku !== g.rail);
+    const also = (g.also || []).map(k => bySkuAll(k)).map(({ p: o, v }) => ({ sku: v.sku, chip: `${v.opts[1]} ${v.size}`, cents: v.cents, label: `${o.name}, ${v.name}`, usa: !!o.madeInUSA, row: '' }));
+    const all = [...also, ...mine.map(v => ({ sku: v.sku, chip: v.chip, cents: v.cents, label: v.title, usa: !!v.usa, row: v.row }))];
+    const rows = [...new Set(all.map(x => x.row))];
+    const chips = list => `<div class="kit-chips">${list.map(x => chip(x.sku, x.chip, x.cents, x.label, x.usa)).join('')}</div>`;
+    const rail = g.rail ? parts.find(v => v.sku === g.rail) : null;
+    return `<fieldset class="opt kit-group" data-kit-group="${esc(g.name)}"><legend>${esc(g.name)} <span data-kit-count="${esc(g.name)}"></span></legend>${g.note ? `<p class="kit-note">${esc(g.note)}</p>` : ''}
+${rows.length > 1 || rows[0] ? rows.map(r => `<div class="kit-row"><span class="kit-row-name">${esc(r)}</span>${chips(all.filter(x => x.row === r))}</div>`).join('') : chips(all)}
+${rail ? `<p class="kit-rail" data-kit-rail="${esc(rail.sku)}">Your sockets come on the ${esc(rail.name)}, ${money((rail.cents / 100).toFixed(2))}.</p>` : ''}${quick(g.quick)}</fieldset>`;
+  }).join('\n');
+  return `<div class="kit" data-kit="${p.cart}">${quick([...(p.kit.quick || []), { label: 'Clear', skus: [] }])}
+${groups}
+<div class="kit-sum"><span>Your kit <em data-kit-n="${p.cart}"></em></span><strong data-kit-total="${p.cart}"></strong></div><p class="gp-sum" data-kit-sum="${p.cart}"></p></div>`;
+};
+const options = p => p.pick === 'kit' ? kitPicker(p) : p.pick === 'many' ? grid2(p) : picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
 const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
 const shipBadge = p => p.freeShipping ? '<div class="freeship">Free shipping to the lower 48</div>' : '';
 const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';
@@ -295,7 +334,8 @@ function extCard(p) {
 function tile(p) {
   const url = prodUrl(p), v = defaultVariant(p);
   const pic = `<img${multi(p) ? ` data-variant-img="${p.cart}"` : ''} src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(v.img.alt)}">`;
-  const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price"${picker(p) ? '' : ` data-price="${p.cart}"`}>${picker(p) ? 'From ' : ''}${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
+  const body = isLive(p) && p.pick === 'kit' ? `<h3>${esc(p.name)}</h3><span class="price">Build your kit</span><span class="ext-buy">Start →</span>`
+    : isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price"${picker(p) ? '' : ` data-price="${p.cart}"`}>${picker(p) ? 'From ' : ''}${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
     : `<h3>${esc(p.name)}</h3><span class="price">Coming Soon</span><span class="ext-buy">See details →</span>`;
   if (!p.colors || !isLive(p)) return `<a class="ext" href="${url}">${usaFlag(p) ? `<span class="ext-photo">${pic}${usaFlag(p)}</span>` : pic}<div class="ext-body">${body}</div></a>`;
   // Products with options: swatches sit over the bottom of the photo, so the tile keeps the same size as its
@@ -420,9 +460,9 @@ for (const p of cartProducts) {
   const dv = picker(p) ? defaultVariant(p) : null, fits = (i, v) => !forOf(i).length || forOf(i).some(k => v.shows.includes(k));
   const pics = picker(p) ? [...p.images.filter(i => i.sku && fits(i, dv)), ...p.images.filter(i => !i.sku && fits(i, dv))] : p.images;
   const ordered = picker(p) ? [...p.images.filter(i => i.sku), ...p.images.filter(i => !i.sku)] : p.images;
-  const thumbs = picker(p) ? `<div class="thumbs${p.pick === 'many' ? ' one-row' : ''}" data-thumbs="${p.cart}"${p.pick === 'many' ? ' data-keep="1"' : p.images.length > 1 ? '' : ' hidden'}>${ordered.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${forOf(i).length ? ` data-for="${forOf(i).join(' ')}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
+  const thumbs = p.pick === 'kit' ? '' : picker(p) ? `<div class="thumbs${p.pick === 'many' ? ' one-row' : ''}" data-thumbs="${p.cart}"${p.pick === 'many' ? ' data-keep="1"' : p.images.length > 1 ? '' : ' hidden'}>${ordered.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${forOf(i).length ? ` data-for="${forOf(i).join(' ')}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
     : !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
-  const related = inCat(p.category).filter(x => x.cart && x !== p && isLive(x));
+  const related = inCat(p.category).filter(x => x.cart && x !== p && isLive(x) && !x.pick); // configurators have their own pages
   const gone = isRetired(p), soon = status(p) === 'coming-soon';
   const instead = gone && p.replacedBy ? products.find(x => x.slug === p.replacedBy && !isRetired(x)) : null;
   const buy = gone
@@ -435,12 +475,12 @@ for (const p of cartProducts) {
   const image = abs(defaultVariant(p).img.src);
   write(`paddock/products/${p.slug}/index.html`,
     head({ title: p.seoTitle || `${p.name} | 799 Paddock Store`, desc: p.seoDescription || `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or ${p.freeShipping ? 'free shipping' : '$25 flat-rate shipping'}.`,
-      url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
+      url: abs(url), image, imageAlt: p.name, ld: isLive(p) && p.pick !== 'kit' ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
 ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
 <div class="pd-grid">
-<div><div class="pd-photo">${photoTag(p, { big: true, lazy: false })}${p.pick === 'many' ? `<div class="lineup" data-lineup="${p.cart}" hidden></div>` : ''}${usaFlag(p)}</div>${thumbs}</div>
+<div><div class="pd-photo${p.pick === 'kit' ? ' kit-photo' : ''}">${p.pick === 'kit' ? `<div class="kitboard" data-kitboard="${p.cart}"></div>` : photoTag(p, { big: true, lazy: false })}${p.pick === 'many' ? `<div class="lineup" data-lineup="${p.cart}" hidden></div>` : ''}${usaFlag(p)}</div>${thumbs}</div>
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>
@@ -456,7 +496,7 @@ ${crumbs(trail)}
 ${p.story || p.points ? `<section class="pd-story"><div class="wrap">${p.story ? `<div class="story-head"><div class="kicker">${esc(p.story.kicker || '')}</div><h2>${esc(p.story.title)}</h2><p>${esc(p.story.text)}</p></div>` : ''}${p.points ? `<div class="points">${p.points.map(x => `<div class="point"><h3>${esc(x.title)}</h3><p>${esc(x.text)}</p></div>`).join('')}</div>` : ''}</div></section>` : ''}
 <section class="pd-about"><div class="wrap pd-about-grid">
 <div><h2>About</h2><p>${esc(p.about)}</p></div>
-<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>${picker(p) ? 'Option' : 'Color'}</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td>${i === 1 && p.pick === 'many' && !/^To come|^Set/.test(v) ? `<a href="?sku=${encodeURIComponent(v)}" data-pick-sku="${esc(v)}" data-pick-for="${p.cart}">${esc(v)}</a>` : esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
+<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>${picker(p) ? 'Option' : 'Color'}</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td>${i === 1 && p.pick && !/^To come|^Set/.test(v) ? `<a href="?sku=${encodeURIComponent(v)}" data-pick-sku="${esc(v)}" data-pick-for="${p.cart}">${esc(v)}</a>` : esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
 </div></section>
 ${related.length ? `<section class="related store"><div class="wrap"><h2>Goes With</h2><div class="store-grid${related.length % 3 === 0 ? ' cols-3' : ''}">\n${related.map(x => card(x)).join('\n')}\n</div></div></section>` : '<div class="related"></div>'}
 ` + foot);

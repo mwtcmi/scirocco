@@ -36,7 +36,7 @@ function used(sku){return cart.reduce(function(s,l){return s+(parts(l.sku).index
 function left(sku){var h=BYSKU[sku];if(h&&h.v.includes)return online?Math.min.apply(null,h.v.includes.map(function(k){return (data.stock[k]||0)-used(k)})):0;return have(sku)-used(sku)}
 function sellable(id){return online&&!!data.catalog[id]&&(!picker(id)||!!liveVariant(id,variant(id).sku))}
 function count(){return cart.reduce(function(s,l){return s+l.qty},0)}
-function lineLabel(l){var h=BYSKU[l.sku];return h?PRODUCTS[h.id].short+(multi(h.id)?', '+h.v.name:''):l.sku}
+function lineLabel(l){var h=BYSKU[l.sku];return h?h.v.title||PRODUCTS[h.id].short+(multi(h.id)?', '+h.v.name:''):l.sku}
 // Stock wording: never "0 in stock" (when it's out, the button says so and the notify box shows).
 function stockText(onHand,rest){return onHand<1?'':rest<1?'All in your cart':rest===1?'Only 1 left':rest+' in stock'}
 // The chosen way to get the order: 'ship', 'pickup', 'table', or 'event:<id>' (paddock pickup at an event).
@@ -67,7 +67,9 @@ function drawThumbs(id,v){all(attr('data-thumbs',id)).forEach(function(box){var 
 // ratchet's own photo. Each row can be tapped like the grid. A thumbnail click shows that photo instead.
 var lineupOff={};
 function toggleSku(id,sku){var i=gsel[id].indexOf(sku);if(i>=0)gsel[id].splice(i,1);else gsel[id].push(sku);if(gsel[id].length)sel[id]=bySku(id,gsel[id][gsel[id].length-1]).name;lineupOff[id]=false;draw()}
-all('[data-pick-sku]').forEach(function(a){a.onclick=function(e){var id=a.getAttribute('data-pick-for'),sku=a.getAttribute('data-pick-sku');if(!gsel[id]||!bySku(id,sku))return;e.preventDefault();if(gsel[id].indexOf(sku)<0)toggleSku(id,sku);var g=document.querySelector('[data-grid="'+id+'"]');if(g)g.scrollIntoView({behavior:'smooth',block:'center'})}}); // Part numbers table: tap a SKU to add it to the set
+all('[data-pick-sku]').forEach(function(a){a.onclick=function(e){var id=a.getAttribute('data-pick-for'),sku=a.getAttribute('data-pick-sku');
+ if(ksel[id]){e.preventDefault();if(ksel[id].indexOf(sku)<0&&!isRail(id,sku))kitTap(id,sku);var c=document.querySelector('.kit [data-kit-sku="'+sku+'"]');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});return}
+ if(!gsel[id]||!bySku(id,sku))return;e.preventDefault();if(gsel[id].indexOf(sku)<0)toggleSku(id,sku);var g=document.querySelector('[data-grid="'+id+'"]');if(g)g.scrollIntoView({behavior:'smooth',block:'center'})}}); // Part numbers table: tap a SKU to add it to the set
 // Structured data for Google: swap the build-time availability for live stock once the catalog loads.
 function liveLd(){all('script[type="application/ld+json"]').forEach(function(el){try{var d=JSON.parse(el.textContent),hit=false;(d.hasVariant||[d]).forEach(function(x){if(x.offers&&x.sku){x.offers.availability='https://schema.org/'+(have(x.sku)>0?'InStock':'OutOfStock');hit=true}});if(hit)el.textContent=JSON.stringify(d)}catch(e){}})}
 function drawLineup(id){var p=PRODUCTS[id],pick=gsel[id];all(attr('data-lineup',id)).forEach(function(box){
@@ -99,7 +101,64 @@ function drawGrid(id){var p=PRODUCTS[id],pick=gsel[id],st=gridSet(id),v=st&&bySk
  all('.add'+attr('data-add',id)).forEach(function(b){var ok=online&&n&&!bad.length&&!outs.length&&rest>0;b.disabled=!ok;
   b.textContent=!n?'Build your set':bad.length&&online?'Coming Soon':!online?'Coming Soon':outs.length?(outs.length===n?'Out of stock':bySku(id,outs[0]).name+' is out of stock'):rest<1?'All in your cart':n>1?'Add '+n+' to cart':'Add to cart'});
  all('form'+attr('data-notify',id)).forEach(function(f){var k=outs[0],show=!!k&&cat;f.hidden=!show;if(k&&f.dataset.sku!==k){f.dataset.sku=k;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l)l.textContent='Want the '+bySku(id,k).name+'? Get an email when it\'s back.'}})}
-function drawProduct(id){if(PRODUCTS[id].pick==='many'){drawGrid(id);return}var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
+// "pick": "kit" (the VIM Paddock Kit): tap any mix of parts, section by section. Every part is its own SKU and its own cart
+// line; a section's "rail" (the 16-clip socket rail) comes automatically with its parts. "also" brings in another product's
+// SKUs (the MVRK ratchets). An out-of-stock part can't be picked: tapping it opens "email me when it's back" for it.
+var KIT={},ksel={},knotify={};
+IDS.forEach(function(id){var p=PRODUCTS[id];if(p.pick!=='kit')return;var groupOf={},railOf={};
+ p.kit.groups.forEach(function(g){(g.also||[]).forEach(function(k){groupOf[k]=g.name});if(g.rail)railOf[g.name]=g.rail});
+ p.variants.forEach(function(v){groupOf[v.sku]=v.group});KIT[id]={groupOf:groupOf,railOf:railOf};
+ ksel[id]=wantSku&&groupOf[wantSku]&&!isRail(id,wantSku)?[wantSku]:[]});
+function isRail(id,sku){var r=KIT[id].railOf;return Object.keys(r).some(function(g){return r[g]===sku})}
+function kitName(sku){var h=BYSKU[sku];return h?(h.v.title||PRODUCTS[h.id].name+', '+h.v.name):sku}
+function kitShort(sku){var h=BYSKU[sku];return h?(h.v.chip||h.v.opts&&h.v.opts[1]+' '+h.v.size||h.v.name):sku}
+function kitGroupPicks(id,g){return ksel[id].filter(function(k){return KIT[id].groupOf[k]===g})}
+function kitLines(id){var out=ksel[id].slice(),r=KIT[id].railOf;Object.keys(r).forEach(function(g){if(kitGroupPicks(id,g).length&&out.indexOf(r[g])<0)out.push(r[g])});return out}
+// Can this part be picked now? Online, for sale, in stock beyond what's in the cart; a part that comes on a rail needs the rail too.
+function kitOk(id,sku){var h=BYSKU[sku];if(!online||!h||!data.catalog[h.id]||(picker(h.id)&&!liveVariant(h.id,sku)))return false;if(left(sku)<1)return false;
+ var g=KIT[id].groupOf[sku],rail=KIT[id].railOf[g];return !rail||rail===sku||left(rail)>0}
+function kitTap(id,sku){var i=ksel[id].indexOf(sku);if(i>=0){ksel[id].splice(i,1);draw();return}
+ if(online&&!kitOk(id,sku)){var rail=KIT[id].railOf[KIT[id].groupOf[sku]],k=have(sku)<1?sku:rail&&have(rail)<1?rail:null;knotify[id]=k;draw();return}
+ ksel[id].push(sku);knotify[id]=null;draw()}
+function sameSet(a,b){return a.length===b.length&&a.slice().sort().join(' ')===b.slice().sort().join(' ')}
+function kitQuick(id,skus,group){var want=skus.filter(function(k){return !online||kitOk(id,k)});
+ if(group){var cur=kitGroupPicks(id,group),rest=ksel[id].filter(function(k){return KIT[id].groupOf[k]!==group});ksel[id]=sameSet(cur,want)&&want.length?rest:rest.concat(want)}
+ else ksel[id]=want.filter(function(k){return !isRail(id,k)});knotify[id]=null;draw()}
+// Socket outside diameters (mm) for the kit board, by size, so the rail looks like a real rail.
+var OD={8:17,10:17,12:18.5,13:19,14:20,15:21,17:23.5,19:26};
+function drawKitboard(id){var p=PRODUCTS[id];all(attr('data-kitboard',id)).forEach(function(box){
+ if(!box.dataset.built){box.dataset.built='1';var html='<div class="kb-cap">Your kit</div>';
+  p.kit.groups.forEach(function(g){if(g.rail){var rows={},order=[];p.variants.forEach(function(v){if(v.group===g.name&&v.sku!==g.rail){if(!rows[v.row]){rows[v.row]=[];order.push(v.row)}rows[v.row].push(v)}});
+    html+='<div class="kb-rail" data-kb-group="'+g.name+'"><div class="kb-rail-head">'+g.name+' <span data-kb-railname></span></div>';
+    order.forEach(function(r){html+='<div class="kb-rail-row"><span class="kb-row-name">'+r+'</span><div class="kb-clips">'+rows[r].map(function(v){var mm=parseFloat(v.chip),d=Math.round((OD[mm]||20)/26*100);
+     return '<button type="button" class="kb-clip" data-kb-sku="'+v.sku+'" aria-label="'+v.title.replace(/"/g,'&quot;')+'"><span class="kb-sock" style="width:'+d+'%"><b>'+mm+'</b></span></button>'}).join('')+'</div></div>'});
+    html+='</div>'}
+   else html+='<div class="kb-line" data-kb-group="'+g.name+'"><span class="kb-box"></span><span class="kb-name">'+g.name+'</span><span class="kb-picks" data-kb-picks></span></div>'});
+  html+='<div class="kb-foot"><span data-kb-n></span><strong data-kb-total></strong></div>';box.innerHTML=html;
+  [].slice.call(box.querySelectorAll('[data-kb-sku]')).forEach(function(b){b.onclick=function(){kitTap(id,b.dataset.kbSku)}})}
+ var lines=kitLines(id);box.classList.toggle('empty',!ksel[id].length);
+ [].slice.call(box.querySelectorAll('[data-kb-sku]')).forEach(function(b){var on=ksel[id].indexOf(b.dataset.kbSku)>=0;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+ [].slice.call(box.querySelectorAll('.kb-line')).forEach(function(l){var picks=kitGroupPicks(id,l.dataset.kbGroup);l.classList.toggle('on',!!picks.length);l.querySelector('[data-kb-picks]').textContent=picks.length?picks.map(kitShort).join(' · '):'—'});
+ [].slice.call(box.querySelectorAll('.kb-rail')).forEach(function(r){var g=r.dataset.kbGroup,rail=KIT[id].railOf[g],n=kitGroupPicks(id,g).length;r.classList.toggle('on',!!n);r.querySelector('[data-kb-railname]').textContent=n?n+' of 16 on the rail':'Tap to fill the rail'});
+ var t=lines.reduce(function(s,k){return s+skuPrice(k)},0);box.querySelector('[data-kb-n]').textContent=lines.length?lines.length+(lines.length===1?' piece':' pieces'):'Tap the parts you want';
+ box.querySelector('[data-kb-total]').textContent=lines.length?money(t):''})}
+function drawKit(id){var p=PRODUCTS[id],lines=kitLines(id),n=lines.length,total=lines.reduce(function(s,k){return s+skuPrice(k)},0);
+ all('.kit[data-kit="'+id+'"] [data-kit-sku]').forEach(function(b){var sku=b.dataset.kitSku,on=ksel[id].indexOf(sku)>=0,ok=!online||kitOk(id,sku);b.setAttribute('aria-pressed',on);b.classList.toggle('out',online&&!on&&!ok);
+  b.title=online&&!on&&!ok?(have(sku)<1?'Out of stock: tap to get an email when it\'s back':left(sku)<1?'All in your cart':'Out of stock'):'';if(!b.onclick)b.onclick=function(){kitTap(id,sku)}});
+ all('[data-kit-quick="'+id+'"]').forEach(function(b){var fs=b.closest('[data-kit-group]'),g=fs&&fs.dataset.kitGroup,k=b.dataset.skus?b.dataset.skus.split(' '):[],want=k.filter(function(x){return !online||kitOk(id,x)||ksel[id].indexOf(x)>=0}).filter(function(x){return !isRail(id,x)});
+  b.setAttribute('aria-pressed',k.length?sameSet(g?kitGroupPicks(id,g):ksel[id],want)&&want.length>0:false);if(!b.onclick)b.onclick=function(){kitQuick(id,k,g)}});
+ all('[data-kit-group]').forEach(function(fs){var c=fs.querySelector('[data-kit-count]'),m=kitGroupPicks(id,fs.dataset.kitGroup).length;if(c)c.textContent=m?m+' picked':''});
+ all('[data-kit-rail]').forEach(function(r){var rail=r.dataset.kitRail,on=lines.indexOf(rail)>=0;r.classList.toggle('on',on);r.classList.toggle('out',online&&have(rail)<1)});
+ all(attr('data-kit-n',id)).forEach(function(e){e.textContent=n?'· '+n+(n===1?' piece':' pieces'):''});
+ all(attr('data-kit-total',id)).forEach(function(e){e.textContent=n?money(total):''});
+ all(attr('data-kit-sum',id)).forEach(function(e){e.textContent=n?'Each piece is its own line in your cart.':'Tap the parts you want, or start with the must-haves.'});
+ all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):' ';e.style.visibility=n?'':'hidden'});
+ all(attr('data-variant-ids',id)).forEach(function(e){e.textContent=n?n+' SKUs':''});
+ all(attr('data-stock',id)).forEach(function(e){e.textContent=''});
+ all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!online||!n;b.textContent=!online?'Store offline':!n?'Build your kit':'Add '+n+' to cart'});
+ all('form'+attr('data-notify',id)).forEach(function(f){var k=knotify[id];f.hidden=!k;if(k&&f.dataset.sku!==k){f.dataset.sku=k;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l)l.textContent='The '+kitName(k)+' is out of stock. Get an email when it\'s back.'}});
+ drawKitboard(id)}
+function drawProduct(id){if(PRODUCTS[id].pick==='kit'){drawKit(id);return}if(PRODUCTS[id].pick==='many'){drawGrid(id);return}var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
  if(v.opts){all(attr('data-pick',id)).forEach(function(b){var i=+b.dataset.opt;b.setAttribute('aria-pressed',v.opts[i]===b.dataset.val);if(!b.onclick)b.onclick=function(){pickTo(id,i,b.dataset.val)}});
   all(attr('data-pick-name',id)).forEach(function(e){e.textContent=v.opts[+e.dataset.opt]+(+e.dataset.opt===v.opts.length-1&&v.size?', '+v.size:'')});
   all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
@@ -141,7 +200,7 @@ function align(){var parts=['h3','.idline','.desc','.facts'],items=all('.store-g
  var rows={};items.forEach(function(it){var k=Math.round(it.getBoundingClientRect().top+scrollY);(rows[k]=rows[k]||[]).push(it)});
  Object.keys(rows).forEach(function(k){var row=rows[k];if(row.length<2)return;parts.forEach(function(s){var els=row.map(function(it){return it.querySelector(s)}).filter(Boolean),h=Math.max.apply(null,els.map(function(e){return e.getBoundingClientRect().height}));els.forEach(function(e){e.style.minHeight=h+'px'})})})}
 window.addEventListener('resize',align);
-function add(id){if(!PRODUCTS[id])return;(PRODUCTS[id].pick==='many'?gridLines(id):[variant(id).sku]).forEach(function(sku){var l=cart.filter(function(x){return x.sku===sku})[0];if(l)l.qty++;else cart.push({sku:sku,qty:1})});save();draw();open()}
+function add(id){if(!PRODUCTS[id])return;(PRODUCTS[id].pick==='kit'?kitLines(id).filter(function(k){return left(k)>0}):PRODUCTS[id].pick==='many'?gridLines(id):[variant(id).sku]).forEach(function(sku){var l=cart.filter(function(x){return x.sku===sku})[0];if(l)l.qty++;else cart.push({sku:sku,qty:1})});save();draw();open()}
 function open(){$('cart').hidden=false;$('cart-shade').hidden=false;$('cart-close').focus()}
 function close(){$('cart').hidden=true;$('cart-shade').hidden=true;$('cart-btn').focus()}
 function note(t){var n=$('store-note');if(!n)return;n.textContent=t;n.hidden=!t}

@@ -26,7 +26,7 @@ export const optionName = v => v.label || v.opts.join(' ') + (v.size ? ', ' + v.
 export function variantsOf(p) {
   // A set ("includes": other SKUs of the same product) has its own SKU and price but no stock of its own: it is
   // in stock when every part is, and selling one takes one of each part.
-  if (p.variants) return p.variants.map(v => ({ name: optionName(v), sku: v.sku, cents: cents(v.price), map: cents(v.map ?? v.price), live: (v.status || 'live') === 'live', ...(v.includes ? { includes: v.includes } : {}) }));
+  if (p.variants) return p.variants.map(v => ({ name: optionName(v), sku: v.sku, cents: cents(v.price), map: cents(v.map ?? v.price), live: (v.status || 'live') === 'live', ...(v.includes ? { includes: v.includes } : {}), ...(v.title ? { title: v.title } : {}) }));
   return p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku })) : [{ name: '', sku: p.sku }];
 }
 export function buildCatalog(file) {
@@ -100,8 +100,9 @@ export function priceLine(line) {
     if (!v) throw new APIError(400, 'Unknown option.');
   }
   const p = CATALOG[id], multi = p.variants.length > 1;
-  return { product: id, sku: v.sku, variant: v.name, qty, cents: v.cents ?? p.cents, map: v.map ?? p.map, name: p.name, freeShipping: !!p.freeShipping,
-    description: (multi ? v.name + ', ' : '') + p.description + ' (' + (v.includes ? v.includes.join(' + ') : v.sku) + ')', keys: v.includes || [v.sku] };
+  // A kit part ("title", e.g. "VIM 10mm 6-Point 3/8\" Drive Socket") goes to Stripe under its own full name.
+  return { product: id, sku: v.sku, variant: v.name, qty, cents: v.cents ?? p.cents, map: v.map ?? p.map, name: v.title || p.name, freeShipping: !!p.freeShipping,
+    description: (multi && !v.title ? v.name + ', ' : '') + p.description + ' (' + (v.includes ? v.includes.join(' + ') : v.sku) + ')', keys: v.includes || [v.sku] };
 }
 // A set sells as one line per ratchet, so every order lists single SKUs (Mike, 2026-11-11). The set price is split
 // across its parts in proportion to their own prices, rounded to the cent, with any leftover cent on the dearest

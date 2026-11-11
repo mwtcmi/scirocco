@@ -11,6 +11,7 @@ const money = n => Number(n).toFixed(2) + ' USD';
 // "feedDesc" on a product replaces the description for Shopping (one listing is one SKU).
 // "feedTitle" on a product: a template for option titles, e.g. "VIM MVRK {Drive} Drive {Head} Head Ratchet, {size}".
 function optionTitle(p, v) {
+  if (v.title) return v.title; // a kit part's own full name
   if (!p.feedTitle) return `${p.name}, ${optionName(v)}`;
   return p.feedTitle.replace(/\{(\w+)\}/g, (m, k) => {
     if (k === 'size') return v.size || '';
@@ -37,7 +38,8 @@ export function feedItems(catalog, stock, site) {
         if ((v.status || 'live') !== 'live' || v.includes) continue; // only real, live SKUs
         const own = imgs.filter(i => i.sku === v.sku), shared = imgs.filter(i => i.skus && i.skus.includes(v.sku));
         const all = [...own, ...shared], pics = [...all.filter(i => !/-dim-/.test(i.src)), ...all.filter(i => /-dim-/.test(i.src))].map(i => abs(i.src)); // main image: a plain photo; the measured shot (text on it) goes after
-        items.push({ ...base, id: v.sku, item_group_id: p.slug, title: optionTitle(p, v), link: `${page}?sku=${encodeURIComponent(v.sku)}`,
+        // Kit parts are different products, not options of one product, so they get no item_group_id.
+        items.push({ ...base, id: v.sku, ...(p.pick === 'kit' ? {} : { item_group_id: p.slug }), title: optionTitle(p, v), link: `${page}?sku=${encodeURIComponent(v.sku)}`,
           image_link: pics[0], image_alt: (all.find(i => abs(i.src) === pics[0]) || {}).alt, additional_image_link: pics.slice(1, 11), price: money(v.price), cents: Math.round(v.price * 100), sku: v.sku, gtin: v.upc, ...(v.size ? { size: optionName(v) } : {}) });
       }
     } else if (p.colors) {
@@ -53,16 +55,16 @@ export function feedItems(catalog, stock, site) {
         price: money(p.price), cents: Math.round(p.price * 100), sku: p.sku, gtin: p.upc, ...(p.color ? { color: p.color } : {}) });
     }
   }
-  return items.filter(i => i.image_link).map(i => ({ ...i, availability: (stock[i.sku] ?? 0) > 0 ? 'in_stock' : 'out_of_stock' }));
+  return items.map(i => ({ ...i, availability: (stock[i.sku] ?? 0) > 0 ? 'in_stock' : 'out_of_stock' }));
 }
 
 // One SKU's title, link (with its option picked), main photo and price: the same as its Shopping listing.
 // Used by the store emails so a customer sees one name for one thing everywhere.
-export function skuInfo(catalog, sku, site) { return feedItems(catalog, {}, site).find(i => i.id === sku) || null; }
+export function skuInfo(catalog, sku, site) { return feedItems(catalog, {}, site).find(i => i.id === sku) || null; } // may have no photo yet
 
 export function feedXml(catalog, stock, site) {
   const tag = (k, v) => (v === undefined || v === null || v === '' ? '' : `<g:${k}>${xml(v)}</g:${k}>`);
-  const items = feedItems(catalog, stock, site).map(i => `<item>${[
+  const items = feedItems(catalog, stock, site).filter(i => i.image_link).map(i => `<item>${[
     tag('id', i.id), tag('item_group_id', i.item_group_id), `<title>${xml(i.title)}</title>`, `<description>${xml(i.description)}</description>`,
     `<link>${xml(i.link)}</link>`, tag('image_link', i.image_link), ...i.additional_image_link.map(u => tag('additional_image_link', u)),
     tag('availability', i.availability), tag('price', i.price), tag('brand', i.brand), tag('gtin', i.gtin), tag('mpn', i.sku),
