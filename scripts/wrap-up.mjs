@@ -234,7 +234,7 @@ if (CHECK_ONLY) {
 // ---- Report ----
 const indexed = pages.filter(p => p.indexable).sort((a, b) => (a.url === SITE + '/' ? -1 : b.url === SITE + '/' ? 1 : a.url.localeCompare(b.url)));
 const hidden = pages.filter(p => !p.indexable);
-console.log(`\nScirocco 799 wrap-up — ${htmlFiles.length} pages checked\n`);
+console.log(`\n799 Motorsport wrap-up — ${htmlFiles.length} pages checked\n`);
 console.log(`Sitemap ${sitemapStatus}: ${indexed.length} pages`);
 for (const p of indexed) console.log(`  + ${p.url}`);
 console.log(`Left out of the sitemap (${hidden.length}): ${hidden.map(p => p.page + (p.is404 ? ' [404]' : p.isRedirect ? ' [redirect]' : ' [noindex]')).join(', ')}`);

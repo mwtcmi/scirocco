@@ -207,7 +207,7 @@ ${baseStyle}
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 <meta name="theme-color" content="#050505">
 <link rel="canonical" href="${url}">
-<meta property="og:site_name" content="Scirocco 799">
+<meta property="og:site_name" content="799 Motorsport">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${t}">
 <meta property="og:description" content="${d}">
@@ -346,7 +346,7 @@ for (const c of live) {
   for (let n = 1; n <= pages; n++) {
     const url = catUrl(c) + (n > 1 ? `page/${n}/` : ''), slice = list.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
     // Optional "seoTitle" / "seoDescription" in catalog.json override the search title and description.
-    const title = c.seoTitle ? c.seoTitle.replace(' | ', n > 1 ? ` (page ${n}) | ` : ' | ') : `${c.name}${n > 1 ? ` (page ${n})` : ''} | Paddock Store | Scirocco 799`;
+    const title = c.seoTitle ? c.seoTitle.replace(' | ', n > 1 ? ` (page ${n}) | ` : ' | ') : `${c.name}${n > 1 ? ` (page ${n})` : ''} | 799 Paddock Store`;
     const desc = c.seoDescription || c.intro || c.blurb;
     const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)]];
     const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: [...(feat && n === 1 ? [feat] : []), ...slice].filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
@@ -379,7 +379,7 @@ for (const b of brands.filter(b => b.own)) {
   const desc = b.info.intro || `Every ${b.name} product in the 799 Paddock Store. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping.`;
   const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: b.list.filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(prodUrl(p)), name: p.name })) };
   write(`paddock/brands/${b.slug}/index.html`,
-    head({ title: `${b.name} | Paddock Store | Scirocco 799`, desc, url: SITE + b.url, ld: [crumbsLd(trail), itemList] }) + `
+    head({ title: `${b.name} | 799 Paddock Store`, desc, url: SITE + b.url, ld: [crumbsLd(trail), itemList] }) + `
 ${crumbs(trail)}
 <header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store · Brand</div><h1>${esc(b.name)}</h1><p>${esc(desc)}</p></div></header>
 <section class="store-page store" id="store"><div class="wrap">
@@ -434,7 +434,7 @@ for (const p of cartProducts) {
   ${notifyForm(p)}`;
   const image = abs(defaultVariant(p).img.src);
   write(`paddock/products/${p.slug}/index.html`,
-    head({ title: p.seoTitle || `${p.name} | Paddock Store | Scirocco 799`, desc: p.seoDescription || `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or ${p.freeShipping ? 'free shipping' : '$25 flat-rate shipping'}.`,
+    head({ title: p.seoTitle || `${p.name} | 799 Paddock Store`, desc: p.seoDescription || `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or ${p.freeShipping ? 'free shipping' : '$25 flat-rate shipping'}.`,
       url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
 ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
