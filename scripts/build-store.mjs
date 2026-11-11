@@ -115,6 +115,11 @@ const FLAG_SVG = (() => {
   return `<svg viewBox="0 0 190 100" aria-hidden="true" focusable="false"><rect width="190" height="100" fill="#fff"/>${stripes}<rect width="76" height="53.85" fill="#3c3b6e"/><g fill="#fff">${stars.join('')}</g></svg>`;
 })();
 const usaFlag = p => p.madeInUSA ? `<span class="usa-flag" role="img" aria-label="Made in USA" title="Made in USA">${FLAG_SVG}</span>` : '';
+// Optional product-page story: "story" {kicker, title, text} and "points" [{title, text}] (e.g. Repair / Replacement / Support).
+for (const p of products) {
+  if (p.story && !(p.story.title && p.story.text)) throw new Error(`${p.slug}: "story" needs a title and text`);
+  if (p.points && !(Array.isArray(p.points) && p.points.every(x => x.title && x.text))) throw new Error(`${p.slug}: every one of "points" needs a title and text`);
+}
 for (const p of products) if (p.madeInUSA !== undefined && typeof p.madeInUSA !== 'boolean') throw new Error(`${p.slug}: madeInUSA must be true or false`);
 
 
@@ -207,7 +212,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=12">
+<link rel="stylesheet" href="/paddock-store.css?v=13">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -419,6 +424,7 @@ ${crumbs(trail)}
 </div>
 </div>
 </div></section>
+${p.story || p.points ? `<section class="pd-story"><div class="wrap">${p.story ? `<div class="story-head"><div class="kicker">${esc(p.story.kicker || '')}</div><h2>${esc(p.story.title)}</h2><p>${esc(p.story.text)}</p></div>` : ''}${p.points ? `<div class="points">${p.points.map(x => `<div class="point"><h3>${esc(x.title)}</h3><p>${esc(x.text)}</p></div>`).join('')}</div>` : ''}</div></section>` : ''}
 <section class="pd-about"><div class="wrap pd-about-grid">
 <div><h2>About</h2><p>${esc(p.about)}</p></div>
 <div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>${picker(p) ? 'Option' : 'Color'}</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
