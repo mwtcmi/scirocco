@@ -110,6 +110,14 @@
       ],
       "sku": "V410", "upc": "", "madeInUSA": true
     },
+    {
+      "slug": "vim-twls100-thin-wall-lug-nut-socket-set", "category": "vim-tools", "cart": "twls100", "status": "coming-soon", "map": 38.89, "list": 53.03, "checkoutNote": "3 pc, 1/2 in drive, thin wall impact lug sockets",
+      "brand": "VIM Tools", "name": "VIM TWLS100 3 Pc. Thin Wall Impact Lug Nut Socket Set, 1/2\" Drive", "short": "TWLS100 Thin Wall Lug Sockets", "price": "53.99",
+      "desc": "Thin wall impact lug sockets that fit the narrow, recessed lug holes on alloy race wheels. 1/2 in drive, 3 pieces.",
+      "about": "Alloy race wheels often have narrow, recessed lug holes where a standard impact socket won't fit, or fits and chews up the wheel. VIM's TWLS100 sockets have thin walls to reach into those holes, and they're impact rated, so they work on the gun in the paddock as well as on a breaker bar or torque wrench.",
+      "facts": ["3 thin wall impact lug nut sockets", "1/2 in square drive, impact rated", "VIM limited lifetime warranty"],
+      "sku": "TWLS100", "upc": "092308039103"
+    },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
       "image": "/images/shop/799-bergrennen-paddock-jacket", "alt": "Champion packable quarter-zip anorak with the embroidered 799 Bergrennen mark" },
