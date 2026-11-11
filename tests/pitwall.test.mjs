@@ -357,28 +357,28 @@ test('shipments: partial shipping, several boxes, edits, removal, status and the
 
 test('prices: list price saves to catalog.json; dealer cost saves to the database only, never to GitHub', async t => {
   const s = setup(t);
-  let x = (await s.call('/api/products')).body.products.find(p => p.cart === 'xzns400a');
-  assert.equal(x.list, 124.11); assert.equal(x.cost, null);
+  let x = (await s.call('/api/products')).body.products.find(p => p.cart === 'pump');
+  assert.equal(x.list, 74.99); assert.equal(x.cost, null);
   // Cost alone: no commit, and it never appears in catalog.json.
-  const r = await s.call('/api/products/xzns400a', { method: 'PUT', data: { cost: '67.46' } });
+  const r = await s.call('/api/products/pump', { method: 'PUT', data: { cost: '67.46' } });
   assert.equal(r.status, 200); assert.equal(r.body.cost, 67.46);
   assert.equal(s.commits.length, 0);
   assert.doesNotMatch(s.file(), /67\.46/);
-  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'xzns400a'").get().cents, 6746);
-  x = (await s.call('/api/products')).body.products.find(p => p.cart === 'xzns400a');
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'pump'").get().cents, 6746);
+  x = (await s.call('/api/products')).body.products.find(p => p.cart === 'pump');
   assert.equal(x.cost, 67.46);
   // List with cost: list goes to GitHub, cost to the database.
-  const r2 = await s.call('/api/products/xzns400a', { method: 'PUT', data: { list: '130', cost: '66' } });
+  const r2 = await s.call('/api/products/pump', { method: 'PUT', data: { list: '130', cost: '66' } });
   assert.equal(r2.status, 200);
-  assert.equal(JSON.parse(s.file()).products.find(p => p.cart === 'xzns400a').list, 130);
-  assert.match(s.commits[0].message, /list \$124\.11 → \$130\.00/);
+  assert.equal(JSON.parse(s.file()).products.find(p => p.cart === 'pump').list, 130);
+  assert.match(s.commits[0].message, /list \$74\.99 → \$130\.00/);
   assert.doesNotMatch(s.commits[0].message + s.file(), /\b66\.00\b|"cost"/);
-  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'xzns400a'").get().cents, 6600);
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'pump'").get().cents, 6600);
   // Clearing the cost, bad values, unknown products.
-  assert.equal((await s.call('/api/products/xzns400a', { method: 'PUT', data: { cost: '' } })).status, 200);
+  assert.equal((await s.call('/api/products/pump', { method: 'PUT', data: { cost: '' } })).status, 200);
   assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM product_costs").get().n, 0);
-  assert.equal((await s.call('/api/products/xzns400a', { method: 'PUT', data: { cost: '-1' } })).status, 400);
-  assert.equal((await s.call('/api/products/xzns400a', { method: 'PUT', data: { list: '0' } })).status, 400);
+  assert.equal((await s.call('/api/products/pump', { method: 'PUT', data: { cost: '-1' } })).status, 400);
+  assert.equal((await s.call('/api/products/pump', { method: 'PUT', data: { list: '0' } })).status, 400);
   assert.equal((await s.call('/api/products/nope', { method: 'PUT', data: { cost: '5' } })).status, 404);
 });
 

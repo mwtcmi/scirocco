@@ -1,1 +1,0 @@
-INSERT OR IGNORE INTO stock (key, qty) VALUES ('MFR30P', 0);

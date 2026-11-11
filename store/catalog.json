@@ -88,17 +88,6 @@
       "color": "Black", "sku": "SpoutBender", "upc": ""
     },
     {
-      "slug": "vim-v410-17mm-vw-drain-plug-tool", "category": "vim-tools", "cart": "v410", "status": "coming-soon", "map": 10.64, "list": 14.51, "checkoutNote": "17mm hex, VW gearbox fill and drain plugs",
-      "brand": "VIM Tools", "name": "VIM 17mm VW Drain Plug Tool", "short": "V410 VW Drain Plug Tool", "price": "14.99",
-      "desc": "17mm hex. Pulls VW gearbox plugs.",
-      "about": "The tool nobody owns until the gear oil is due.",
-      "facts": ["17mm hex", "VW manual gearbox fill + drain", "Lifetime warranty"],
-      "images": [
-        { "src": "/images/optimized/vim-v410-900.webp", "src480": "/images/optimized/vim-v410-480.webp", "w": 900, "h": 900, "alt": "VIM V410 17mm hex VW drain plug tool, black oxide finish" }
-      ],
-      "sku": "V410", "upc": ""
-    },
-    {
       "slug": "vim-mvrk-ratchets", "category": "vim-tools", "cart": "mvrk", "status": "coming-soon", "checkoutNote": "90 tooth, made in USA",
       "brand": "VIM Tools", "name": "VIM MVRK Ratchets", "short": "MVRK Ratchet",
       "desc": "Made in USA. 90 teeth. Pick your drive and head.",
@@ -126,28 +115,6 @@
         { "src": "/images/optimized/vim-r6usa-stamp-900.webp", "src480": "/images/optimized/vim-r6usa-stamp-480.webp", "w": 900, "h": 900, "sku": "R6USA", "alt": "Close-up of the VIM MVRK USA stamp on the R6USA head" }
       ],
       "madeInUSA": true
-    },
-    {
-      "slug": "vim-xzn-triple-square-driver-set-13-pc", "category": "vim-tools", "cart": "xzns400a", "status": "coming-soon", "map": 91.02, "list": 124.11, "checkoutNote": "13 pc, XZN4 to XZN18, 4 in long, foam tray",
-      "brand": "VIM Tools", "name": "VIM 4-18mm Triple Squares", "short": "13 Pc. Triple Square Set", "price": "124.99",
-      "desc": "13 triple squares. 4mm to 18mm. Every German bolt.",
-      "about": "CV bolts, calipers, seats. VW and Audi love triple square. Now you've got all of them.",
-      "facts": ["13 pc · XZN4 to XZN18", "4\" long · 1/4\", 3/8\", 1/2\" drive", "Foam tray · lifetime warranty"],
-      "images": [
-        { "src": "/images/optimized/vim-xzns400a-900.webp", "src480": "/images/optimized/vim-xzns400a-480.webp", "w": 900, "h": 900, "alt": "VIM XZNS400A 13 piece XZN triple square driver set, 4mm to 18mm, in a black and lime green foam tray" }
-      ],
-      "sku": "XZNS400A", "upc": "092308449414"
-    },
-    {
-      "slug": "vim-green-tear-off-microfiber-roll", "category": "vim-tools", "cart": "mfr30p", "status": "coming-soon", "map": 23.65, "list": 32.25, "checkoutNote": "30 green towels, 12 x 12 in, tear-off roll",
-      "brand": "VIM Tools", "name": "VIM 12\" x 12\" Microfiber Roll", "short": "Green Microfiber Roll", "price": "32.99",
-      "desc": "Tear one off. Wipe. Repeat.",
-      "about": "30 microfiber towels on a roll. Hang it in the trailer and stop hunting for a clean rag.",
-      "facts": ["30 green towels per roll", "12\" x 12\" microfiber", "Tear-off, like paper towels"],
-      "images": [
-        { "src": "/images/optimized/vim-mfr30p-900.webp", "src480": "/images/optimized/vim-mfr30p-480.webp", "w": 900, "h": 900, "alt": "VIM green tear-off microfiber roll with the VIM logo pressed into the towels" }
-      ],
-      "sku": "MFR30P", "upc": "092308383060"
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
