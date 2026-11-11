@@ -69,14 +69,14 @@ function drawGrid(id){var p=PRODUCTS[id],pick=gsel[id],st=gridSet(id),v=st&&bySk
  if(v.img)all(attr('data-variant-img',id)).forEach(function(img){if(img.dataset.sku!==v.sku){img.dataset.sku=v.sku;img.src=v.img.src;if(v.img.srcset)img.srcset=v.img.srcset;img.alt=v.img.alt}});
  drawThumbs(id,v);
  var total=lines.reduce(function(t,k){return t+skuPrice(k)},0),n=pick.length;
- all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'Pick a ratchet'});
+ all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'Build your set'});
  all(attr('data-grid-count',id)).forEach(function(e){e.textContent=n?n+' picked':''});
  all(attr('data-grid-sum',id)).forEach(function(e){e.textContent=st?(bySku(id,st.sku).name+'. Priced as a set.'):n?pick.map(function(k){return bySku(id,k).name}).join(' · '):'Tap the ratchets you want.'});
  all(attr('data-variant-ids',id)).forEach(function(e){e.textContent=n?'SKU '+(st?st.sku:pick.join(' · ')):''});
  var bad=pick.filter(function(k){return !cat||!liveVariant(id,k)}),outs=pick.filter(function(k){return online&&have(k)<1}),rest=Math.min.apply(null,lines.map(function(k){return left(k)}).concat([99]));
  all(attr('data-stock',id)).forEach(function(e){e.textContent=n&&online&&!outs.length?(rest<1?'All in your cart':rest<3?'Only '+rest+' left':''):''});
  all('.add'+attr('data-add',id)).forEach(function(b){var ok=online&&n&&!bad.length&&!outs.length&&rest>0;b.disabled=!ok;
-  b.textContent=!n?'Pick a ratchet':bad.length&&online?'Coming Soon':!online?'Coming Soon':outs.length?(outs.length===n?'Out of stock':bySku(id,outs[0]).name+' is out of stock'):rest<1?'All in your cart':st?'Add the set to cart':n>1?'Add '+n+' to cart':'Add to cart'});
+  b.textContent=!n?'Build your set':bad.length&&online?'Coming Soon':!online?'Coming Soon':outs.length?(outs.length===n?'Out of stock':bySku(id,outs[0]).name+' is out of stock'):rest<1?'All in your cart':st?'Add the set to cart':n>1?'Add '+n+' to cart':'Add to cart'});
  all('form'+attr('data-notify',id)).forEach(function(f){var k=outs[0],show=!!k&&cat;f.hidden=!show;if(k&&f.dataset.sku!==k){f.dataset.sku=k;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l)l.textContent='Want the '+bySku(id,k).name+'? Get an email when it\'s back.'}})}
 function drawProduct(id){if(PRODUCTS[id].pick==='many'){drawGrid(id);return}var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
  if(v.opts){all(attr('data-pick',id)).forEach(function(b){var i=+b.dataset.opt;b.setAttribute('aria-pressed',v.opts[i]===b.dataset.val);if(!b.onclick)b.onclick=function(){pickTo(id,i,b.dataset.val)}});

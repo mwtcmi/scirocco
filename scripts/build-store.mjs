@@ -159,7 +159,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=14"></script>`;
+<script src="/paddock-store.js?v=15"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -249,7 +249,7 @@ const grid2 = p => {
   const [cols, rows] = p.options, single = p.variants.filter(v => !v.includes), d = defaultVariant(p).sku;
   const cell = (c, r) => { const v = single.find(x => x.opts[0] === c && x.opts[1] === r); return v ? `<button type="button" class="gp-cell" data-cell="${p.cart}" data-sku="${v.sku}" aria-pressed="${v.sku === d}" aria-label="${esc(optionName(v))}"><b>${esc(v.size || c)}</b><small>${money(Number(v.price).toFixed(2))}</small></button>` : '<span class="gp-none"></span>'; };
   const quick = p.variants.filter(v => v.includes && v.quick);
-  return `<fieldset class="opt pick gp" data-grid="${p.cart}"><legend>Pick your ${esc(p.short || p.name).replace(/ ratchet$/i, ' ratchets')} <span data-grid-count="${p.cart}"></span></legend>
+  return `<fieldset class="opt pick gp" data-grid="${p.cart}"><legend>Build your set <span data-grid-count="${p.cart}"></span></legend>
 <div class="gp-table" style="--cols:${cols.values.length}"><span></span>${cols.values.map(c => `<span class="gp-col">${esc(c)}</span>`).join('')}
 ${rows.values.map(r => `<span class="gp-row">${esc(r)}</span>${cols.values.map(c => cell(c, r)).join('')}`).join('\n')}</div>
 ${quick.length ? `<div class="gp-quick">${quick.map(v => `<button type="button" data-quick="${p.cart}" data-skus="${v.includes.join(' ')}">${esc(v.quick)}</button>`).join('')}<button type="button" data-quick="${p.cart}" data-skus="">Clear</button></div>` : ''}
@@ -327,7 +327,7 @@ function featureBand(p) {
 <a class="feat-photo" href="${url}" tabindex="-1" aria-hidden="true"><img src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 100vw, 560px" width="900" height="900" alt="${esc(v.img.alt)}">${usaFlag(p)}</a>
 <div class="feat-copy"><div class="kicker">Featured${p.madeInUSA ? ' · Made in USA' : ''}</div><h2>${esc(words.join(' '))} <span>${esc(last)}.</span></h2><p>${esc(p.desc)}</p>${opts}
 <div class="feat-price">${isLive(p) ? `${picker(p) ? 'From ' : ''}${money(p.price)}` : 'Coming Soon'}</div>
-<a class="feat-btn" href="${url}">${picker(p) ? 'Pick yours' : 'See details'} →</a></div>
+<a class="feat-btn" href="${url}">${p.pick === 'many' ? 'Build your set' : picker(p) ? 'Pick yours' : 'See details'} →</a></div>
 </div></section>`;
 }
 for (const c of cats) if (c.featured && !products.some(p => p.slug === c.featured && p.category === c.slug && !isRetired(p))) throw new Error(`${c.slug}: featured product ${c.featured} is not in this category`);
