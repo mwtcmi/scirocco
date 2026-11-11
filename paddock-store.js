@@ -68,6 +68,8 @@ function drawThumbs(id,v){all(attr('data-thumbs',id)).forEach(function(box){var 
 var lineupOff={};
 function toggleSku(id,sku){var i=gsel[id].indexOf(sku);if(i>=0)gsel[id].splice(i,1);else gsel[id].push(sku);if(gsel[id].length)sel[id]=bySku(id,gsel[id][gsel[id].length-1]).name;lineupOff[id]=false;draw()}
 all('[data-pick-sku]').forEach(function(a){a.onclick=function(e){var id=a.getAttribute('data-pick-for'),sku=a.getAttribute('data-pick-sku');if(!gsel[id]||!bySku(id,sku))return;e.preventDefault();if(gsel[id].indexOf(sku)<0)toggleSku(id,sku);var g=document.querySelector('[data-grid="'+id+'"]');if(g)g.scrollIntoView({behavior:'smooth',block:'center'})}}); // Part numbers table: tap a SKU to add it to the set
+// Structured data for Google: swap the build-time availability for live stock once the catalog loads.
+function liveLd(){all('script[type="application/ld+json"]').forEach(function(el){try{var d=JSON.parse(el.textContent),hit=false;(d.hasVariant||[d]).forEach(function(x){if(x.offers&&x.sku){x.offers.availability='https://schema.org/'+(have(x.sku)>0?'InStock':'OutOfStock');hit=true}});if(hit)el.textContent=JSON.stringify(d)}catch(e){}})}
 function drawLineup(id){var p=PRODUCTS[id],pick=gsel[id];all(attr('data-lineup',id)).forEach(function(box){
  var vs=p.variants.filter(function(x){return x.cut}),n=vs.filter(function(x){return pick.indexOf(x.sku)>=0}).length;
  box.hidden=lineupOff[id]||!(n===0||n>=2);if(box.hidden)return;
@@ -164,7 +166,7 @@ if(q.get('order')==='success'){cart=[];save();var ref=q.get('ref')||'',num=/^cs_
  setTimeout(function(){var n=$('store-note');if(n)n.scrollIntoView({block:'center'})},50)}
 else if(q.get('order')==='cancelled')note('Checkout was cancelled. Your cart is saved.');
 draw();
-fetch(API+'/api/catalog').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){if(!j.catalog||typeof j.catalog!=='object'||!j.stock)throw 0;data=j;online=true;
+fetch(API+'/api/catalog').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){if(!j.catalog||typeof j.catalog!=='object'||!j.stock)throw 0;data=j;online=true;liveLd();
  cart=cart.filter(function(l){var h=BYSKU[l.sku];return h&&!!data.catalog[h.id]&&(!picker(h.id)||!!liveVariant(h.id,l.sku))&&l.qty>0});save();drawEvents();draw()})
  .catch(function(){note('The store is offline right now. Please check back soon.');draw()});
 // Product page photo thumbnails.

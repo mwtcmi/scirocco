@@ -161,16 +161,21 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=24"></script>`;
+<script src="/paddock-store.js?v=25"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
-function offer(p, url) { return { '@type': 'Offer', price: p.price, priceCurrency: 'USD', availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition', seller, url: abs(url) }; }
+// Availability here is a safe default (the build can't see stock); paddock-store.js swaps in live stock on load.
+function offer(p, url) { return { '@type': 'Offer', price: p.price, priceCurrency: 'USD', availability: 'https://schema.org/OutOfStock', itemCondition: 'https://schema.org/NewCondition', seller, url: abs(url) }; }
+// Same titles and main photo as the Merchant Center feed (store/feed.mjs): "feedTitle" template, and a plain photo
+// first (the measured shot has text on it, which Google doesn't allow as a main image).
+const feedTitle = (p, v) => p.feedTitle ? p.feedTitle.replace(/\{(\w+)\}/g, (m, k) => k === 'size' ? v.size : (i => i >= 0 ? v.opts[i] : m)(p.options.findIndex(o => o.name === k))) : `${p.name}, ${v.name}`;
+const plainPhoto = (p, v) => { const own = (p.images || []).filter(i => i.sku === v.sku || (i.skus || []).includes(v.sku)); return (own.find(i => !/-dim-/.test(i.src)) || own[0] || v.img).src; };
 function productLd(p) {
   const url = prodUrl(p), brand = { '@type': 'Brand', name: p.brand };
   if (picker(p)) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name, productGroupID: p.slug, brand, url: abs(url), description: p.about, variesBy: ['https://schema.org/size'],
-    hasVariant: variantsOf(p).filter(v => !v.soon).map(v => ({ '@type': 'Product', name: `${p.name}, ${v.name}`, size: v.name, sku: v.sku, mpn: v.sku, ...(v.upc ? { gtin12: v.upc } : {}), brand,
-      image: abs(v.img.src), offers: { ...offer(p, `${url}?sku=${encodeURIComponent(v.sku)}`), price: (v.cents / 100).toFixed(2) } })) };
+    hasVariant: variantsOf(p).filter(v => !v.soon).map(v => ({ '@type': 'Product', name: feedTitle(p, v), size: v.name, sku: v.sku, mpn: v.sku, ...(v.upc ? { gtin12: v.upc } : {}), brand,
+      image: abs(plainPhoto(p, v)), offers: { ...offer(p, `${url}?sku=${encodeURIComponent(v.sku)}`), price: (v.cents / 100).toFixed(2) } })) };
   if (p.colors) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name + ' with Auto-Stop Spout', productGroupID: p.slug, brand, url: abs(url),
     description: p.about, variesBy: ['https://schema.org/color'],
     hasVariant: p.colors.map(c => ({ '@type': 'Product', name: `${p.name}, ${c.name}, Auto-Stop Spout`, sku: c.sku, mpn: c.sku, gtin12: c.upc, color: c.name, brand,

@@ -24,7 +24,7 @@ function service(t, { key = 'rk_test_abc', stripeStatus = 200, emailStatus = 200
     const body = raw ?? (data === undefined ? undefined : JSON.stringify(data));
     const res = await worker.fetch(new Request('https://store.example' + path, { method, headers: h, body }), env);
     const text = method === 'OPTIONS' ? '' : await res.text();
-    return { status: res.status, body: text ? JSON.parse(text) : null, res };
+    return { status: res.status, body: text && /json/.test(res.headers.get('content-type') || '') ? JSON.parse(text) : text || null, res };
   }
   function sign(payload, at = Math.floor(time / 1000)) {
     const sig = crypto.createHmac('sha256', SECRET).update(at + '.' + payload).digest('hex');
@@ -54,6 +54,21 @@ test('catalog returns stock and options', async t => {
   assert.equal(r.body.catalog.jug.cents, 4599); assert.equal(r.body.catalog.ripper.cents, 2799); assert.equal(r.body.stock.tuffspout, 2);
   assert.equal(r.body.catalog.spoutbender.cents, 799); assert.equal(r.body.stock.spoutbender, 2);
   assert.equal(r.res.headers.get('access-control-allow-origin'), 'https://799motorsport.com');
+});
+
+test('merchant feed lists every live SKU with live stock and price', async t => {
+  const s = service(t);
+  const r = await s.call('/api/merchant-feed.xml', { origin: null });
+  assert.equal(r.status, 200); assert.match(r.res.headers.get('content-type'), /xml/);
+  const item = id => r.body.split('<item>').find(x => x.startsWith('<g:id>' + id + '<'));
+  assert.ok(item('RUASVS20') && item('LTP') && item('BLKR20'));
+  assert.match(item('LTP'), /<g:availability>in_stock<\/g:availability>/); assert.match(item('BLKR20'), /<g:price>27\.99 USD<\/g:price>/);
+  const fr6 = item('FR6USA');
+  assert.match(fr6, /<title>VIM MVRK 3\/8&quot; Drive Flex Head Ratchet, 12&quot;<\/title>/);
+  assert.match(fr6, /<g:item_group_id>vim-mvrk-ratchets<\/g:item_group_id>/); assert.match(fr6, /\?sku=FR6USA<\/link>/);
+  assert.match(fr6, /<g:gtin>092308686192<\/g:gtin>/); assert.match(fr6, /<g:price>149\.99 USD<\/g:price>/);
+  assert.match(fr6, /<g:image_link>[^<]*vim-fr6usa-side-900\.webp</); // a plain photo leads; the measured shot is extra
+  assert.ok(!r.body.includes('MVRK-SET')); // only real SKUs
 });
 
 test('other origins are refused', async t => {

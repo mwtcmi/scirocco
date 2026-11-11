@@ -10,6 +10,7 @@
 import catalogFile from './catalog.json' with { type: 'json' };
 import { frame, FROM as PADDOCK_FROM, REPLY_TO, newsConfirmEmail } from './emails.mjs';
 import { syncNews, newsStatus, newsReady } from './resend.mjs';
+import { feedXml } from './feed.mjs';
 export const SHIPPING = Object.freeze({
   ship: { cents: 2500, label: 'Flat-rate shipping (lower 48)' },
   pickup: { cents: 0, label: 'Local pickup: Downtown Traverse City, MI (by appointment)' },
@@ -483,6 +484,12 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
           const stock = await stockMap(db);
           const events = await upcomingEvents(db, localDate(now())).catch(() => []);
           return json({ catalog: CATALOG, shipping: SHIPPING, stock: publicStock(stock), events, mode: /_test_/.test(key) ? 'test' : 'live' });
+        }
+
+        // Google Merchant Center feed: every live SKU with its live price and stock. Merchant Center fetches it on a schedule.
+        if (request.method === 'GET' && url.pathname === '/api/merchant-feed.xml') {
+          const site = (env.SITE_URL || 'https://799motorsport.com').replace(/\/$/, '');
+          return new Response(feedXml(catalogFile, publicStock(await stockMap(db)), site), { headers: { ...headers, 'Content-Type': 'application/xml;charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
         }
 
         if (request.method === 'POST' && url.pathname === '/api/checkout') {
