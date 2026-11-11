@@ -207,6 +207,9 @@
       "desc": "Tear one off. Wipe. Repeat.",
       "about": "30 microfiber towels on a roll. Hang it in the trailer and stop hunting for a clean rag.",
       "facts": ["30 green towels per roll", "12\" x 12\" microfiber", "Tear-off, like paper towels"],
+      "images": [
+        { "src": "/images/optimized/vim-mfr30p-900.webp", "src480": "/images/optimized/vim-mfr30p-480.webp", "w": 900, "h": 900, "alt": "VIM green tear-off microfiber roll with the VIM logo pressed into the towels" }
+      ],
       "sku": "MFR30P", "upc": "092308383060"
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
