@@ -89,7 +89,7 @@
     },
     {
       "slug": "vim-mvrk-3-8-flex-head-ratchet", "category": "vim-tools", "cart": "fr6usa", "status": "coming-soon", "map": 109.52, "list": 149.35, "checkoutNote": "3/8 in drive, 90 tooth flex head, made in USA",
-      "brand": "VIM Tools", "name": "VIM MVRK Flex Ratchet", "short": "MVRK 3/8\" Flex Ratchet", "price": "149.99",
+      "brand": "VIM Tools", "name": "VIM 3/8\" x 12\" Flex Ratchet", "short": "MVRK 3/8\" Flex Ratchet", "price": "149.99",
       "desc": "Made in USA. 90 teeth. Flex head. 12 inches of leverage.",
       "about": "Built in America. Rebuildable. Buy it once.",
       "facts": ["3/8\" drive · 90T · 4° swing", "12\" flex head", "Made in USA · lifetime warranty"],
@@ -101,7 +101,7 @@
     },
     {
       "slug": "vim-v410-17mm-vw-drain-plug-tool", "category": "vim-tools", "cart": "v410", "status": "coming-soon", "map": 10.64, "list": 14.51, "checkoutNote": "17mm hex, VW gearbox fill and drain plugs",
-      "brand": "VIM Tools", "name": "VIM VW Drain Plug Tool", "short": "V410 VW Drain Plug Tool", "price": "14.99",
+      "brand": "VIM Tools", "name": "VIM 17mm VW Drain Plug Tool", "short": "V410 VW Drain Plug Tool", "price": "14.99",
       "desc": "17mm hex. Pulls VW gearbox plugs.",
       "about": "The tool nobody owns until the gear oil is due.",
       "facts": ["17mm hex", "VW manual gearbox fill + drain", "Lifetime warranty"],
@@ -112,7 +112,7 @@
     },
     {
       "slug": "vim-mvrk-3-8-drive-ratchet-8", "category": "vim-tools", "cart": "r6usa", "status": "coming-soon", "map": 87.3, "list": 119.05, "checkoutNote": "3/8 in drive, 90 tooth, 8 in, made in USA",
-      "brand": "VIM Tools", "name": "VIM MVRK 3/8\" Ratchet", "short": "MVRK 3/8\" Ratchet", "price": "119.99",
+      "brand": "VIM Tools", "name": "VIM 3/8\" x 8\" Ratchet", "short": "MVRK 3/8\" Ratchet", "price": "119.99",
       "desc": "Made in USA. 90 teeth. 8 inches. The everyday ratchet.",
       "about": "Same rebuild kit as the flex head. Buy it once.",
       "facts": ["3/8\" drive · 90T · 4° swing", "8\" fixed head", "Made in USA · lifetime warranty"],
@@ -126,7 +126,7 @@
     },
     {
       "slug": "vim-xzn-triple-square-driver-set-13-pc", "category": "vim-tools", "cart": "xzns400a", "status": "coming-soon", "map": 91.02, "list": 124.11, "checkoutNote": "13 pc, XZN4 to XZN18, 4 in long, foam tray",
-      "brand": "VIM Tools", "name": "VIM Triple Square Set", "short": "13 Pc. Triple Square Set", "price": "124.99",
+      "brand": "VIM Tools", "name": "VIM 4-18mm Triple Squares", "short": "13 Pc. Triple Square Set", "price": "124.99",
       "desc": "13 triple squares. 4mm to 18mm. Every German bolt.",
       "about": "CV bolts, calipers, seats. VW and Audi love triple square. Now you've got all of them.",
       "facts": ["13 pc · XZN4 to XZN18", "4\" long · 1/4\", 3/8\", 1/2\" drive", "Foam tray · lifetime warranty"],
@@ -137,7 +137,7 @@
     },
     {
       "slug": "vim-green-tear-off-microfiber-roll", "category": "vim-tools", "cart": "mfr30p", "status": "coming-soon", "map": 23.65, "list": 32.25, "checkoutNote": "30 green towels, 12 x 12 in, tear-off roll",
-      "brand": "VIM Tools", "name": "VIM Microfiber Roll", "short": "Green Microfiber Roll", "price": "32.99",
+      "brand": "VIM Tools", "name": "VIM 12\" x 12\" Microfiber Roll", "short": "Green Microfiber Roll", "price": "32.99",
       "desc": "Tear one off. Wipe. Repeat.",
       "about": "30 microfiber towels on a roll. Hang it in the trailer and stop hunting for a clean rag.",
       "facts": ["30 green towels per roll", "12\" x 12\" microfiber", "Tear-off, like paper towels"],
