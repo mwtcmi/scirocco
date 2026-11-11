@@ -93,10 +93,10 @@
       "brand": "VIM Tools", "name": "VIM MVRK Ratchets", "short": "MVRK Ratchet",
       "desc": "Made in USA. 90 teeth. Pick your drive and head.",
       "about": "Built in America. Rebuildable. Buy it once.",
-      "facts": ["1/4\", 3/8\", 1/2\" or the set of 3", "Fixed or flex head · 90T", "Made in USA · limited lifetime warranty"],
+      "facts": ["1/4\", 3/8\", 1/2\" or the set of 3", "Fixed, flex or both · 90T", "Made in USA · limited lifetime warranty"],
       "options": [
         { "name": "Drive", "values": ["1/4\"", "3/8\"", "1/2\"", "All 3"] },
-        { "name": "Head", "values": ["Fixed", "Flex"] }
+        { "name": "Head", "values": ["Fixed", "Flex", "Both"] }
       ],
       "story": { "kicker": "Made in USA", "title": "Spend It Where It Counts.", "text": "Your sockets can be cheap. The ratchet takes the load every time you pull. Put the money there: a ratchet made in the USA by VIM, a family-owned tool company since 1931, on the sockets you already own." },
       "points": [
@@ -113,7 +113,11 @@
         { "sku": "R8USA", "upc": "092308881917", "opts": ["1/2\"", "Fixed"], "size": "10\"", "map": 101.59, "list": 138.53, "price": "138.99" },
         { "sku": "FR8USA", "upc": "092308688196", "opts": ["1/2\"", "Flex"], "size": "24\"", "map": 142.86, "list": 194.81, "price": "194.99" },
         { "sku": "MVRK-SET-FIXED", "includes": ["R4USA", "R6USA", "R8USA"], "opts": ["All 3", "Fixed"], "size": "5\", 8\", 10\"", "map": 253.97, "list": 346.32, "price": "346.99" },
-        { "sku": "MVRK-SET-FLEX", "includes": ["FR4USA", "FR6USA", "FR8USA"], "opts": ["All 3", "Flex"], "size": "6\", 12\", 24\"", "map": 347.62, "list": 474.03, "price": "474.99" }
+        { "sku": "MVRK-SET-FLEX", "includes": ["FR4USA", "FR6USA", "FR8USA"], "opts": ["All 3", "Flex"], "size": "6\", 12\", 24\"", "map": 347.62, "list": 474.03, "price": "474.99" },
+        { "sku": "MVRK-PAIR-14", "includes": ["R4USA", "FR4USA"], "opts": ["1/4\"", "Both"], "size": "5\" + 6\"", "map": 160.32, "list": 218.61, "price": "218.99" },
+        { "sku": "MVRK-PAIR-38", "includes": ["R6USA", "FR6USA"], "opts": ["3/8\"", "Both"], "size": "8\" + 12\"", "map": 196.82, "list": 268.4, "price": "268.99" },
+        { "sku": "MVRK-PAIR-12", "includes": ["R8USA", "FR8USA"], "opts": ["1/2\"", "Both"], "size": "10\" + 24\"", "map": 244.45, "list": 333.34, "price": "333.99" },
+        { "sku": "MVRK-SET-ALL", "label": "All 6 ratchets, fixed and flex", "includes": ["R4USA", "FR4USA", "R6USA", "FR6USA", "R8USA", "FR8USA"], "opts": ["All 3", "Both"], "size": "all 6", "map": 601.59, "list": 820.35, "price": "820.99" }
       ],
       "images": [
         { "src": "/images/optimized/vim-fr6usa-side-900.webp", "src480": "/images/optimized/vim-fr6usa-side-480.webp", "w": 900, "h": 900, "sku": "FR6USA", "alt": "VIM Tools MVRK FR6USA 3/8 in drive 12 in flex head ratchet, made in USA" },

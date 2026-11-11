@@ -37,7 +37,7 @@ const STATUSES = ['live', 'coming-soon', 'retired'];
 // "opts" lists its value for each option in order and "size" is shown after it ("3/8\" Flex, 12\"").
 // A variant can be "coming-soon" while the rest sell. Photos with a "sku" belong to that variant; untagged
 // photos show for every variant. The product's price is its lowest variant price ("from").
-const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
+const optionName = v => v.label || v.opts.join(' ') + (v.size ? ', ' + v.size : ''); // "label" overrides, e.g. "All 6 ratchets"
 const PLACEHOLDER = { src: '/images/optimized/photo-coming-soon-900.webp', src480: '/images/optimized/photo-coming-soon-480.webp', w: 900, h: 900 };
 for (const p of products.filter(p => p.variants)) {
   if (!Array.isArray(p.options) || !p.options.length) throw new Error(`${p.slug}: "variants" needs "options"`);

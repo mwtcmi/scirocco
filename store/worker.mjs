@@ -21,7 +21,7 @@ const cents = v => Math.round(Number(v) * 100);
 // Every sellable thing is a variant with its own SKU. A product with "colors" has one variant per color;
 // a product with "options" + "variants" (a configurator, like the MVRK ratchets) has one variant per combination,
 // each with its own price; any other product has a single variant (its own SKU). Stock, cart lines and orders all use SKUs.
-export const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
+export const optionName = v => v.label || v.opts.join(' ') + (v.size ? ', ' + v.size : ''); // "label" overrides, e.g. "All 6 ratchets"
 export function variantsOf(p) {
   // A set ("includes": other SKUs of the same product) has its own SKU and price but no stock of its own: it is
   // in stock when every part is, and selling one takes one of each part.

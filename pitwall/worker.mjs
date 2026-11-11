@@ -156,7 +156,7 @@ export function eventInput(d) {
 }
 // One naming rule everywhere in Pitwall: the product's full name, then ", Color" for a color option.
 // Stock is grouped by product, one row per variant (SKU), in the product list's order.
-const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
+const optionName = v => v.label || v.opts.join(' ') + (v.size ? ', ' + v.size : ''); // "label" overrides, e.g. "All 6 ratchets"
 const variantsOf = p => p.variants ? p.variants.map(v => ({ name: optionName(v), sku: v.sku, status: v.status || 'live', ...(v.includes ? { includes: v.includes } : {}) }))
   : p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku, img: c.img })) : [{ name: '', sku: p.sku }];
 export function stockGroups(data) {

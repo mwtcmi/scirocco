@@ -486,9 +486,10 @@ test('business name: optional at checkout, saved apart from the person’s name'
 test('configurator products: each option has its own price, and Coming Soon options cannot be bought', () => {
   const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url)));
   const m = file.products.find(p => p.cart === 'mvrk');
-  assert.ok(m.variants.length === 8 && m.options.length === 2);
+  assert.ok(m.variants.length === 12 && m.options.length === 2);
   const c = worker.buildCatalog(file).mvrk;
-  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499], ['MVRK-SET-FIXED', 34699], ['MVRK-SET-FLEX', 47499]]);
+  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499], ['MVRK-SET-FIXED', 34699], ['MVRK-SET-FLEX', 47499], ['MVRK-PAIR-14', 21899], ['MVRK-PAIR-38', 26899], ['MVRK-PAIR-12', 33399], ['MVRK-SET-ALL', 82099]]);
+  assert.equal(c.variants.find(v => v.sku === 'MVRK-SET-ALL').includes.length, 6);
   assert.deepEqual(c.variants.find(v => v.sku === 'MVRK-SET-FIXED').includes, ['R4USA', 'R6USA', 'R8USA']);
   assert.equal(c.variants.find(v => v.sku === 'FR6USA').name, '3/8" Flex, 12"');
   assert.equal(c.cents, 8899); assert.equal(c.option, 'Option');
