@@ -111,7 +111,7 @@ IDS.forEach(function(id){var p=PRODUCTS[id];if(p.pick!=='kit')return;var groupOf
  ksel[id]=wantSku&&groupOf[wantSku]&&!isRail(id,wantSku)?[wantSku]:[]});
 function isRail(id,sku){var r=KIT[id].railOf;return Object.keys(r).some(function(g){return r[g]===sku})}
 function kitName(sku){var h=BYSKU[sku];return h?(h.v.title||PRODUCTS[h.id].name+', '+h.v.name):sku}
-function kitShort(sku){var h=BYSKU[sku];return h?(h.v.chip||h.v.opts&&h.v.opts[1]+' '+h.v.size||h.v.name):sku}
+function kitShort(sku){var h=BYSKU[sku];return h?(h.v.usa&&h.v.chip?'MVRK '+h.v.chip:h.v.chip||h.v.opts&&h.v.opts[1]+' '+h.v.size||h.v.name):sku}
 function kitGroupPicks(id,g){return ksel[id].filter(function(k){return KIT[id].groupOf[k]===g})}
 function kitLines(id){var out=ksel[id].slice(),r=KIT[id].railOf;Object.keys(r).forEach(function(g){if(kitGroupPicks(id,g).length&&out.indexOf(r[g])<0)out.push(r[g])});return out}
 // Can this part be picked now? Online, for sale, in stock beyond what's in the cart; a part that comes on a rail needs the rail too.
@@ -192,6 +192,7 @@ function draw(){
  var ub=$('upsell-btns');ub.innerHTML='';offers.forEach(function(id){var b=document.createElement('button');b.type='button';b.setAttribute('data-add',id);b.textContent='+ '+PRODUCTS[id].short+' '+money(price(id));ub.appendChild(b)});
  $('upsell').hidden=!offers.length;
  $('checkout').disabled=!cart.length||!online;
+ var emp=$('cart-empty');if(emp){emp.hidden=!cart.length;if(!cart.length){emp.dataset.armed='';emp.textContent='Empty cart'}}
  align();
 }
 // Lines up titles, part numbers, descriptions and fact lists across each row of cards.
@@ -206,6 +207,9 @@ function close(){$('cart').hidden=true;$('cart-shade').hidden=true;$('cart-btn')
 function note(t){var n=$('store-note');if(!n)return;n.textContent=t;n.hidden=!t}
 document.addEventListener('click',function(e){var a=e.target.closest('[data-add]');if(a&&!a.disabled)add(a.getAttribute('data-add'))});
 all('input[name=get]').forEach(function(r){r.onchange=draw});
+// "Empty cart": two taps, so a big kit isn't lost to one slip.
+if($('cart-empty'))$('cart-empty').onclick=function(){var b=this;if(b.dataset.armed){cart=[];save();b.dataset.armed='';draw();return}
+ b.dataset.armed='1';b.textContent='Tap again to empty';setTimeout(function(){if(b.dataset.armed){b.dataset.armed='';b.textContent='Empty cart'}},4000)};
 $('cart-btn').onclick=open;$('cart-close').onclick=close;$('cart-shade').onclick=close;document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('cart').hidden)close()});
 $('checkout').onclick=function(){var b=this;b.disabled=true;b.textContent='Opening secure checkout…';$('cart-error').hidden=true;
  fetch(API+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign(getChoice(),{items:cart.map(function(l){return{sku:l.sku,qty:l.qty}}),returnPath:location.pathname}))})

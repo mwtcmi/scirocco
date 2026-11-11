@@ -164,6 +164,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
 <div class="cart-shade" id="cart-shade" hidden></div>
 <aside class="cart" id="cart" role="dialog" aria-modal="true" aria-label="Cart" hidden>
   <div class="cart-head"><div class="kicker">Your Cart</div><button class="cart-close" id="cart-close" aria-label="Close cart">&times;</button></div>
+  <button type="button" class="cart-empty" id="cart-empty" hidden>Empty cart</button>
   <ul class="cart-lines" id="cart-lines"></ul>
   <div class="upsell" id="upsell" hidden><span>Goes with your order</span><div class="upsell-btns" id="upsell-btns"></div></div>
   <fieldset class="opt get"><legend>How do you want it?</legend>
@@ -179,7 +180,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=27"></script>`;
+<script src="/paddock-store.js?v=28"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -242,7 +243,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=22">
+<link rel="stylesheet" href="/paddock-store.css?v=23">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
