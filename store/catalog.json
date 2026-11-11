@@ -100,15 +100,15 @@
       "sku": "FR6USA", "upc": "092308686192", "madeInUSA": true
     },
     {
-      "slug": "vim-v410-17mm-vw-drain-plug-tool", "category": "vim-tools", "cart": "v410", "status": "coming-soon", "map": 10.64, "list": 14.51, "checkoutNote": "17mm hex, VW gearbox fill and drain plugs, made in USA",
-      "brand": "VIM Tools", "name": "Made in USA: VIM V410 17mm Hex VW Drain Plug Tool", "short": "V410 VW Drain Plug Tool", "price": "14.99",
-      "desc": "17mm hex. Pulls VW gearbox plugs. Made in USA.",
+      "slug": "vim-v410-17mm-vw-drain-plug-tool", "category": "vim-tools", "cart": "v410", "status": "coming-soon", "map": 10.64, "list": 14.51, "checkoutNote": "17mm hex, VW gearbox fill and drain plugs",
+      "brand": "VIM Tools", "name": "VIM V410 17mm Hex VW Drain Plug Tool", "short": "V410 VW Drain Plug Tool", "price": "14.99",
+      "desc": "17mm hex. Pulls VW gearbox plugs.",
       "about": "The tool nobody owns until the gear oil is due.",
-      "facts": ["17mm hex", "VW manual gearbox fill + drain", "Made in USA · lifetime warranty"],
+      "facts": ["17mm hex", "VW manual gearbox fill + drain", "Lifetime warranty"],
       "images": [
         { "src": "/images/optimized/vim-v410-900.webp", "src480": "/images/optimized/vim-v410-480.webp", "w": 900, "h": 900, "alt": "VIM V410 17mm hex VW drain plug tool, black oxide finish" }
       ],
-      "sku": "V410", "upc": "", "madeInUSA": true
+      "sku": "V410", "upc": ""
     },
     {
       "slug": "vim-twls100-thin-wall-lug-nut-socket-set", "category": "vim-tools", "cart": "twls100", "status": "coming-soon", "map": 38.89, "list": 53.03, "checkoutNote": "3 pc, 1/2 in drive, thin wall impact lug sockets",
@@ -117,6 +117,86 @@
       "about": "Race wheels. Skinny lug holes. These fit.",
       "facts": ["3 pc · 1/2\" drive", "Thin wall · impact rated", "Lifetime warranty"],
       "sku": "TWLS100", "upc": "092308039103"
+    },
+    {
+      "slug": "vim-mvrk-3-8-drive-ratchet-8", "category": "vim-tools", "cart": "r6usa", "status": "coming-soon", "map": 87.3, "list": 119.05, "checkoutNote": "3/8 in drive, 90 tooth, 8 in, made in USA",
+      "brand": "VIM Tools", "name": "Made in USA: VIM MVRK 3/8\" Drive Ratchet, 8\"", "short": "MVRK 3/8\" Ratchet", "price": "119.99",
+      "desc": "Made in USA. 90 teeth. 8 inches. The everyday ratchet.",
+      "about": "Same rebuild kit as the flex head. Buy it once.",
+      "facts": ["3/8\" drive · 90T · 4° swing", "8\" fixed head", "Made in USA · lifetime warranty"],
+      "sku": "R6USA", "upc": "092308861919", "madeInUSA": true
+    },
+    {
+      "slug": "vim-mvrk-3-8-impact-locking-extension-set", "category": "vim-tools", "cart": "ilex600usa", "status": "coming-soon", "map": 119.05, "list": 162.34, "checkoutNote": "3 pc, 3/8 in drive, impact rated, made in USA",
+      "brand": "VIM Tools", "name": "Made in USA: VIM MVRK 3 Pc. 3/8\" Impact Locking Extension Set", "short": "MVRK 3/8\" Locking Extensions", "price": "162.99",
+      "desc": "Locking extensions. The socket stays on. Made in USA.",
+      "about": "No more sockets left behind in the wheel well.",
+      "facts": ["3 pc · 3/8\" drive", "Impact rated · locking", "Made in USA · lifetime warranty"],
+      "sku": "ILEX600USA", "upc": "092308956004", "madeInUSA": true
+    },
+    {
+      "slug": "vim-3-8-ratchet-repair-kit", "category": "vim-tools", "cart": "r6usa-rk", "status": "coming-soon", "map": 16.55, "list": 22.57, "checkoutNote": "fits R6USA and FR6USA",
+      "brand": "VIM Tools", "name": "VIM 3/8\" Ratchet Repair Kit for MVRK R6USA and FR6USA", "short": "MVRK 3/8\" Repair Kit", "price": "22.99",
+      "desc": "Rebuild your MVRK. Don't replace it.",
+      "about": "Cheap fix. Your ratchet is new again.",
+      "facts": ["Fits R6USA and FR6USA", "Rebuilds the ratchet mechanism", "Keep one in the trailer"],
+      "sku": "R6USA-RK", "upc": "092308861810"
+    },
+    {
+      "slug": "vim-lime-green-hood-holder", "category": "vim-tools", "cart": "v387g", "status": "coming-soon", "map": 30.95, "list": 42.21, "checkoutNote": "adjustable 28 to 46 in",
+      "brand": "VIM Tools", "name": "VIM Lime Green Hood Holder, 28\" to 46\"", "short": "Lime Green Hood Holder", "price": "42.99",
+      "desc": "Holds the hood up. Paddock green.",
+      "about": "Tired hood struts? Not your problem anymore.",
+      "facts": ["Adjusts 28\" to 46\"", "Lime green", "Lives in the trailer"],
+      "sku": "V387G", "upc": "092308387075"
+    },
+    {
+      "slug": "vim-socket-rail-set", "category": "vim-tools", "cart": "v423", "status": "coming-soon", "map": 15.01, "list": 20.47, "checkoutNote": "1/4, 3/8 and 1/2 in rails, 16 clips each",
+      "brand": "VIM Tools", "name": "VIM Socket Rail Set, 1/4\" 3/8\" 1/2\"", "short": "Socket Rail Set", "price": "20.99",
+      "desc": "Three rails. 48 clips. Sockets stay put.",
+      "about": "Trailer bouncing down the highway. Sockets stay put.",
+      "facts": ["1/4\", 3/8\" and 1/2\" rails", "16 clips each", "Any brand of socket"],
+      "sku": "V423", "upc": ""
+    },
+    {
+      "slug": "vim-xzn-stubby-triple-square-set", "category": "vim-tools", "cart": "xzns412", "status": "coming-soon", "map": 37.4, "list": 51.0, "checkoutNote": "6 pc, 4 to 12 mm, 1/4 in drive",
+      "brand": "VIM Tools", "name": "VIM XZN Stubby Triple Square Set, 4mm to 12mm", "short": "Stubby Triple Square Set", "price": "51.99",
+      "desc": "Stubby triple squares. Because VW and Audi said so.",
+      "about": "CV bolts and the other German stuff. Stubby fits where long won't.",
+      "facts": ["6 pc · 4mm to 12mm", "1/4\" square drive", "Lifetime warranty"],
+      "sku": "XZNS412", "upc": "092308249137"
+    },
+    {
+      "slug": "vim-half-cut-stubby-torx-set", "category": "vim-tools", "cart": "hct1050a", "status": "coming-soon", "map": 41.37, "list": 56.42, "checkoutNote": "10 pc, T10 to T50, 1/4 in drive",
+      "brand": "VIM Tools", "name": "VIM 10 Pc. Half Cut Stubby Torx Set, T10 to T50", "short": "Half Cut Stubby Torx Set", "price": "56.99",
+      "desc": "Half cut. Stubby. Fits where nothing else does.",
+      "about": "Low profile drivers on a green MagRail. Grab and go.",
+      "facts": ["10 pc · T10 to T50", "1/4\" drive · green MagRail", "Lifetime warranty"],
+      "sku": "HCT1050A", "upc": "092308904012"
+    },
+    {
+      "slug": "vim-e-torx-socket-set", "category": "vim-tools", "cart": "vse616", "status": "coming-soon", "map": 31.97, "list": 43.6, "checkoutNote": "7 pc, E6 to E16",
+      "brand": "VIM Tools", "name": "VIM 7 Pc. E-Torx Socket Set, E6 to E16", "short": "E-Torx Socket Set", "price": "43.99",
+      "desc": "External Torx. German cars love them.",
+      "about": "Every German car has a few. Now you have the sockets.",
+      "facts": ["7 pc · E6 to E16", "Vinyl holder", "Lifetime warranty"],
+      "sku": "VSE616", "upc": ""
+    },
+    {
+      "slug": "vim-hub-and-stud-cleaning-kit-car", "category": "vim-tools", "cart": "hsc100", "status": "coming-soon", "map": 90.72, "list": 123.71, "checkoutNote": "car hubs",
+      "brand": "VIM Tools", "name": "VIM Hub and Stud Cleaning Kit, Car", "short": "Hub and Stud Cleaning Kit, Car", "price": "123.99",
+      "desc": "Clean hubs. Flat wheels. No wobble.",
+      "about": "Rust on the hub means a wheel that won't sit flat. Fix that.",
+      "facts": ["Cleans hub faces and studs", "For cars", "Truck kit: HSC200"],
+      "sku": "HSC100", "upc": "092308891008"
+    },
+    {
+      "slug": "vim-hub-and-stud-cleaning-kit-truck", "category": "vim-tools", "cart": "hsc200", "status": "coming-soon", "map": 99.8, "list": 136.1, "checkoutNote": "truck hubs",
+      "brand": "VIM Tools", "name": "VIM Hub and Stud Cleaning Kit, Truck", "short": "Hub and Stud Cleaning Kit, Truck", "price": "136.99",
+      "desc": "Clean hubs. Flat wheels. Truck size.",
+      "about": "Tow rig wheels sit flat too. Clean the hub first.",
+      "facts": ["Cleans hub faces and studs", "For trucks", "Car kit: HSC100"],
+      "sku": "HSC200", "upc": "092308892005"
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
