@@ -105,3 +105,4 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 /* A steady configurator: the price, summary, stock line and thumbnail row keep their space whatever is picked */
 .thumbs.one-row{flex-wrap:nowrap;overflow-x:auto;min-height:94px;scrollbar-width:thin}.thumbs.one-row button{flex:0 0 auto}
 .gp-sum{min-height:2.9em;line-height:1.45}.pd-info [data-stock]{min-height:1.5em}
+.gp ~ .idline,.pd-info [data-variant-ids]{min-height:2.9em}

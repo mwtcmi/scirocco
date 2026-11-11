@@ -105,19 +105,14 @@
         { "title": "Support", "text": "Find us at the 799 trailer, in Traverse City, or by email." }
       ],
       "pick": "many", "defaultSku": "FR6USA",
+      "quick": [{ "label": "All fixed", "skus": ["R4USA", "R6USA", "R8USA"] }, { "label": "All flex", "skus": ["FR4USA", "FR6USA", "FR8USA"] }, { "label": "All 6", "skus": ["R4USA", "FR4USA", "R6USA", "FR6USA", "R8USA", "FR8USA"] }],
       "variants": [
         { "sku": "R4USA", "cut": "/images/optimized/vim-r4usa-cut.webp", "inches": 5, "upc": "092308841911", "opts": ["1/4\"", "Fixed"], "size": "5\"", "map": 65.08, "list": 88.74, "price": "88.99" },
         { "sku": "FR4USA", "cut": "/images/optimized/vim-fr4usa-cut.webp", "inches": 6, "upc": "092308684198", "opts": ["1/4\"", "Flex"], "size": "6\"", "map": 95.24, "list": 129.87, "price": "129.99" },
         { "sku": "R6USA", "cut": "/images/optimized/vim-r6usa-cut.webp", "inches": 8, "upc": "092308861919", "opts": ["3/8\"", "Fixed"], "size": "8\"", "map": 87.3, "list": 119.05, "price": "119.99" },
         { "sku": "FR6USA", "cut": "/images/optimized/vim-fr6usa-cut.webp", "inches": 12, "upc": "092308686192", "opts": ["3/8\"", "Flex"], "size": "12\"", "map": 109.52, "list": 149.35, "price": "149.99" },
         { "sku": "R8USA", "cut": "/images/optimized/vim-r8usa-cut.webp", "inches": 10, "upc": "092308881917", "opts": ["1/2\"", "Fixed"], "size": "10\"", "map": 101.59, "list": 138.53, "price": "138.99" },
-        { "sku": "FR8USA", "cut": "/images/optimized/vim-fr8usa-cut.webp", "inches": 24, "upc": "092308688196", "opts": ["1/2\"", "Flex"], "size": "24\"", "map": 142.86, "list": 194.81, "price": "194.99" },
-        { "sku": "MVRK-SET-FIXED", "quick": "All fixed", "label": "All 3 fixed: 5\", 8\", 10\"", "includes": ["R4USA", "R6USA", "R8USA"], "map": 253.97, "list": 346.32, "price": "346.99" },
-        { "sku": "MVRK-SET-FLEX", "quick": "All flex", "label": "All 3 flex: 6\", 12\", 24\"", "includes": ["FR4USA", "FR6USA", "FR8USA"], "map": 347.62, "list": 474.03, "price": "474.99" },
-        { "sku": "MVRK-PAIR-14", "label": "1/4\" fixed + flex", "includes": ["R4USA", "FR4USA"], "map": 160.32, "list": 218.61, "price": "218.99" },
-        { "sku": "MVRK-PAIR-38", "label": "3/8\" fixed + flex", "includes": ["R6USA", "FR6USA"], "map": 196.82, "list": 268.4, "price": "268.99" },
-        { "sku": "MVRK-PAIR-12", "label": "1/2\" fixed + flex", "includes": ["R8USA", "FR8USA"], "map": 244.45, "list": 333.34, "price": "333.99" },
-        { "sku": "MVRK-SET-ALL", "quick": "All 6", "label": "All 6 ratchets, fixed and flex", "includes": ["R4USA", "FR4USA", "R6USA", "FR6USA", "R8USA", "FR8USA"], "map": 601.59, "list": 820.35, "price": "820.99" }
+        { "sku": "FR8USA", "cut": "/images/optimized/vim-fr8usa-cut.webp", "inches": 24, "upc": "092308688196", "opts": ["1/2\"", "Flex"], "size": "24\"", "map": 142.86, "list": 194.81, "price": "194.99" }
       ],
       "images": [
         { "src": "/images/optimized/vim-r4usa-dim-900.webp", "src480": "/images/optimized/vim-r4usa-dim-480.webp", "w": 900, "h": 900, "sku": "R4USA", "alt": "VIM MVRK R4USA ratchet, 1/4 in drive fixed, 5 in overall, made in USA" },
@@ -139,9 +134,6 @@
         { "src": "/images/optimized/vim-fr4usa-head-900.webp", "src480": "/images/optimized/vim-fr4usa-head-480.webp", "w": 900, "h": 900, "sku": "FR4USA", "alt": "Close-up of the MVRK FR4USA flex head and direction lever" },
         { "src": "/images/optimized/vim-fr8usa-top-900.webp", "src480": "/images/optimized/vim-fr8usa-top-480.webp", "w": 900, "h": 900, "sku": "FR8USA", "alt": "VIM MVRK FR8USA 1/2 in drive 24 in flex head ratchet, made in USA, from above" },
         { "src": "/images/optimized/vim-fr8usa-head-900.webp", "src480": "/images/optimized/vim-fr8usa-head-480.webp", "w": 900, "h": 900, "sku": "FR8USA", "alt": "Close-up of the MVRK FR8USA flex head and direction lever" },
-        { "src": "/images/optimized/vim-mvrk-set-all-900.webp", "src480": "/images/optimized/vim-mvrk-set-all-480.webp", "w": 900, "h": 900, "sku": "MVRK-SET-ALL", "alt": "All six VIM MVRK ratchets to scale: fixed 5, 8 and 10 in, flex 6, 12 and 24 in" },
-        { "src": "/images/optimized/vim-mvrk-set-fixed-900.webp", "src480": "/images/optimized/vim-mvrk-set-fixed-480.webp", "w": 900, "h": 900, "sku": "MVRK-SET-FIXED", "alt": "The three VIM MVRK fixed ratchets to scale: 5, 8 and 10 in" },
-        { "src": "/images/optimized/vim-mvrk-set-flex-900.webp", "src480": "/images/optimized/vim-mvrk-set-flex-480.webp", "w": 900, "h": 900, "sku": "MVRK-SET-FLEX", "alt": "The three VIM MVRK flex ratchets to scale: 6, 12 and 24 in" },
         { "src": "/images/optimized/vim-mvrk-fixed-angle-900.webp", "src480": "/images/optimized/vim-mvrk-fixed-angle-480.webp", "w": 900, "h": 900, "skus": ["R4USA", "R6USA", "R8USA"], "alt": "VIM MVRK fixed-head ratchet, made in USA, angled view" },
         { "src": "/images/optimized/vim-r6usa-head-900.webp", "src480": "/images/optimized/vim-r6usa-head-480.webp", "w": 900, "h": 900, "skus": ["R4USA", "R6USA", "R8USA"], "alt": "Close-up of an MVRK fixed ratchet head and direction lever" },
         { "src": "/images/optimized/vim-mvrk-fixed-stamp-900.webp", "src480": "/images/optimized/vim-mvrk-fixed-stamp-480.webp", "w": 900, "h": 900, "skus": ["R4USA", "R6USA", "R8USA"], "alt": "Close-up of the VIM MVRK USA stamp on a fixed ratchet head" },

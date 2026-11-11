@@ -486,41 +486,23 @@ test('business name: optional at checkout, saved apart from the person’s name'
 test('configurator products: each option has its own price, and Coming Soon options cannot be bought', () => {
   const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url)));
   const m = file.products.find(p => p.cart === 'mvrk');
-  assert.ok(m.variants.length === 12 && m.options.length === 2);
+  assert.ok(m.variants.length === 6 && m.options.length === 2 && !m.variants.some(v => v.includes)); // no made-up set SKUs
   const c = worker.buildCatalog(file).mvrk;
-  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499], ['MVRK-SET-FIXED', 34699], ['MVRK-SET-FLEX', 47499], ['MVRK-PAIR-14', 21899], ['MVRK-PAIR-38', 26899], ['MVRK-PAIR-12', 33399], ['MVRK-SET-ALL', 82099]]);
-  assert.equal(c.variants.find(v => v.sku === 'MVRK-SET-ALL').includes.length, 6);
-  assert.deepEqual(c.variants.find(v => v.sku === 'MVRK-SET-FIXED').includes, ['R4USA', 'R6USA', 'R8USA']);
+  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499]]);
   assert.equal(c.variants.find(v => v.sku === 'FR6USA').name, '3/8" Flex, 12"');
   assert.equal(c.cents, 8899); assert.equal(c.option, 'Option');
   m.variants.find(v => v.sku === 'R4USA').status = 'coming-soon';
-  assert.ok(!worker.buildCatalog(file).mvrk.variants.some(v => v.sku === 'R4USA' || v.sku === 'MVRK-SET-FIXED')); // a set needs every part on sale
+  assert.ok(!worker.buildCatalog(file).mvrk.variants.some(v => v.sku === 'R4USA'));
   m.status = 'coming-soon';
   assert.equal(worker.buildCatalog(file).mvrk, undefined);
 });
 
-test('a set checks out as one line per ratchet, splitting the set price, and takes one of each part from stock', async t => {
+test('a mix of MVRK ratchets checks out as one line per ratchet at its own price', async t => {
   const s = service(t);
-  s.sqlite.exec("UPDATE stock SET qty = 2 WHERE key IN ('R4USA','R6USA'); UPDATE stock SET qty = 1 WHERE key = 'R8USA'");
-  const cat = (await s.call('/api/catalog')).body;
-  assert.equal(cat.stock['MVRK-SET-FIXED'], 1); assert.equal(cat.stock['MVRK-SET-FLEX'], 0);
-  // Two sets need two 10" ratchets: refused.
-  const no = await s.call('/api/checkout', { method: 'POST', data: { items: [{ sku: 'MVRK-SET-FIXED', qty: 2 }], fulfillment: 'pickup' } });
-  assert.equal(no.status, 409); assert.deepEqual(no.body.soldOut, ['R8USA']);
-  const ok = await s.call('/api/checkout', { method: 'POST', data: { items: [{ sku: 'MVRK-SET-FIXED', qty: 1 }, { sku: 'R6USA', qty: 1 }], fulfillment: 'pickup' } });
+  s.sqlite.exec("UPDATE stock SET qty = 2 WHERE key IN ('R4USA','R6USA','R8USA')");
+  const ok = await s.call('/api/checkout', { method: 'POST', data: { items: [{ sku: 'R4USA', qty: 1 }, { sku: 'R6USA', qty: 1 }, { sku: 'R8USA', qty: 1 }], fulfillment: 'pickup' } });
   assert.equal(ok.status, 200);
   const p = s.sent.at(-1).params, line = k => p.get('line_items[' + k + '][price_data][unit_amount]');
-  // $346.99 split over the 5", 8" and 10" in proportion to $88.99, $119.99 and $138.99; then the single 8".
-  assert.deepEqual([line(0), line(1), line(2), line(3)], ['8874', '11965', '13860', '11999']);
-  assert.equal(8874 + 11965 + 13860, 34699);
-  assert.match(p.get('line_items[0][price_data][product_data][description]'), /\(R4USA\), part of the All 3 fixed set/);
-  const meta = JSON.parse(p.get('metadata[items]'));
-  assert.deepEqual(meta, [{ s: 'R4USA', q: 1, u: 8874, k: 'MVRK-SET-FIXED' }, { s: 'R6USA', q: 1, u: 11965, k: 'MVRK-SET-FIXED' }, { s: 'R8USA', q: 1, u: 13860, k: 'MVRK-SET-FIXED' }, { s: 'R6USA', q: 1 }]);
-  // Paid: the order lists single SKUs at the prices they sold for, and stock drops by one of each.
-  const r = await s.webhook(paid('cs_test_set12345', meta));
-  assert.equal(r.status, 200);
-  const items = JSON.parse(s.sqlite.prepare("SELECT items FROM orders WHERE session_id = 'cs_test_set12345'").get().items);
-  assert.deepEqual(items.map(i => [i.s, i.u]), [['R4USA', 8874], ['R6USA', 11965], ['R8USA', 13860], ['R6USA', 11999]]);
-  const st = Object.fromEntries(s.sqlite.prepare("SELECT key, qty FROM stock WHERE key IN ('R4USA','R6USA','R8USA')").all().map(x => [x.key, x.qty]));
-  assert.deepEqual(st, { R4USA: 1, R6USA: 0, R8USA: 0 });
+  assert.deepEqual([line(0), line(1), line(2)], ['8899', '11999', '13899']);
+  assert.deepEqual(JSON.parse(p.get('metadata[items]')), [{ s: 'R4USA', q: 1 }, { s: 'R6USA', q: 1 }, { s: 'R8USA', q: 1 }]);
 });

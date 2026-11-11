@@ -61,6 +61,7 @@ for (const p of products.filter(p => p.variants)) {
     if (!Array.isArray(v.includes) || v.includes.length < 2 || v.includes.some(k => !p.variants.some(x => x.sku === k && !x.includes))) throw new Error(`${p.slug} ${v.sku}: "includes" must list two or more of this product's single SKUs`);
   }
   for (const i of p.images || []) for (const k of [i.sku, ...(i.skus || [])].filter(Boolean)) if (!seen.has(k)) throw new Error(`${p.slug}: photo for unknown SKU ${k}`);
+  for (const q of p.quick || []) if (!q.label || !Array.isArray(q.skus) || !q.skus.length || q.skus.some(k => !seen.has(k))) throw new Error(`${p.slug}: every "quick" button needs a label and this product's SKUs`);
   if (p.defaultSku && !seen.has(p.defaultSku)) throw new Error(`${p.slug}: defaultSku ${p.defaultSku} is not a variant`);
   const forSale = p.variants.filter(v => (v.status || 'live') === 'live');
   p.price = Math.min(...(forSale.length ? forSale : p.variants).map(v => Number(v.price))).toFixed(2);
@@ -160,7 +161,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=21"></script>`;
+<script src="/paddock-store.js?v=23"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -218,7 +219,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=19">
+<link rel="stylesheet" href="/paddock-store.css?v=20">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -249,11 +250,11 @@ const pickers = p => p.options.map((o, i) => `<fieldset class="opt pick"><legend
 const grid2 = p => {
   const [cols, rows] = p.options, single = p.variants.filter(v => !v.includes), d = defaultVariant(p).sku;
   const cell = (c, r) => { const v = single.find(x => x.opts[0] === c && x.opts[1] === r); return v ? `<button type="button" class="gp-cell" data-cell="${p.cart}" data-sku="${v.sku}" aria-pressed="${v.sku === d}" aria-label="${esc(optionName(v))}"><b>${esc(v.size || c)}</b><small>${money(Number(v.price).toFixed(2))}</small></button>` : '<span class="gp-none"></span>'; };
-  const quick = p.variants.filter(v => v.includes && v.quick);
+  const quick = p.quick || []; // shortcut buttons that pick a group of real ratchets ("All fixed"); no SKUs of their own
   return `<fieldset class="opt pick gp" data-grid="${p.cart}"><legend>Build your set <span data-grid-count="${p.cart}"></span></legend>
 <div class="gp-table" style="--cols:${cols.values.length}"><span></span>${cols.values.map(c => `<span class="gp-col">${esc(c)}</span>`).join('')}
 ${rows.values.map(r => `<span class="gp-row">${esc(r)}</span>${cols.values.map(c => cell(c, r)).join('')}`).join('\n')}</div>
-${quick.length ? `<div class="gp-quick">${quick.map(v => `<button type="button" data-quick="${p.cart}" data-skus="${v.includes.join(' ')}">${esc(v.quick)}</button>`).join('')}<button type="button" data-quick="${p.cart}" data-skus="">Clear</button></div>` : ''}
+${quick.length ? `<div class="gp-quick">${quick.map(q => `<button type="button" data-quick="${p.cart}" data-skus="${q.skus.join(' ')}" data-label="${esc(q.label)}">${esc(q.label)}</button>`).join('')}<button type="button" data-quick="${p.cart}" data-skus="">Clear</button></div>` : ''}
 <p class="gp-sum" data-grid-sum="${p.cart}"></p></fieldset>`;
 };
 const options = p => p.pick === 'many' ? grid2(p) : picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
