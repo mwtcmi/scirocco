@@ -43,9 +43,12 @@ for (const p of products.filter(p => p.variants)) {
   if (!Array.isArray(p.options) || !p.options.length) throw new Error(`${p.slug}: "variants" needs "options"`);
   if (p.colors) throw new Error(`${p.slug}: use "colors" or "variants", not both`);
   const seen = new Set(), combos = new Set();
+  if (p.pick && p.pick !== 'many') throw new Error(`${p.slug}: "pick" can only be "many"`);
+  if (p.pick === 'many' && p.options.length !== 2) throw new Error(`${p.slug}: "pick": "many" needs exactly two options (columns and rows)`);
   for (const v of p.variants) {
     if (!v.sku || seen.has(v.sku)) throw new Error(`${p.slug}: every variant needs its own SKU`);
     seen.add(v.sku);
+    if (v.includes) { if (!v.label && !v.opts) throw new Error(`${p.slug} ${v.sku}: a set needs a "label"`); if (!v.opts) { if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`); continue; } }
     if (!Array.isArray(v.opts) || v.opts.length !== p.options.length || v.opts.some((x, i) => !p.options[i].values.includes(x))) throw new Error(`${p.slug} ${v.sku}: "opts" must give one listed value per option`);
     if (combos.has(v.opts.join('|'))) throw new Error(`${p.slug}: two variants are ${v.opts.join(' ')}`);
     combos.add(v.opts.join('|'));
@@ -129,7 +132,7 @@ for (const p of products) if (p.madeInUSA !== undefined && typeof p.madeInUSA !=
 const onPage = cartProducts.filter(p => isLive(p) || (picker(p) && !isRetired(p))); // a coming-soon configurator still lets you pick
 const clientData = {
   products: Object.fromEntries(onPage.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: p.colors ? 'Color' : picker(p) ? 'Option' : null, freeShipping: p.freeShipping === true,
-    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name) } : {}) }])),
+    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name), ...(p.pick ? { pick: p.pick } : {}) } : {}) }])),
   fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
 
@@ -156,7 +159,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=12"></script>`;
+<script src="/paddock-store.js?v=13"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -214,7 +217,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=13">
+<link rel="stylesheet" href="/paddock-store.css?v=14">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -240,7 +243,19 @@ function photoTag(p, { big = false, lazy = true } = {}) {
 const idLine = p => { const v = defaultVariant(p); return v.sku ? `<div class="idline"${multi(p) ? ` data-variant-ids="${p.cart}"` : ''}>SKU ${esc(v.sku)}${v.upc ? ` · UPC ${esc(v.upc)}` : ''}</div>` : '<div class="idline">SKU and UPC to come</div>'; };
 const pickers = p => p.options.map((o, i) => `<fieldset class="opt pick"><legend>${esc(o.name)} <span data-pick-name="${p.cart}" data-opt="${i}">${esc(defaultVariant(p).opts[i])}</span></legend><div class="pick-row">${o.values.map(val =>
   `<button type="button" class="pick-btn" data-pick="${p.cart}" data-opt="${i}" data-val="${esc(val)}" aria-pressed="${defaultVariant(p).opts[i] === val}">${esc(val)}</button>`).join('')}</div></fieldset>`).join('');
-const options = p => picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
+// "pick": "many": a grid (rows = second option, columns = first) where any mix of options can be picked at once.
+// If the picks match a set exactly, the set's price applies. paddock-store.js runs it.
+const grid2 = p => {
+  const [cols, rows] = p.options, single = p.variants.filter(v => !v.includes), d = defaultVariant(p).sku;
+  const cell = (c, r) => { const v = single.find(x => x.opts[0] === c && x.opts[1] === r); return v ? `<button type="button" class="gp-cell" data-cell="${p.cart}" data-sku="${v.sku}" aria-pressed="${v.sku === d}" aria-label="${esc(optionName(v))}"><b>${esc(v.size || c)}</b><small>${money(Number(v.price).toFixed(2))}</small></button>` : '<span class="gp-none"></span>'; };
+  const quick = p.variants.filter(v => v.includes && v.quick);
+  return `<fieldset class="opt pick gp" data-grid="${p.cart}"><legend>Pick your ${esc(p.short || p.name).replace(/ ratchet$/i, ' ratchets')} <span data-grid-count="${p.cart}"></span></legend>
+<div class="gp-table" style="--cols:${cols.values.length}"><span></span>${cols.values.map(c => `<span class="gp-col">${esc(c)}</span>`).join('')}
+${rows.values.map(r => `<span class="gp-row">${esc(r)}</span>${cols.values.map(c => cell(c, r)).join('')}`).join('\n')}</div>
+${quick.length ? `<div class="gp-quick">${quick.map(v => `<button type="button" data-quick="${p.cart}" data-skus="${v.includes.join(' ')}">${esc(v.quick)}</button>`).join('')}<button type="button" data-quick="${p.cart}" data-skus="">Clear</button></div>` : ''}
+<p class="gp-sum" data-grid-sum="${p.cart}"></p></fieldset>`;
+};
+const options = p => p.pick === 'many' ? grid2(p) : picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
 const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
 const shipBadge = p => p.freeShipping ? '<div class="freeship">Free shipping to the lower 48</div>' : '';
 const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';

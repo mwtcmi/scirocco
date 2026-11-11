@@ -54,7 +54,31 @@ function drawEvents(){var box=$('get-events');if(!box)return;var was=getChoice()
 // One product's options, photo, part numbers, price, stock line, button and "notify me" box.
 function pickTo(id,i,val){var p=PRODUCTS[id],cur=variant(id).opts.slice();cur[i]=val;
  var hit=p.variants.filter(function(x){return x.opts.join('|')===cur.join('|')})[0]||p.variants.filter(function(x){return x.opts[i]===val})[0];if(hit){sel[id]=hit.name;draw()}}
-function drawProduct(id){var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
+// "pick": "many" (the MVRK ratchet grid): any mix of single options at once; an exact match for a set gets the set price.
+var gsel={};IDS.forEach(function(id){if(PRODUCTS[id].pick==='many')gsel[id]=[variant(id).sku]});
+function bySku(id,sku){return PRODUCTS[id].variants.filter(function(x){return x.sku===sku})[0]}
+function gridSet(id){var pick=gsel[id].slice().sort().join(' ');return pick.indexOf(' ')<0?null:PRODUCTS[id].variants.filter(function(x){return x.includes&&x.includes.slice().sort().join(' ')===pick})[0]||null}
+function gridLines(id){var st=gridSet(id);return st?[st.sku]:gsel[id].slice()}
+function drawThumbs(id,v){all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
+ box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
+function drawGrid(id){var p=PRODUCTS[id],v=variant(id),pick=gsel[id],st=gridSet(id),lines=gridLines(id),cat=online&&!!data.catalog[id];
+ all(attr('data-cell',id)).forEach(function(b){var sku=b.dataset.sku,out=online&&have(sku)<1,soon=online&&cat&&!liveVariant(id,sku);b.setAttribute('aria-pressed',pick.indexOf(sku)>=0);b.classList.toggle('out',out||soon);
+  if(!b.onclick)b.onclick=function(){var i=gsel[id].indexOf(sku);if(i>=0)gsel[id].splice(i,1);else gsel[id].push(sku);sel[id]=bySku(id,sku).name;draw()}});
+ all(attr('data-quick',id)).forEach(function(b){var k=b.dataset.skus;b.setAttribute('aria-pressed',!!k&&pick.slice().sort().join(' ')===k.split(' ').sort().join(' '));
+  if(!b.onclick)b.onclick=function(){gsel[id]=k?k.split(' '):[];if(gsel[id].length)sel[id]=bySku(id,gsel[id][gsel[id].length-1]).name;draw()}});
+ if(v.img)all(attr('data-variant-img',id)).forEach(function(img){if(img.dataset.sku!==v.sku){img.dataset.sku=v.sku;img.src=v.img.src;if(v.img.srcset)img.srcset=v.img.srcset;img.alt=v.img.alt}});
+ drawThumbs(id,v);
+ var total=lines.reduce(function(t,k){return t+skuPrice(k)},0),n=pick.length;
+ all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'Pick a ratchet'});
+ all(attr('data-grid-count',id)).forEach(function(e){e.textContent=n?n+' picked':''});
+ all(attr('data-grid-sum',id)).forEach(function(e){e.textContent=st?(bySku(id,st.sku).name+'. Priced as a set.'):n?pick.map(function(k){return bySku(id,k).name}).join(' · '):'Tap the ratchets you want.'});
+ all(attr('data-variant-ids',id)).forEach(function(e){e.textContent=n?'SKU '+(st?st.sku:pick.join(' · ')):''});
+ var bad=pick.filter(function(k){return !cat||!liveVariant(id,k)}),outs=pick.filter(function(k){return online&&have(k)<1}),rest=Math.min.apply(null,lines.map(function(k){return left(k)}).concat([99]));
+ all(attr('data-stock',id)).forEach(function(e){e.textContent=n&&online&&!outs.length?(rest<1?'All in your cart':rest<3?'Only '+rest+' left':''):''});
+ all('.add'+attr('data-add',id)).forEach(function(b){var ok=online&&n&&!bad.length&&!outs.length&&rest>0;b.disabled=!ok;
+  b.textContent=!n?'Pick a ratchet':bad.length&&online?'Coming Soon':!online?'Coming Soon':outs.length?(outs.length===n?'Out of stock':bySku(id,outs[0]).name+' is out of stock'):rest<1?'All in your cart':st?'Add the set to cart':n>1?'Add '+n+' to cart':'Add to cart'});
+ all('form'+attr('data-notify',id)).forEach(function(f){var k=outs[0],show=!!k&&cat;f.hidden=!show;if(k&&f.dataset.sku!==k){f.dataset.sku=k;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l)l.textContent='Want the '+bySku(id,k).name+'? Get an email when it\'s back.'}})}
+function drawProduct(id){if(PRODUCTS[id].pick==='many'){drawGrid(id);return}var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
  if(v.opts){all(attr('data-pick',id)).forEach(function(b){var i=+b.dataset.opt;b.setAttribute('aria-pressed',v.opts[i]===b.dataset.val);if(!b.onclick)b.onclick=function(){pickTo(id,i,b.dataset.val)}});
   all(attr('data-pick-name',id)).forEach(function(e){e.textContent=v.opts[+e.dataset.opt]+(+e.dataset.opt===v.opts.length-1&&v.size?', '+v.size:'')});
   all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
@@ -96,7 +120,7 @@ function align(){var parts=['h3','.idline','.desc','.facts'],items=all('.store-g
  var rows={};items.forEach(function(it){var k=Math.round(it.getBoundingClientRect().top+scrollY);(rows[k]=rows[k]||[]).push(it)});
  Object.keys(rows).forEach(function(k){var row=rows[k];if(row.length<2)return;parts.forEach(function(s){var els=row.map(function(it){return it.querySelector(s)}).filter(Boolean),h=Math.max.apply(null,els.map(function(e){return e.getBoundingClientRect().height}));els.forEach(function(e){e.style.minHeight=h+'px'})})})}
 window.addEventListener('resize',align);
-function add(id){if(!PRODUCTS[id])return;var sku=variant(id).sku,l=cart.filter(function(x){return x.sku===sku})[0];if(l)l.qty++;else cart.push({sku:sku,qty:1});save();draw();open()}
+function add(id){if(!PRODUCTS[id])return;(PRODUCTS[id].pick==='many'?gridLines(id):[variant(id).sku]).forEach(function(sku){var l=cart.filter(function(x){return x.sku===sku})[0];if(l)l.qty++;else cart.push({sku:sku,qty:1})});save();draw();open()}
 function open(){$('cart').hidden=false;$('cart-shade').hidden=false;$('cart-close').focus()}
 function close(){$('cart').hidden=true;$('cart-shade').hidden=true;$('cart-btn').focus()}
 function note(t){var n=$('store-note');if(!n)return;n.textContent=t;n.hidden=!t}
