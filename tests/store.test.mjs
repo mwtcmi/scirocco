@@ -51,7 +51,7 @@ test('catalog returns stock and options', async t => {
   const s = service(t);
   const r = await s.call('/api/catalog');
   assert.equal(r.status, 200); assert.equal(r.body.stock['jug/color/Red'], 2); assert.equal(r.body.stock.pump, 2);
-  assert.equal(r.body.catalog.jug.cents, 4599); assert.equal(r.body.catalog.ripper.cents, 2745); assert.equal(r.body.stock.tuffspout, 2);
+  assert.equal(r.body.catalog.jug.cents, 4599); assert.equal(r.body.catalog.ripper.cents, 2799); assert.equal(r.body.stock.tuffspout, 2);
   assert.equal(r.body.catalog.spoutbender.cents, 799); assert.equal(r.body.stock.spoutbender, 2);
   assert.equal(r.res.headers.get('access-control-allow-origin'), 'https://799motorsport.com');
 });
@@ -69,7 +69,7 @@ test('pickup checkout prices on the server and skips shipping address', async t 
   const p = s.sent[0].params;
   assert.equal(p.get('line_items[0][price_data][unit_amount]'), '4599');
   assert.match(p.get('line_items[0][price_data][product_data][description]'), /RUASVS20/);
-  assert.equal(p.get('line_items[2][price_data][unit_amount]'), '2745');
+  assert.equal(p.get('line_items[2][price_data][unit_amount]'), '2799');
   assert.equal(p.get('line_items[1][price_data][unit_amount]'), '7499');
   assert.equal(p.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
   assert.equal(p.get('shipping_address_collection[allowed_countries][0]'), null);
