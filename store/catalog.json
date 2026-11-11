@@ -120,6 +120,12 @@
         { "sku": "MVRK-SET-ALL", "quick": "All 6", "label": "All 6 ratchets, fixed and flex", "includes": ["R4USA", "FR4USA", "R6USA", "FR6USA", "R8USA", "FR8USA"], "map": 601.59, "list": 820.35, "price": "820.99" }
       ],
       "images": [
+        { "src": "/images/optimized/vim-r4usa-dim-900.webp", "src480": "/images/optimized/vim-r4usa-dim-480.webp", "w": 900, "h": 900, "sku": "R4USA", "alt": "VIM MVRK R4USA ratchet, 1/4 in drive fixed, 5 in overall, made in USA" },
+        { "src": "/images/optimized/vim-r6usa-dim-900.webp", "src480": "/images/optimized/vim-r6usa-dim-480.webp", "w": 900, "h": 900, "sku": "R6USA", "alt": "VIM MVRK R6USA ratchet, 3/8 in drive fixed, 8 in overall, made in USA" },
+        { "src": "/images/optimized/vim-r8usa-dim-900.webp", "src480": "/images/optimized/vim-r8usa-dim-480.webp", "w": 900, "h": 900, "sku": "R8USA", "alt": "VIM MVRK R8USA ratchet, 1/2 in drive fixed, 10 in overall, made in USA" },
+        { "src": "/images/optimized/vim-fr4usa-dim-900.webp", "src480": "/images/optimized/vim-fr4usa-dim-480.webp", "w": 900, "h": 900, "sku": "FR4USA", "alt": "VIM MVRK FR4USA ratchet, 1/4 in drive flex head, 6 in overall, made in USA" },
+        { "src": "/images/optimized/vim-fr6usa-dim-900.webp", "src480": "/images/optimized/vim-fr6usa-dim-480.webp", "w": 900, "h": 900, "sku": "FR6USA", "alt": "VIM MVRK FR6USA ratchet, 3/8 in drive flex head, 12 in overall, made in USA" },
+        { "src": "/images/optimized/vim-fr8usa-dim-900.webp", "src480": "/images/optimized/vim-fr8usa-dim-480.webp", "w": 900, "h": 900, "sku": "FR8USA", "alt": "VIM MVRK FR8USA ratchet, 1/2 in drive flex head, 24 in overall, made in USA" },
         { "src": "/images/optimized/vim-fr6usa-side-900.webp", "src480": "/images/optimized/vim-fr6usa-side-480.webp", "w": 900, "h": 900, "sku": "FR6USA", "alt": "VIM Tools MVRK FR6USA 3/8 in drive 12 in flex head ratchet, made in USA" },
         { "src": "/images/optimized/vim-r6usa-angle-900.webp", "src480": "/images/optimized/vim-r6usa-angle-480.webp", "w": 900, "h": 900, "sku": "R6USA", "alt": "VIM MVRK R6USA 3/8 in drive 8 in ratchet, made in USA, angled view" },
         { "src": "/images/optimized/vim-r6usa-top-900.webp", "src480": "/images/optimized/vim-r6usa-top-480.webp", "w": 900, "h": 900, "sku": "R6USA", "alt": "VIM MVRK R6USA ratchet from above, VIM MVRK USA stamped on the head" },

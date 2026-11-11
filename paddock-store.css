@@ -92,3 +92,4 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 .gp-cell[aria-pressed=true]{border-color:var(--green);background:var(--green);color:#050505}.gp-cell[aria-pressed=true] small{color:#050505}.gp-cell.out{border-style:dashed;opacity:.55}.gp-cell.out[aria-pressed=true]{opacity:1}.gp-cell:focus-visible{outline:2px solid var(--green);outline-offset:3px}
 .gp-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.gp-quick button{min-height:36px;padding:0 12px;border:1px solid #444;background:none;color:#fff;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.gp-quick button[aria-pressed=true]{border-color:var(--green);color:var(--green)}
 .gp-sum{margin:12px 0 0;color:#aaa;font-size:13px;min-height:1.4em}
+.pd-grid>div{min-width:0}.thumbs{flex-wrap:wrap}
