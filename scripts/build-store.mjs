@@ -56,7 +56,7 @@ for (const p of products.filter(p => p.variants)) {
   for (const v of p.variants.filter(v => v.includes)) {
     if (!Array.isArray(v.includes) || v.includes.length < 2 || v.includes.some(k => !p.variants.some(x => x.sku === k && !x.includes))) throw new Error(`${p.slug} ${v.sku}: "includes" must list two or more of this product's single SKUs`);
   }
-  for (const i of p.images || []) if (i.sku && !seen.has(i.sku)) throw new Error(`${p.slug}: photo for unknown SKU ${i.sku}`);
+  for (const i of p.images || []) for (const k of [i.sku, ...(i.skus || [])].filter(Boolean)) if (!seen.has(k)) throw new Error(`${p.slug}: photo for unknown SKU ${k}`);
   if (p.defaultSku && !seen.has(p.defaultSku)) throw new Error(`${p.slug}: defaultSku ${p.defaultSku} is not a variant`);
   const forSale = p.variants.filter(v => (v.status || 'live') === 'live');
   p.price = Math.min(...(forSale.length ? forSale : p.variants).map(v => Number(v.price))).toFixed(2);
@@ -92,8 +92,10 @@ const imgOf = i => ({ src: i.src, srcset: i.src480 ? `${i.src480} 480w,${i.src} 
 function variantsOf(p) {
   if (p.variants) return p.variants.map(v => {
     // A set shows its own photos if it has any, otherwise its parts' photos.
+    // Photos: "sku" = that option's own photo (shown first); "skus" = a shared photo (e.g. a close-up true for every
+    // fixed-head size). A set shows its own photos if it has any, otherwise its parts'.
     const shows = (p.images || []).some(i => i.sku === v.sku) ? [v.sku] : v.includes || [v.sku];
-    const own = (p.images || []).filter(i => shows.includes(i.sku)), name = optionName(v);
+    const imgs = p.images || [], own = imgs.filter(i => shows.includes(i.sku)).concat(imgs.filter(i => i.skus && i.skus.some(k => shows.includes(k)))), name = optionName(v);
     return { name, sku: v.sku, upc: v.upc || '', opts: v.opts, size: v.size || '', cents: Math.round(Number(v.price) * 100), soon: (v.status || 'live') !== 'live', shows,
       ...(v.includes ? { includes: v.includes } : {}), img: imgOf(own[0] || { ...PLACEHOLDER, alt: `${p.name}, ${name} (photo coming soon)` }) };
   });
@@ -154,7 +156,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=11"></script>`;
+<script src="/paddock-store.js?v=12"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -390,8 +392,12 @@ for (const p of cartProducts) {
   const c = catBySlug[p.category], url = prodUrl(p);
   const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
   const rows = p.colors ? p.colors.map(x => [x.name, x.sku, x.upc]) : picker(p) ? p.variants.map(v => [optionName(v), v.sku, v.includes ? 'Set: ' + v.includes.join(' + ') : v.upc || 'To come']) : [[p.color || '', p.sku || 'To come', p.upc || 'To come']];
-  const pics = picker(p) ? p.images.filter(i => !i.sku || defaultVariant(p).shows.includes(i.sku)) : p.images;
-  const thumbs = picker(p) ? `<div class="thumbs" data-thumbs="${p.cart}"${p.images.length > 1 ? '' : ' hidden'}>${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${i.sku ? ` data-for="${i.sku}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
+  // Thumbnails in the order each option shows them (own photos first); paddock-store.js shows the picked option's.
+  const forOf = i => [i.sku, ...(i.skus || [])].filter(Boolean);
+  const dv = picker(p) ? defaultVariant(p) : null, fits = (i, v) => !forOf(i).length || forOf(i).some(k => v.shows.includes(k));
+  const pics = picker(p) ? [...p.images.filter(i => i.sku && fits(i, dv)), ...p.images.filter(i => !i.sku && fits(i, dv))] : p.images;
+  const ordered = picker(p) ? [...p.images.filter(i => i.sku), ...p.images.filter(i => !i.sku)] : p.images;
+  const thumbs = picker(p) ? `<div class="thumbs" data-thumbs="${p.cart}"${p.images.length > 1 ? '' : ' hidden'}>${ordered.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${forOf(i).length ? ` data-for="${forOf(i).join(' ')}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
     : !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
   const related = inCat(p.category).filter(x => x.cart && x !== p && isLive(x));
   const gone = isRetired(p), soon = status(p) === 'coming-soon';

@@ -57,7 +57,7 @@ function pickTo(id,i,val){var p=PRODUCTS[id],cur=variant(id).opts.slice();cur[i]
 function drawProduct(id){var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
  if(v.opts){all(attr('data-pick',id)).forEach(function(b){var i=+b.dataset.opt;b.setAttribute('aria-pressed',v.opts[i]===b.dataset.val);if(!b.onclick)b.onclick=function(){pickTo(id,i,b.dataset.val)}});
   all(attr('data-pick-name',id)).forEach(function(e){e.textContent=v.opts[+e.dataset.opt]+(+e.dataset.opt===v.opts.length-1&&v.size?', '+v.size:'')});
-  all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||(v.shows||[v.sku]).indexOf(t.dataset.for)>=0;t.hidden=!on;if(on){shown++;if(!first)first=t}});
+  all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
    box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
  all(attr('data-options',id)).forEach(function(box){box.innerHTML='';p.variants.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='sw'+(online&&have(x.sku)<1?' out':'');b.style.background=x.hex||'#777';b.title=x.name;
   b.setAttribute('aria-label',x.name+(online&&have(x.sku)<1?' (out of stock)':''));b.setAttribute('aria-pressed',sel[id]===x.name);b.onclick=function(){sel[id]=x.name;draw()};box.appendChild(b)})});
