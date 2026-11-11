@@ -127,7 +127,7 @@ function kitQuick(id,skus,group){var want=skus.filter(function(k){return !online
 // Socket outside diameters (mm) for the kit board, by size, so the rail looks like a real rail.
 var OD={8:17,10:17,12:18.5,13:19,14:20,15:21,17:23.5,19:26};
 function drawKitboard(id){var p=PRODUCTS[id];all(attr('data-kitboard',id)).forEach(function(box){
- if(!box.dataset.built){box.dataset.built='1';var html='<div class="kb-cap">Your kit</div>';
+ if(!box.dataset.built){box.dataset.built='1';var html='<div class="kb-cap">Your paddock kit</div>';
   p.kit.groups.forEach(function(g){if(g.rail){var rows={},order=[];p.variants.forEach(function(v){if(v.group===g.name&&v.sku!==g.rail){if(!rows[v.row]){rows[v.row]=[];order.push(v.row)}rows[v.row].push(v)}});
     html+='<div class="kb-rail" data-kb-group="'+g.name+'"><div class="kb-rail-head">'+g.name+' <span data-kb-railname></span></div>';
     order.forEach(function(r){html+='<div class="kb-rail-row"><span class="kb-row-name">'+r+'</span><div class="kb-clips">'+rows[r].map(function(v){var mm=parseFloat(v.chip),d=Math.round((OD[mm]||20)/26*100);

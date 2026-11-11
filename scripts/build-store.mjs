@@ -179,7 +179,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=26"></script>`;
+<script src="/paddock-store.js?v=27"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -299,7 +299,7 @@ ${rail ? `<p class="kit-rail" data-kit-rail="${esc(rail.sku)}">Your sockets come
   }).join('\n');
   return `<div class="kit" data-kit="${p.cart}">${quick([...(p.kit.quick || []), { label: 'Clear', skus: [] }])}
 ${groups}
-<div class="kit-sum"><span>Your kit <em data-kit-n="${p.cart}"></em></span><strong data-kit-total="${p.cart}"></strong></div><p class="gp-sum" data-kit-sum="${p.cart}"></p></div>`;
+<div class="kit-sum"><span>Your paddock kit <em data-kit-n="${p.cart}"></em></span><strong data-kit-total="${p.cart}"></strong></div><p class="gp-sum" data-kit-sum="${p.cart}"></p></div>`;
 };
 const options = p => p.pick === 'kit' ? kitPicker(p) : p.pick === 'many' ? grid2(p) : picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
 const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
