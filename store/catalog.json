@@ -92,17 +92,17 @@
       "slug": "vim-mvrk-ratchets", "category": "vim-tools", "cart": "mvrk", "checkoutNote": "90 tooth, made in USA",
       "brand": "VIM Tools", "name": "VIM MVRK Ratchets", "short": "MVRK Ratchet",
       "desc": "Made in USA. 90 teeth. Pick one, pick a few, or take all six.",
-      "about": "Built in America. Rebuildable. Buy it once.",
+      "about": "Built in America. Rebuildable.",
       "facts": ["1/4\", 3/8\" and 1/2\" drive", "Fixed or flex head · 90T", "Made in USA · limited lifetime warranty"],
       "options": [
         { "name": "Drive", "values": ["1/4\"", "3/8\"", "1/2\""] },
         { "name": "Head", "values": ["Fixed", "Flex"] }
       ],
-      "story": { "kicker": "Made in USA", "title": "Spend It Where It Counts.", "text": "Your sockets can be cheap. The ratchet takes the load every time you pull. Put the money there: a ratchet made in the USA by VIM, a family-owned tool company since 1931, on the sockets you already own." },
+      "story": { "kicker": "Made in USA", "title": "Buy It Once.", "text": "Made in the USA by VIM, a family-owned tool company since 1931." },
       "points": [
-        { "title": "Repair", "text": "Rebuild it, don't toss it. Every MVRK size has its own USA-made rebuild kit, and we can get one in for you." },
-        { "title": "Replacement", "text": "Covered by VIM's limited lifetime warranty. Break it doing real work and we sort it out with VIM." },
-        { "title": "Support", "text": "Bought from a racer, not a warehouse. Bring it to the 799 trailer, see us in Traverse City, or email us. A person answers." }
+        { "title": "Repair", "text": "Every MVRK size has a USA-made rebuild kit. We can order one for you." },
+        { "title": "Replacement", "text": "Covered by VIM's limited lifetime warranty. We handle the claim with VIM." },
+        { "title": "Support", "text": "Find us at the 799 trailer, in Traverse City, or by email." }
       ],
       "pick": "many", "defaultSku": "FR6USA",
       "variants": [
