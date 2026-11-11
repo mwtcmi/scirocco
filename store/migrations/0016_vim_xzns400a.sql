@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('XZNS400A', 0);

@@ -159,12 +159,15 @@
       "sku": "V423", "upc": ""
     },
     {
-      "slug": "vim-xzn-stubby-triple-square-set", "category": "vim-tools", "cart": "xzns412", "status": "coming-soon", "map": 37.4, "list": 51.0, "checkoutNote": "6 pc, 4 to 12 mm, 1/4 in drive",
-      "brand": "VIM Tools", "name": "VIM XZN Stubby Triple Square Set, 4mm to 12mm", "short": "Stubby Triple Square Set", "price": "51.99",
-      "desc": "Stubby triple squares. Because VW and Audi said so.",
-      "about": "CV bolts and the other German stuff. Stubby fits where long won't.",
-      "facts": ["6 pc · 4mm to 12mm", "1/4\" square drive", "Lifetime warranty"],
-      "sku": "XZNS412", "upc": "092308249137"
+      "slug": "vim-xzn-triple-square-driver-set-13-pc", "category": "vim-tools", "cart": "xzns400a", "status": "coming-soon", "map": 91.02, "list": 124.11, "checkoutNote": "13 pc, XZN4 to XZN18, 4 in long, foam tray",
+      "brand": "VIM Tools", "name": "VIM 13 Pc. XZN Triple Square Driver Set, 4mm to 18mm", "short": "13 Pc. Triple Square Set", "price": "124.99",
+      "desc": "13 triple squares. 4mm to 18mm. Every German bolt.",
+      "about": "CV bolts, calipers, seats. VW and Audi love triple square. Now you've got all of them.",
+      "facts": ["13 pc · XZN4 to XZN18", "4\" long · 1/4\", 3/8\", 1/2\" drive", "Foam tray · lifetime warranty"],
+      "images": [
+        { "src": "/images/optimized/vim-xzns400a-900.webp", "src480": "/images/optimized/vim-xzns400a-480.webp", "w": 900, "h": 900, "alt": "VIM XZNS400A 13 piece XZN triple square driver set, 4mm to 18mm, in a black and lime green foam tray" }
+      ],
+      "sku": "XZNS400A", "upc": "092308449414"
     },
     {
       "slug": "vim-half-cut-stubby-torx-set", "category": "vim-tools", "cart": "hct1050a", "status": "coming-soon", "map": 41.37, "list": 56.42, "checkoutNote": "10 pc, T10 to T50, 1/4 in drive",
