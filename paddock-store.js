@@ -61,7 +61,7 @@ function gridSet(id){var pick=gsel[id].slice().sort().join(' ');return pick.inde
 function gridLines(id){var st=gridSet(id);return st?[st.sku]:gsel[id].slice()}
 function drawThumbs(id,v){all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for.split(' ').some(function(k){return (v.shows||[v.sku]).indexOf(k)>=0});t.hidden=!on;if(on){shown++;if(!first)first=t}});
  box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
-function drawGrid(id){var p=PRODUCTS[id],v=variant(id),pick=gsel[id],st=gridSet(id),lines=gridLines(id),cat=online&&!!data.catalog[id];
+function drawGrid(id){var p=PRODUCTS[id],pick=gsel[id],st=gridSet(id),v=st&&bySku(id,st.sku).img&&bySku(id,st.sku).shows[0]===st.sku?bySku(id,st.sku):variant(id),lines=gridLines(id),cat=online&&!!data.catalog[id];
  all(attr('data-cell',id)).forEach(function(b){var sku=b.dataset.sku,out=online&&have(sku)<1,soon=online&&cat&&!liveVariant(id,sku);b.setAttribute('aria-pressed',pick.indexOf(sku)>=0);b.classList.toggle('out',out||soon);
   if(!b.onclick)b.onclick=function(){var i=gsel[id].indexOf(sku);if(i>=0)gsel[id].splice(i,1);else gsel[id].push(sku);sel[id]=bySku(id,sku).name;draw()}});
  all(attr('data-quick',id)).forEach(function(b){var k=b.dataset.skus;b.setAttribute('aria-pressed',!!k&&pick.slice().sort().join(' ')===k.split(' ').sort().join(' '));
