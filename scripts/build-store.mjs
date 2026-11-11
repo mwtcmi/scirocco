@@ -55,6 +55,7 @@ for (const p of products.filter(p => p.variants)) {
     if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`);
     if (v.status && !['live', 'coming-soon'].includes(v.status)) throw new Error(`${p.slug} ${v.sku}: status must be live or coming-soon`);
   }
+  for (const v of p.variants) if ((v.cut || v.inches) && !(v.cut && Number(v.inches) > 0)) throw new Error(`${p.slug} ${v.sku}: "cut" (a same-scale cut-out photo) and "inches" go together`);
   // A set: "includes" lists other (single) SKUs of this product; it sells as one line and takes one of each part.
   for (const v of p.variants.filter(v => v.includes)) {
     if (!Array.isArray(v.includes) || v.includes.length < 2 || v.includes.some(k => !p.variants.some(x => x.sku === k && !x.includes))) throw new Error(`${p.slug} ${v.sku}: "includes" must list two or more of this product's single SKUs`);
@@ -99,7 +100,7 @@ function variantsOf(p) {
     // fixed-head size). A set shows its own photos if it has any, otherwise its parts'.
     const shows = (p.images || []).some(i => i.sku === v.sku) ? [v.sku] : v.includes || [v.sku];
     const imgs = p.images || [], own = imgs.filter(i => shows.includes(i.sku)).concat(imgs.filter(i => i.skus && i.skus.some(k => shows.includes(k)))), name = optionName(v);
-    return { name, sku: v.sku, upc: v.upc || '', opts: v.opts, size: v.size || '', cents: Math.round(Number(v.price) * 100), soon: (v.status || 'live') !== 'live', shows,
+    return { name, sku: v.sku, upc: v.upc || '', opts: v.opts, size: v.size || '', ...(v.cut ? { cut: v.cut, inches: v.inches } : {}), cents: Math.round(Number(v.price) * 100), soon: (v.status || 'live') !== 'live', shows,
       ...(v.includes ? { includes: v.includes } : {}), img: imgOf(own[0] || { ...PLACEHOLDER, alt: `${p.name}, ${name} (photo coming soon)` }) };
   });
   if (!p.colors) { const i = p.images?.[0]; return [{ name: '', sku: p.sku || '', upc: p.upc || '', img: i ? { src: i.src, srcset: i.src480 ? `${i.src480} 480w,${i.src} ${i.w}w` : '', alt: i.alt } : null }]; }
@@ -159,7 +160,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=15"></script>`;
+<script src="/paddock-store.js?v=16"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -217,7 +218,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=15">
+<link rel="stylesheet" href="/paddock-store.css?v=16">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -432,7 +433,7 @@ ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
 <div class="pd-grid">
-<div><div class="pd-photo">${photoTag(p, { big: true, lazy: false })}${usaFlag(p)}</div>${thumbs}</div>
+<div><div class="pd-photo">${photoTag(p, { big: true, lazy: false })}${p.pick === 'many' ? `<div class="lineup" data-lineup="${p.cart}" hidden></div>` : ''}${usaFlag(p)}</div>${thumbs}</div>
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>

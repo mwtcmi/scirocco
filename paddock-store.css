@@ -93,3 +93,8 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 .gp-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.gp-quick button{min-height:36px;padding:0 12px;border:1px solid #444;background:none;color:#fff;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.gp-quick button[aria-pressed=true]{border-color:var(--green);color:var(--green)}
 .gp-sum{margin:12px 0 0;color:#aaa;font-size:13px;min-height:1.4em}
 .pd-grid>div{min-width:0}.thumbs{flex-wrap:wrap}
+/* Live to-scale lineup of the picked ratchets, over the product photo */
+.pd-photo .lineup{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:4.5%;padding:8% 7%;background:#ECECEA}.pd-photo .lineup[hidden]{display:none}
+.lu-head{margin-top:2%;color:#8a8a86;font-size:clamp(10px,1.6vw,14px);font-weight:900;letter-spacing:.16em;text-transform:uppercase}.lu-head:first-child{margin-top:0}
+.lu-row{display:flex;align-items:center;gap:2.5%;min-height:0}.lu-row img{display:block;height:auto}.lu-row span{color:#4a4a47;font-size:clamp(11px,1.7vw,16px);font-weight:900;white-space:nowrap}
+.pd-photo .usa-flag{z-index:2}
