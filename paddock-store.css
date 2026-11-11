@@ -78,3 +78,7 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 .feat-btn{display:inline-flex;align-items:center;min-height:56px;padding:0 30px;background:var(--green);color:#050505;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;text-decoration:none}.feat-btn:hover{background:#fff}
 @media(max-width:800px){.featured{padding:32px 0 48px}.feat-grid{grid-template-columns:1fr;gap:28px}.feat-copy p{font-size:18px}}
 .store-page.feat-only{padding-top:0}
+/* The season line: what buying here does (store front, category pages, cart) */
+.season-line{max-width:720px;margin:24px 0 0;padding-left:14px;border-left:3px solid var(--green);color:#fff;font-size:16px;line-height:1.5;font-weight:700}.season-line strong{color:var(--green)}.season-line a{color:#fff;white-space:nowrap}.season-line a:hover{color:var(--green)}
+.cart-season{margin:10px 0 0;text-align:center;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.hero .season-line,.cat-hero .season-line{margin-top:24px;font-size:16px;color:#fff}

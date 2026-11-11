@@ -126,6 +126,10 @@ const clientData = {
   fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
 
+// "season" in catalog.json: the line that says what buying here does (gets 799 to the start line), on the store front,
+// every category page and in the cart. Leave it out to hide it.
+const season = catalog.season || null;
+const seasonLine = season ? `<p class="season-line">${esc(season.line)} <strong>${esc(season.bold)}</strong>${season.link ? ` <a href="${season.link}">${esc(season.linkText || 'See the schedule')} →</a>` : ''}</p>` : '';
 const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog" aria-controls="cart"><span>Cart</span><b id="cart-count">0</b><em id="cart-total">$0.00</em></button>
 <div class="cart-shade" id="cart-shade" hidden></div>
 <aside class="cart" id="cart" role="dialog" aria-modal="true" aria-label="Cart" hidden>
@@ -140,7 +144,8 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   </fieldset>
   <p class="cart-error" id="cart-error" role="alert" hidden></p>
   <div class="cart-sum"><span id="sum-label">Subtotal</span><strong id="cart-sub">$0.00</strong></div>
-  <button class="checkout" id="checkout">Checkout</button>
+  <button class="checkout" id="checkout">Checkout</button>${season?.cart ? `
+  <p class="cart-season">${esc(season.cart)}</p>` : ''}
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
@@ -202,7 +207,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=10">
+<link rel="stylesheet" href="/paddock-store.css?v=12">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -319,7 +324,7 @@ for (const c of live) {
     write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
       head({ title, desc, url: SITE + url, ld: [crumbsLd(trail), itemList] }) + `
 ${crumbs(trail)}
-<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(desc)}</p></div></header>
+<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(desc)}</p>${seasonLine}</div></header>
 ${feat && n === 1 ? featureBand(feat) : ''}
 <section class="store-page store${feat && !list.length ? ' feat-only' : ''}" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
@@ -428,6 +433,7 @@ function fill(name, html) {
   if (!re.test(home)) throw new Error(`paddock.html is missing <!-- store:${name} --> markers`);
   home = home.replace(re, (_, open, close) => `${open}\n${html}\n${close}`); // a function, so "$2" in a price is never read as a pattern
 }
+fill('season', seasonLine);
 // Only categories with products are shown; empty ones stay hidden until they're stocked.
 fill('categories', live.map((c, i) => {
   const n = inCat(c.slug).length, num = String(i + 1).padStart(2, '0');
