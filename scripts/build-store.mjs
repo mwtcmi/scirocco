@@ -327,7 +327,7 @@ function featureBand(p) {
   return `<section class="featured" aria-label="Featured"><div class="wrap feat-grid">
 <a class="feat-photo" href="${url}" tabindex="-1" aria-hidden="true"><img src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 100vw, 560px" width="900" height="900" alt="${esc(v.img.alt)}">${usaFlag(p)}</a>
 <div class="feat-copy"><div class="kicker">Featured${p.madeInUSA ? ' · Made in USA' : ''}</div><h2>${esc(words.join(' '))} <span>${esc(last)}.</span></h2><p>${esc(p.desc)}</p>${opts}
-<div class="feat-price">${isLive(p) ? `${picker(p) ? 'From ' : ''}${money(p.price)}` : 'Coming Soon'}</div>
+${p.pick === 'many' && isLive(p) ? '' : `<div class="feat-price">${isLive(p) ? `${picker(p) ? 'From ' : ''}${money(p.price)}` : 'Coming Soon'}</div>`}
 <a class="feat-btn" href="${url}">${p.pick === 'many' ? 'Build your set' : picker(p) ? 'Pick yours' : 'See details'} →</a></div>
 </div></section>`;
 }
