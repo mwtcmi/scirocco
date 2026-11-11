@@ -25,6 +25,9 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const cats = catalog.categories;
 const catBySlug = Object.fromEntries(cats.map(c => [c.slug, c]));
 const products = catalog.products;
+// A product can go in before its photos exist: with no "images" it shows a "Photo coming soon" placeholder
+// until real photos are added.
+for (const p of products) if (!p.colors && !p.external && !p.images?.length) p.images = [{ src: '/images/optimized/photo-coming-soon-900.webp', src480: '/images/optimized/photo-coming-soon-480.webp', w: 900, h: 900, alt: `${p.name} (photo coming soon)` }];
 // Product lifecycle: "status" is "live" (default: shown and sold), "coming-soon" (shown, not sold yet) or
 // "retired" (hidden from the store; its page stays up as "no longer available", pointing to "replacedBy" or
 // its category, so old links and search results keep working). Nothing is ever deleted.

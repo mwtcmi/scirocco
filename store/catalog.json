@@ -99,6 +99,14 @@
       ],
       "sku": "FR6USA", "upc": "092308686192", "madeInUSA": true
     },
+    {
+      "slug": "vim-v410-17mm-vw-drain-plug-tool", "category": "vim-tools", "cart": "v410", "status": "coming-soon", "list": 14.51, "checkoutNote": "17mm hex, VW gearbox fill and drain plugs, made in USA",
+      "brand": "VIM Tools", "name": "VIM V410 17mm Hex VW Drain Plug Tool, Made in USA", "short": "V410 VW Drain Plug Tool", "price": "14.99",
+      "desc": "The 17mm hex tool for the fill and drain plugs on VW manual gearboxes. American-made by VIM.",
+      "about": "VW put 17mm internal hex fill and drain plugs on its manual gearboxes, from air-cooled Beetles through the Scirocco and Golf, and most socket sets don't have a hex that size. The VIM V410 is a solid 17mm hex made for exactly that job, so a gear oil change doesn't start with a trip to three parts stores.",
+      "facts": ["17mm hex for VW manual gearbox fill and drain plugs", "Made in USA by VIM Tools", "VIM limited lifetime warranty"],
+      "sku": "V410", "upc": "", "madeInUSA": true
+    },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
       "image": "/images/shop/799-bergrennen-paddock-jacket", "alt": "Champion packable quarter-zip anorak with the embroidered 799 Bergrennen mark" },
