@@ -15,7 +15,7 @@
     { "slug": "vim-tools", "name": "VIM Tools", "featured": "vim-mvrk-ratchets", "blurb": "Specialty hand tools from VIM, the original mobile tool distributor, since 1931.",
       "intro": "The VIM Tools gear in the 799 trailer. 799 is an authorized VIM Tools dealer, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
     { "slug": "tire-wheel", "name": "Tire & Wheel", "blurb": "Pressure, temperature, torque, transport and tire-management gear." },
-    { "slug": "trailer-pit", "name": "Trailer & Pit", "blurb": "Loading, tie-downs, lighting, power, tables, canopy and paddock setup." },
+    { "slug": "trailer-pit", "name": "Trailer & Pit", "teaser": true, "blurb": "Loading, tie-downs, lighting, power, tables, canopy and paddock setup." },
     { "slug": "trackside", "name": "Trackside", "blurb": "The small stuff that becomes very important when you are miles from the garage." },
     { "slug": "cameras-data", "name": "Cameras & Data", "blurb": "Video, mounts, timing and the equipment used to learn from every run." },
     { "slug": "apparel", "name": "799 Apparel", "blurb": "Tees, hoodies, caps and paddock jackets carrying the 799 Bergrennen mark.",

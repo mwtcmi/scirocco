@@ -464,7 +464,10 @@ function fill(name, html) {
 }
 fill('season', seasonLine);
 // Only categories with products are shown; empty ones stay hidden until they're stocked.
-fill('categories', live.map((c, i) => {
+// "teaser": true shows an empty category on the store front as a Coming Soon tile (after the stocked ones), e.g. to
+// keep the category grid even. It gets no page until it has products.
+const tiles = [...live, ...cats.filter(c => c.teaser && !inCat(c.slug).length)];
+fill('categories', tiles.map((c, i) => {
   const n = inCat(c.slug).length, num = String(i + 1).padStart(2, '0');
   return n ? `<a class="cat" href="${catUrl(c)}"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Shop ${n} ${n === 1 ? 'item' : 'items'} →</span></a>`
     : `<div class="cat soon"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Coming Soon</span></div>`;
