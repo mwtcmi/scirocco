@@ -11,7 +11,7 @@
       "intro": "The fuel and transfer gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
     { "slug": "tuff-jug", "name": "Tuff Jug", "blurb": "Utility jugs, the electric transfer pump, spouts and caps we use in the 799 paddock.",
       "intro": "The Tuff Jug gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
-    { "slug": "vim-tools", "name": "VIM Tools", "blurb": "Specialty hand tools from VIM, the original mobile tool distributor, since 1931.",
+    { "slug": "vim-tools", "name": "VIM Tools", "featured": "vim-mvrk-ratchets", "blurb": "Specialty hand tools from VIM, the original mobile tool distributor, since 1931.",
       "intro": "The VIM Tools gear in the 799 trailer. 799 is an authorized VIM Tools dealer, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
     { "slug": "tire-wheel", "name": "Tire & Wheel", "blurb": "Pressure, temperature, torque, transport and tire-management gear." },
     { "slug": "trailer-pit", "name": "Trailer & Pit", "blurb": "Loading, tie-downs, lighting, power, tables, canopy and paddock setup." },

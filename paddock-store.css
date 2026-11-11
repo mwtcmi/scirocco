@@ -69,3 +69,12 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 /* Configurator buttons (Drive, Head...): one row per option, the picked one in green */
 .pick-row{display:flex;flex-wrap:wrap;gap:8px}.pick-btn{min-height:44px;min-width:64px;padding:0 16px;border:1px solid #555;background:transparent;color:#fff;font-size:13px;font-weight:900;letter-spacing:.04em;cursor:pointer}.pick-btn[aria-pressed=true]{border-color:var(--green);background:var(--green);color:#050505}.pick-btn:focus-visible{outline:2px solid var(--green);outline-offset:3px}
 .thumbs[hidden],.thumbs [hidden]{display:none}
+/* Featured product across the top of the store (paddock.html, from "featured" in catalog.json) */
+.featured{padding:56px 0 70px}.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.feat-photo{position:relative;display:block;background:#ECECEA;border:1px solid #222}.feat-photo img{display:block;width:100%;height:auto}.feat-photo .usa-flag{width:13%}
+.feat-copy h2{margin:14px 0 18px;font-size:clamp(52px,7vw,96px);line-height:.88;letter-spacing:-.045em;text-transform:uppercase}.feat-copy h2 span{color:var(--green)}.feat-copy p{margin:0 0 24px;font-size:20px;color:#fff}
+.feat-opts{margin:0 0 26px;padding:0;border-top:1px solid #292929}.feat-opts div{display:flex;gap:18px;padding:12px 0;border-bottom:1px solid #292929}.feat-opts dt{width:64px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;padding-top:2px}.feat-opts dd{margin:0;color:#fff;font-weight:700}
+.feat-price{color:var(--green);font-size:30px;font-weight:900;margin-bottom:20px}
+.feat-btn{display:inline-flex;align-items:center;min-height:56px;padding:0 30px;background:var(--green);color:#050505;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;text-decoration:none}.feat-btn:hover{background:#fff}
+@media(max-width:800px){.featured{padding:32px 0 48px}.feat-grid{grid-template-columns:1fr;gap:28px}.feat-copy p{font-size:18px}}
+.store-page.feat-only{padding-top:0}

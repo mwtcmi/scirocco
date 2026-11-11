@@ -196,7 +196,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=8">
+<link rel="stylesheet" href="/paddock-store.css?v=10">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -285,21 +285,37 @@ function write(rel, html) {
 const storeDir = path.join(ROOT, 'paddock');
 if (fs.existsSync(storeDir)) fs.rmSync(storeDir, { recursive: true });
 
+// A category page can lead with one featured product ("featured": its slug, on the category in catalog.json):
+// a big photo-and-copy band across the top, so the page reads as a curated landing page. It isn't repeated in the grid.
+function featureBand(p) {
+  const url = prodUrl(p), v = defaultVariant(p), words = p.name.split(' '), last = words.pop();
+  const opts = picker(p) ? `<dl class="feat-opts">${p.options.map(o => `<div><dt>${esc(o.name)}</dt><dd>${o.values.map(esc).join(' · ')}</dd></div>`).join('')}</dl>` : '';
+  return `<section class="featured" aria-label="Featured"><div class="wrap feat-grid">
+<a class="feat-photo" href="${url}" tabindex="-1" aria-hidden="true"><img src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 100vw, 560px" width="900" height="900" alt="${esc(v.img.alt)}">${usaFlag(p)}</a>
+<div class="feat-copy"><div class="kicker">Featured${p.madeInUSA ? ' · Made in USA' : ''}</div><h2>${esc(words.join(' '))} <span>${esc(last)}.</span></h2><p>${esc(p.desc)}</p>${opts}
+<div class="feat-price">${isLive(p) ? `${picker(p) ? 'From ' : ''}${money(p.price)}` : 'Coming Soon'}</div>
+<a class="feat-btn" href="${url}">${picker(p) ? 'Pick yours' : 'See details'} →</a></div>
+</div></section>`;
+}
+for (const c of cats) if (c.featured && !products.some(p => p.slug === c.featured && p.category === c.slug && !isRetired(p))) throw new Error(`${c.slug}: featured product ${c.featured} is not in this category`);
+
 const live = cats.filter(c => inCat(c.slug).length);
 for (const c of live) {
-  const list = inCat(c.slug), pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const feat = c.featured ? inCat(c.slug).find(p => p.slug === c.featured) : null;
+  const list = inCat(c.slug).filter(p => p !== feat), pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   for (let n = 1; n <= pages; n++) {
     const url = catUrl(c) + (n > 1 ? `page/${n}/` : ''), slice = list.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
     const title = `${c.name}${n > 1 ? ` (page ${n})` : ''} | Paddock Store | Scirocco 799`;
     const desc = c.intro || c.blurb;
     const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)]];
-    const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: slice.filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
+    const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: [...(feat && n === 1 ? [feat] : []), ...slice].filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
     const pager = pages > 1 ? `<nav class="pager" aria-label="Pages">${n > 1 ? `<a href="${catUrl(c) + (n > 2 ? `page/${n - 1}/` : '')}" rel="prev">‹ Prev</a>` : ''}${Array.from({ length: pages }, (_, i) => i + 1).map(k => k === n ? `<span aria-current="page">${k}</span>` : `<a href="${catUrl(c) + (k > 1 ? `page/${k}/` : '')}">${k}</a>`).join('')}${n < pages ? `<a href="${catUrl(c)}page/${n + 1}/" rel="next">Next ›</a>` : ''}</nav>` : '';
     write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
       head({ title, desc, url: SITE + url, ld: [crumbsLd(trail), itemList] }) + `
 ${crumbs(trail)}
 <header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(desc)}</p></div></header>
-<section class="store-page store" id="store"><div class="wrap">
+${feat && n === 1 ? featureBand(feat) : ''}
+<section class="store-page store${feat && !list.length ? ' feat-only' : ''}" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
 ${grid(slice)}
 ${pager}
