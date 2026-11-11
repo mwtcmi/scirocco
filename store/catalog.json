@@ -201,6 +201,14 @@
       "facts": ["Cleans hub faces and studs", "For trucks", "Car kit: HSC100"],
       "sku": "HSC200", "upc": "092308892005"
     },
+    {
+      "slug": "vim-tear-off-microfiber-roll", "category": "vim-tools", "cart": "mfr30", "status": "coming-soon", "map": 28.57, "list": 38.96, "checkoutNote": "30 towels, 12 x 12 in, tear-off roll",
+      "brand": "VIM Tools", "name": "VIM Tear-Off Microfiber Roll, 30 Towels", "short": "Tear-Off Microfiber Roll", "price": "38.99",
+      "desc": "Tear one off. Wipe. Repeat.",
+      "about": "30 microfiber towels on a roll. Hang it in the trailer and stop hunting for a clean rag.",
+      "facts": ["30 towels per roll", "12\" x 12\" microfiber", "Tear-off, like paper towels"],
+      "sku": "MFR30", "upc": "092308368302"
+    },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
       "group": "Outerwear & Sweatshirts", "name": "799 Bergrennen Paddock Jacket", "priceLabel": "From $61.00",
       "image": "/images/shop/799-bergrennen-paddock-jacket", "alt": "Champion packable quarter-zip anorak with the embroidered 799 Bergrennen mark" },
