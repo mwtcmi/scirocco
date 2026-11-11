@@ -357,29 +357,56 @@ test('shipments: partial shipping, several boxes, edits, removal, status and the
 
 test('prices: list price saves to catalog.json; dealer cost saves to the database only, never to GitHub', async t => {
   const s = setup(t);
-  let fr = (await s.call('/api/products')).body.products.find(p => p.cart === 'fr6usa');
-  assert.equal(fr.list, 149.35); assert.equal(fr.cost, null);
+  let x = (await s.call('/api/products')).body.products.find(p => p.cart === 'xzns400a');
+  assert.equal(x.list, 124.11); assert.equal(x.cost, null);
   // Cost alone: no commit, and it never appears in catalog.json.
-  const r = await s.call('/api/products/fr6usa', { method: 'PUT', data: { cost: '81.18' } });
-  assert.equal(r.status, 200); assert.equal(r.body.cost, 81.18);
+  const r = await s.call('/api/products/xzns400a', { method: 'PUT', data: { cost: '67.46' } });
+  assert.equal(r.status, 200); assert.equal(r.body.cost, 67.46);
   assert.equal(s.commits.length, 0);
-  assert.doesNotMatch(s.file(), /81\.18/);
-  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'fr6usa'").get().cents, 8118);
-  fr = (await s.call('/api/products')).body.products.find(p => p.cart === 'fr6usa');
-  assert.equal(fr.cost, 81.18);
+  assert.doesNotMatch(s.file(), /67\.46/);
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'xzns400a'").get().cents, 6746);
+  x = (await s.call('/api/products')).body.products.find(p => p.cart === 'xzns400a');
+  assert.equal(x.cost, 67.46);
   // List with cost: list goes to GitHub, cost to the database.
-  const r2 = await s.call('/api/products/fr6usa', { method: 'PUT', data: { list: '155', cost: '80' } });
+  const r2 = await s.call('/api/products/xzns400a', { method: 'PUT', data: { list: '130', cost: '66' } });
   assert.equal(r2.status, 200);
-  assert.equal(JSON.parse(s.file()).products.find(p => p.cart === 'fr6usa').list, 155);
-  assert.match(s.commits[0].message, /list \$149\.35 → \$155\.00/);
-  assert.doesNotMatch(s.commits[0].message + s.file(), /\b80\.00\b|"cost"/);
-  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'fr6usa'").get().cents, 8000);
+  assert.equal(JSON.parse(s.file()).products.find(p => p.cart === 'xzns400a').list, 130);
+  assert.match(s.commits[0].message, /list \$124\.11 → \$130\.00/);
+  assert.doesNotMatch(s.commits[0].message + s.file(), /\b66\.00\b|"cost"/);
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'xzns400a'").get().cents, 6600);
   // Clearing the cost, bad values, unknown products.
-  assert.equal((await s.call('/api/products/fr6usa', { method: 'PUT', data: { cost: '' } })).status, 200);
+  assert.equal((await s.call('/api/products/xzns400a', { method: 'PUT', data: { cost: '' } })).status, 200);
   assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS n FROM product_costs").get().n, 0);
-  assert.equal((await s.call('/api/products/fr6usa', { method: 'PUT', data: { cost: '-1' } })).status, 400);
-  assert.equal((await s.call('/api/products/fr6usa', { method: 'PUT', data: { list: '0' } })).status, 400);
+  assert.equal((await s.call('/api/products/xzns400a', { method: 'PUT', data: { cost: '-1' } })).status, 400);
+  assert.equal((await s.call('/api/products/xzns400a', { method: 'PUT', data: { list: '0' } })).status, 400);
   assert.equal((await s.call('/api/products/nope', { method: 'PUT', data: { cost: '5' } })).status, 404);
+});
+
+test('prices: each configurator option has its own price, MAP, list and private cost', async t => {
+  const s = setup(t);
+  const m = (await s.call('/api/products')).body.products.find(p => p.cart === 'mvrk');
+  assert.equal(m.price, null);
+  const fr = m.variants.find(v => v.sku === 'FR6USA');
+  assert.deepEqual([fr.name, fr.price, fr.map, fr.list, fr.cost, fr.status], ['3/8" Flex, 12"', 149.99, 109.52, 149.35, null, 'live']);
+  assert.equal(m.variants.find(v => v.sku === 'R4USA').status, 'coming-soon');
+  // Cost alone for one option: saved under its SKU, no commit.
+  assert.equal((await s.call('/api/products/' + encodeURIComponent('mvrk/FR6USA'), { method: 'PUT', data: { cost: '81.18' } })).status, 200);
+  assert.equal(s.commits.length, 0);
+  assert.equal(s.sqlite.prepare("SELECT cents FROM product_costs WHERE cart = 'FR6USA'").get().cents, 8118);
+  assert.equal((await s.call('/api/products')).body.products.find(p => p.cart === 'mvrk').variants.find(v => v.sku === 'FR6USA').cost, 81.18);
+  // A price change edits only that option's line.
+  const before = JSON.parse(s.file()).products.find(p => p.cart === 'mvrk').variants;
+  const r = await s.call('/api/products/' + encodeURIComponent('mvrk/R6USA'), { method: 'PUT', data: { price: '114.99', list: '119.50' } });
+  assert.equal(r.status, 200);
+  const after = JSON.parse(s.file()).products.find(p => p.cart === 'mvrk').variants;
+  assert.equal(after.find(v => v.sku === 'R6USA').price, '114.99');
+  assert.equal(after.find(v => v.sku === 'R6USA').list, 119.5);
+  assert.deepEqual(after.filter(v => v.sku !== 'R6USA'), before.filter(v => v.sku !== 'R6USA'));
+  assert.match(s.commits[0].message, /VIM MVRK Ratchets, 3\/8" Fixed, 8" .*price \$119\.99 → \$114\.99/);
+  // The product itself has no single price, and unknown options are refused.
+  assert.equal((await s.call('/api/products/mvrk', { method: 'PUT', data: { price: '99' } })).status, 404);
+  assert.equal((await s.call('/api/products/' + encodeURIComponent('mvrk/NOPE'), { method: 'PUT', data: { price: '99' } })).status, 404);
+  assert.equal((await s.call('/api/products/' + encodeURIComponent('mvrk/FR6USA'), { method: 'PUT', data: { freeShipping: true } })).status, 400);
 });
 
 test('setPrice adds a list price after MAP when a product has none, and edits it in place after', () => {

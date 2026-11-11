@@ -478,3 +478,18 @@ test('business name: optional at checkout, saved apart from the person’s name'
   assert.deepEqual({ ...c }, { name: 'Pat Buyer', business: 'Acme Racing' });
   assert.equal(s.sqlite.prepare("SELECT business FROM orders WHERE session_id = 'cs_test_biz1'").get().business, 'Acme Racing');
 });
+
+test('configurator products: each option has its own price, and Coming Soon options cannot be bought', () => {
+  const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url)));
+  const m = file.products.find(p => p.cart === 'mvrk');
+  assert.ok(m.variants.length === 6 && m.options.length === 2);
+  assert.equal(worker.buildCatalog(file).mvrk, undefined); // the product is Coming Soon
+  m.status = 'live';
+  const c = worker.buildCatalog(file).mvrk;
+  assert.deepEqual(c.variants.map(v => [v.sku, v.name, v.cents]), [['R6USA', '3/8" Fixed, 8"', 11999], ['FR6USA', '3/8" Flex, 12"', 14999]]);
+  assert.equal(c.cents, 11999); assert.equal(c.option, 'Option');
+  m.variants.find(v => v.sku === 'R6USA').status = 'coming-soon';
+  assert.deepEqual(worker.buildCatalog(file).mvrk.variants.map(v => v.sku), ['FR6USA']);
+  m.variants.forEach(v => { v.status = 'coming-soon'; });
+  assert.equal(worker.buildCatalog(file).mvrk, undefined);
+});

@@ -19,17 +19,24 @@ export const SHIPPING = Object.freeze({
 const FREE_SHIPPING = Object.freeze({ cents: 0, label: 'Free shipping (lower 48)' });
 const cents = v => Math.round(Number(v) * 100);
 // Every sellable thing is a variant with its own SKU. A product with "colors" has one variant per color;
-// any other product has a single variant (its own SKU). Stock, cart lines and orders all use SKUs.
+// a product with "options" + "variants" (a configurator, like the MVRK ratchets) has one variant per combination,
+// each with its own price; any other product has a single variant (its own SKU). Stock, cart lines and orders all use SKUs.
+export const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
 export function variantsOf(p) {
+  if (p.variants) return p.variants.map(v => ({ name: optionName(v), sku: v.sku, cents: cents(v.price), map: cents(v.map ?? v.price), live: (v.status || 'live') === 'live' }));
   return p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku })) : [{ name: '', sku: p.sku }];
 }
 export function buildCatalog(file) {
   const out = {};
   for (const p of file.products) {
     if (!p.cart || (p.status || 'live') !== 'live') continue; // only live products can be bought
-    const variants = variantsOf(p);
-    for (const v of variants) if (!v.sku) throw new Error(p.slug + ': every variant needs a SKU');
-    const item = { name: p.name, description: p.checkoutNote, cents: cents(p.price), map: cents(p.map ?? p.price), option: p.colors ? 'Color' : null, variants, freeShipping: p.freeShipping === true };
+    const all = variantsOf(p);
+    for (const v of all) if (!v.sku) throw new Error(p.slug + ': every variant needs a SKU');
+    const variants = p.variants ? all.filter(v => v.live).map(({ live, ...v }) => v) : all; // a coming-soon option can't be bought
+    if (!variants.length) continue;
+    const low = p.variants ? Math.min(...variants.map(v => v.cents)) : cents(p.price);
+    const item = { name: p.name, description: p.checkoutNote, cents: low, map: p.variants ? Math.min(...variants.map(v => v.map)) : cents(p.map ?? p.price),
+      option: p.colors ? 'Color' : p.variants ? 'Option' : null, variants, freeShipping: p.freeShipping === true };
     // Older field names, kept so a cached copy of the store page keeps working during a deploy.
     if (p.colors) { item.colors = p.colors.map(c => c.name); item.skus = Object.fromEntries(p.colors.map(c => [c.name, c.sku])); }
     else item.sku = p.sku;
@@ -40,7 +47,7 @@ export function buildCatalog(file) {
 export const CATALOG = Object.freeze(buildCatalog(catalogFile));
 export const SKUS = Object.freeze(Object.fromEntries(Object.entries(CATALOG).flatMap(([id, p]) => p.variants.map(v => [v.sku, { id, variant: v }]))));
 // The stock keys used before SKUs (jug/color/<Color> and the product id). Kept as aliases in /api/catalog.
-export const legacyKey = (id, v) => CATALOG[id].colors ? 'jug/color/' + v.name : id;
+export const legacyKey = (id, v) => CATALOG[id].colors ? 'jug/color/' + v.name : CATALOG[id].option === 'Option' ? null : id; // option products never had one
 
 const ORIGINS = ['https://799motorsport.com', 'https://www.799motorsport.com', 'https://scirocco799.com', 'https://www.scirocco799.com', 'https://mwtcmi.github.io'];
 const SITE = 'https://799motorsport.com';
@@ -88,14 +95,15 @@ export function priceLine(line) {
     if (!v) throw new APIError(400, 'Unknown option.');
   }
   const p = CATALOG[id], multi = p.variants.length > 1;
-  return { product: id, sku: v.sku, variant: v.name, qty, cents: p.cents, map: p.map, name: p.name, freeShipping: !!p.freeShipping,
+  return { product: id, sku: v.sku, variant: v.name, qty, cents: v.cents ?? p.cents, map: v.map ?? p.map, name: p.name, freeShipping: !!p.freeShipping,
     description: (multi ? v.name + ', ' : '') + p.description + ' (' + v.sku + ')', keys: [v.sku] };
 }
 // Order metadata items: {s: sku, q} now, {p, c, q} before SKUs.
 const itemLine = i => priceLine(i.s ? { sku: i.s, qty: i.q } : { product: i.p, color: i.c, qty: i.q });
 
 export function priceWarnings() {
-  return Object.entries(CATALOG).filter(([, v]) => v.cents < v.map).map(([k]) => k + ' is below MAP');
+  return Object.entries(CATALOG).flatMap(([k, p]) => p.option === 'Option' ? p.variants.filter(v => v.cents < v.map).map(v => k + ' ' + v.sku + ' is below MAP')
+    : p.cents < p.map ? [k + ' is below MAP'] : []);
 }
 
 function needs(lines) {
@@ -111,7 +119,7 @@ async function stockMap(db) {
 // Stock by SKU, plus the older keys as aliases for a cached copy of the store page.
 function publicStock(stock) {
   const out = {};
-  for (const [sku, { id, variant }] of Object.entries(SKUS)) { out[sku] = stock[sku] ?? 0; out[legacyKey(id, variant)] = stock[sku] ?? 0; }
+  for (const [sku, { id, variant }] of Object.entries(SKUS)) { out[sku] = stock[sku] ?? 0; const old = legacyKey(id, variant); if (old) out[old] = stock[sku] ?? 0; }
   return out;
 }
 

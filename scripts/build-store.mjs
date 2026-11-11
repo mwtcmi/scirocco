@@ -32,6 +32,31 @@ for (const p of products) if (!p.colors && !p.external && !p.images?.length) p.i
 // "retired" (hidden from the store; its page stays up as "no longer available", pointing to "replacedBy" or
 // its category, so old links and search results keep working). Nothing is ever deleted.
 const STATUSES = ['live', 'coming-soon', 'retired'];
+// Configurator products ("options" + "variants"): one product with a picker, e.g. the MVRK ratchets
+// (Drive 1/4" 3/8" 1/2" x Head Fixed/Flex). Each variant is one combination with its own SKU, price, MAP and list;
+// "opts" lists its value for each option in order and "size" is shown after it ("3/8\" Flex, 12\"").
+// A variant can be "coming-soon" while the rest sell. Photos with a "sku" belong to that variant; untagged
+// photos show for every variant. The product's price is its lowest variant price ("from").
+const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
+const PLACEHOLDER = { src: '/images/optimized/photo-coming-soon-900.webp', src480: '/images/optimized/photo-coming-soon-480.webp', w: 900, h: 900 };
+for (const p of products.filter(p => p.variants)) {
+  if (!Array.isArray(p.options) || !p.options.length) throw new Error(`${p.slug}: "variants" needs "options"`);
+  if (p.colors) throw new Error(`${p.slug}: use "colors" or "variants", not both`);
+  const seen = new Set(), combos = new Set();
+  for (const v of p.variants) {
+    if (!v.sku || seen.has(v.sku)) throw new Error(`${p.slug}: every variant needs its own SKU`);
+    seen.add(v.sku);
+    if (!Array.isArray(v.opts) || v.opts.length !== p.options.length || v.opts.some((x, i) => !p.options[i].values.includes(x))) throw new Error(`${p.slug} ${v.sku}: "opts" must give one listed value per option`);
+    if (combos.has(v.opts.join('|'))) throw new Error(`${p.slug}: two variants are ${v.opts.join(' ')}`);
+    combos.add(v.opts.join('|'));
+    if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`);
+    if (v.status && !['live', 'coming-soon'].includes(v.status)) throw new Error(`${p.slug} ${v.sku}: status must be live or coming-soon`);
+  }
+  for (const i of p.images || []) if (i.sku && !seen.has(i.sku)) throw new Error(`${p.slug}: photo for unknown SKU ${i.sku}`);
+  if (p.defaultSku && !seen.has(p.defaultSku)) throw new Error(`${p.slug}: defaultSku ${p.defaultSku} is not a variant`);
+  const forSale = p.variants.filter(v => (v.status || 'live') === 'live');
+  p.price = Math.min(...(forSale.length ? forSale : p.variants).map(v => Number(v.price))).toFixed(2);
+}
 const status = p => p.status || 'live';
 for (const p of products) if (!STATUSES.includes(status(p))) throw new Error(`${p.slug}: status must be ${STATUSES.join(', ')}`);
 const isLive = p => status(p) === 'live', isRetired = p => status(p) === 'retired';
@@ -59,7 +84,13 @@ const menu = home.match(/<nav>[\s\S]*?<\/nav>/)[0]
 
 // Variants: every sellable thing has a SKU. A product with "colors" has one variant per color (photo from
 // "variantImage" with {img}); any other product is a single variant with its own SKU and first photo.
+const imgOf = i => ({ src: i.src, srcset: i.src480 ? `${i.src480} 480w,${i.src} ${i.w}w` : '', alt: i.alt });
 function variantsOf(p) {
+  if (p.variants) return p.variants.map(v => {
+    const own = (p.images || []).filter(i => i.sku === v.sku), name = optionName(v);
+    return { name, sku: v.sku, upc: v.upc || '', opts: v.opts, cents: Math.round(Number(v.price) * 100), soon: (v.status || 'live') !== 'live',
+      img: imgOf(own[0] || { ...PLACEHOLDER, alt: `${p.name}, ${name} (photo coming soon)` }) };
+  });
   if (!p.colors) { const i = p.images?.[0]; return [{ name: '', sku: p.sku || '', upc: p.upc || '', img: i ? { src: i.src, srcset: i.src480 ? `${i.src480} 480w,${i.src} ${i.w}w` : '', alt: i.alt } : null }]; }
   return p.colors.map(c => {
     const base = p.variantImage ? p.variantImage.replace('{img}', c.img) : null;
@@ -67,8 +98,9 @@ function variantsOf(p) {
     return { name: c.name, sku: c.sku, upc: c.upc, hex: c.hex, img: base ? { src: `${base}-900.webp`, srcset: `${base}-480.webp 480w,${base}-900.webp 900w`, alt } : null };
   });
 }
-const defaultVariant = p => { const vs = variantsOf(p); return vs.find(v => v.name === p.defaultColor) || vs[0]; };
-const multi = p => !!p.colors;
+const defaultVariant = p => { const vs = variantsOf(p); return vs.find(v => v.name === p.defaultColor || v.sku === p.defaultSku) || vs[0]; };
+const multi = p => !!p.colors || !!p.variants;
+const picker = p => !!p.variants;
 // "madeInUSA": true puts a small US flag over the bottom-right corner of the product's photo.
 const FLAG_SVG = (() => {
   const stripes = Array.from({ length: 13 }, (_, i) => i % 2 ? '' : `<rect y="${(i * 100 / 13).toFixed(2)}" width="190" height="${(100 / 13).toFixed(2)}" fill="#b22234"/>`).join('');
@@ -81,9 +113,10 @@ for (const p of products) if (p.madeInUSA !== undefined && typeof p.madeInUSA !=
 
 
 // The data the shared cart script needs on every store page.
+const onPage = cartProducts.filter(p => isLive(p) || (picker(p) && !isRetired(p))); // a coming-soon configurator still lets you pick
 const clientData = {
-  products: Object.fromEntries(sellable.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: multi(p) ? 'Color' : null, freeShipping: p.freeShipping === true,
-    default: defaultVariant(p).name, variants: variantsOf(p) }])),
+  products: Object.fromEntries(onPage.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: p.colors ? 'Color' : picker(p) ? 'Option' : null, freeShipping: p.freeShipping === true,
+    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name) } : {}) }])),
   fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
 
@@ -105,13 +138,16 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=9"></script>`;
+<script src="/paddock-store.js?v=10"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
 function offer(p, url) { return { '@type': 'Offer', price: p.price, priceCurrency: 'USD', availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition', seller, url: abs(url) }; }
 function productLd(p) {
   const url = prodUrl(p), brand = { '@type': 'Brand', name: p.brand };
+  if (picker(p)) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name, productGroupID: p.slug, brand, url: abs(url), description: p.about,
+    hasVariant: variantsOf(p).filter(v => !v.soon).map(v => ({ '@type': 'Product', name: `${p.name}, ${v.name}`, sku: v.sku, mpn: v.sku, ...(v.upc ? { gtin12: v.upc } : {}), brand,
+      image: abs(v.img.src), offers: { ...offer(p, `${url}?sku=${encodeURIComponent(v.sku)}`), price: (v.cents / 100).toFixed(2) } })) };
   if (p.colors) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name + ' with Auto-Stop Spout', productGroupID: p.slug, brand, url: abs(url),
     description: p.about, variesBy: ['https://schema.org/color'],
     hasVariant: p.colors.map(c => ({ '@type': 'Product', name: `${p.name}, ${c.name}, Auto-Stop Spout`, sku: c.sku, mpn: c.sku, gtin12: c.upc, color: c.name, brand,
@@ -160,7 +196,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=7">
+<link rel="stylesheet" href="/paddock-store.css?v=8">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -184,7 +220,9 @@ function photoTag(p, { big = false, lazy = true } = {}) {
   return `<img${big ? ' id="main-photo"' : ''} src="${src}"${i.src480 && big ? ` srcset="${i.src480} 480w,${i.src} ${i.w}w" sizes="(max-width:800px) 100vw,560px"` : ''} alt="${esc(i.alt)}" width="${big ? i.w : (i.src480 ? 480 : i.w)}" height="${big ? i.h : (i.src480 ? 480 : i.h)}"${lazy ? ' loading="lazy"' : ''}>`;
 }
 const idLine = p => { const v = defaultVariant(p); return v.sku ? `<div class="idline"${multi(p) ? ` data-variant-ids="${p.cart}"` : ''}>SKU ${esc(v.sku)}${v.upc ? ` · UPC ${esc(v.upc)}` : ''}</div>` : '<div class="idline">SKU and UPC to come</div>'; };
-const options = p => multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
+const pickers = p => p.options.map((o, i) => `<fieldset class="opt pick"><legend>${esc(o.name)} <span data-pick-name="${p.cart}" data-opt="${i}">${esc(defaultVariant(p).opts[i])}</span></legend><div class="pick-row">${o.values.map(val =>
+  `<button type="button" class="pick-btn" data-pick="${p.cart}" data-opt="${i}" data-val="${esc(val)}" aria-pressed="${defaultVariant(p).opts[i] === val}">${esc(val)}</button>`).join('')}</div></fieldset>`).join('');
+const options = p => picker(p) ? pickers(p) : multi(p) ? `<fieldset class="opt"><legend>Color <span data-option-name="${p.cart}">${esc(defaultVariant(p).name)}</span></legend><div class="swatches" data-options="${p.cart}"></div></fieldset>` : '';
 const stockLine = p => `<div class="stock" data-stock="${p.cart}"></div>`;
 const shipBadge = p => p.freeShipping ? '<div class="freeship">Free shipping to the lower 48</div>' : '';
 const fine = p => p.fine ? `<p class="fine note-above">${esc(p.fine)}</p>` : '';
@@ -217,9 +255,9 @@ function extCard(p) {
 function tile(p) {
   const url = prodUrl(p), v = defaultVariant(p);
   const pic = `<img${multi(p) ? ` data-variant-img="${p.cart}"` : ''} src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(v.img.alt)}">`;
-  const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
+  const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price"${picker(p) ? '' : ` data-price="${p.cart}"`}>${picker(p) ? 'From ' : ''}${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
     : `<h3>${esc(p.name)}</h3><span class="price">Coming Soon</span><span class="ext-buy">See details →</span>`;
-  if (!multi(p) || !isLive(p)) return `<a class="ext" href="${url}">${usaFlag(p) ? `<span class="ext-photo">${pic}${usaFlag(p)}</span>` : pic}<div class="ext-body">${body}</div></a>`;
+  if (!p.colors || !isLive(p)) return `<a class="ext" href="${url}">${usaFlag(p) ? `<span class="ext-photo">${pic}${usaFlag(p)}</span>` : pic}<div class="ext-body">${body}</div></a>`;
   // Products with options: swatches sit over the bottom of the photo, so the tile keeps the same size as its
   // neighbours. paddock-store.js fills [data-options], swaps [data-variant-img] and adds ?color= to [data-variant-link].
   return `<div class="ext ext-pick"><div class="ext-photo"><a href="${url}" data-variant-link="${p.cart}" tabindex="-1" aria-hidden="true">${pic}</a>${usaFlag(p)}<div class="ext-colors" data-options="${p.cart}" role="group" aria-label="${esc(p.short || p.name)} color"></div></div><a class="ext-body" href="${url}" data-variant-link="${p.cart}">${body}</a></div>`;
@@ -319,13 +357,16 @@ written.push('_redirects');
 for (const p of cartProducts) {
   const c = catBySlug[p.category], url = prodUrl(p);
   const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)], [p.short, url]];
-  const rows = p.colors ? p.colors.map(x => [x.name, x.sku, x.upc]) : [[p.color || '', p.sku || 'To come', p.upc || 'To come']];
-  const thumbs = !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
+  const rows = p.colors ? p.colors.map(x => [x.name, x.sku, x.upc]) : picker(p) ? p.variants.map(v => [optionName(v), v.sku, v.upc || 'To come']) : [[p.color || '', p.sku || 'To come', p.upc || 'To come']];
+  const pics = picker(p) ? p.images.filter(i => !i.sku || i.sku === defaultVariant(p).sku) : p.images;
+  const thumbs = picker(p) ? `<div class="thumbs" data-thumbs="${p.cart}"${p.images.length > 1 ? '' : ' hidden'}>${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}"${i.sku ? ` data-for="${i.sku}"` : ''} aria-pressed="${i === pics[0]}" aria-label="Photo ${k + 1}"${pics.includes(i) ? '' : ' hidden'}><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>`
+    : !p.colors && p.images.length > 1 ? `<div class="thumbs">${p.images.map((i, k) => `<button type="button" data-thumb="${i.src}" data-alt="${esc(i.alt)}" aria-pressed="${k === 0}" aria-label="Photo ${k + 1}"><img src="${i.src480 || i.src}" alt="" width="84" height="84" loading="lazy"></button>`).join('')}</div>` : '';
   const related = inCat(p.category).filter(x => x.cart && x !== p && isLive(x));
   const gone = isRetired(p), soon = status(p) === 'coming-soon';
   const instead = gone && p.replacedBy ? products.find(x => x.slug === p.replacedBy && !isRetired(x)) : null;
   const buy = gone
     ? `<div class="retired-note"><strong>No longer available.</strong> ${instead ? `See the <a href="${prodUrl(instead)}">${esc(instead.name)}</a>, or browse` : 'Browse'} <a href="${catUrl(c)}">${esc(c.name)}</a>.</div>`
+    : soon && picker(p) ? `${options(p)}<button class="add" type="button" data-add="${p.cart}" disabled>Coming Soon</button>`
     : soon ? `<button class="add" type="button" disabled>Coming Soon</button>`
     : `${options(p)}${fine(p)}${stockLine(p)}
   <button class="add" data-add="${p.cart}">Add to cart</button>
@@ -353,7 +394,7 @@ ${crumbs(trail)}
 </div></section>
 <section class="pd-about"><div class="wrap pd-about-grid">
 <div><h2>About</h2><p>${esc(p.about)}</p></div>
-<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>Color</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
+<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>${picker(p) ? 'Option' : 'Color'}</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
 </div></section>
 ${related.length ? `<section class="related store"><div class="wrap"><h2>Goes With</h2><div class="store-grid${related.length % 3 === 0 ? ' cols-3' : ''}">\n${related.map(x => card(x)).join('\n')}\n</div></div></section>` : '<div class="related"></div>'}
 ` + foot);
