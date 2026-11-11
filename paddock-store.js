@@ -87,7 +87,7 @@ function drawGrid(id){var p=PRODUCTS[id],pick=gsel[id],st=gridSet(id),v=st&&bySk
  if(v.img)all(attr('data-variant-img',id)).forEach(function(img){if(img.dataset.sku!==v.sku){img.dataset.sku=v.sku;img.src=v.img.src;if(v.img.srcset)img.srcset=v.img.srcset;img.alt=v.img.alt}});
  drawThumbs(id,v);if(!pick.length)all(attr('data-thumbs',id)).forEach(function(t){t.hidden=true});drawLineup(id);
  var total=lines.reduce(function(t,k){return t+skuPrice(k)},0),n=pick.length;
- all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'From '+money(Math.min.apply(null,p.variants.filter(function(x){return !x.includes}).map(function(x){return skuPrice(x.sku)})))});
+ all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):'';e.hidden=!n});
  all(attr('data-grid-count',id)).forEach(function(e){e.textContent=n?n+' picked':''});
  all(attr('data-grid-sum',id)).forEach(function(e){e.textContent=st?(bySku(id,st.sku).name+'. Priced as a set.'):n?pick.map(function(k){return bySku(id,k).name}).join(' · '):'Tap the ratchets you want.'});
  all(attr('data-variant-ids',id)).forEach(function(e){e.textContent=n?'SKU '+(st?st.sku:pick.join(' · ')):''});

@@ -101,3 +101,4 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 .lu-row img{display:block;height:auto;filter:brightness(0);opacity:.13;transition:filter .3s,opacity .3s}.lu-row span{color:#b5b5b0;font-size:clamp(11px,1.6vw,15px);font-weight:900;white-space:nowrap;transition:color .3s}
 .lu-row.on img{filter:none;opacity:1}.lu-row.on span{color:#1a1a1a}.lu-row:hover img{opacity:.3}.lu-row.on:hover img{opacity:1}.lu-row:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .pd-photo .usa-flag{z-index:2}
+.pd-info .price[hidden]{display:none}
