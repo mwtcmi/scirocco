@@ -226,6 +226,10 @@ test('checkout catalog comes from store/catalog.json: every cart product priced,
   assert.deepEqual(Object.keys(worker.CATALOG).sort(), cart.map(p => p.cart).sort());
   for (const p of cart) {
     const c = worker.CATALOG[p.cart];
+    if (p.variants) { // a configurator: every option priced at or above its own MAP
+      for (const v of p.variants) { const cv = c.variants.find(x => x.sku === v.sku); assert.ok(cv && cv.cents === Math.round(Number(v.price) * 100) && typeof v.map === 'number' && cv.map <= cv.cents, p.cart + ' ' + v.sku); }
+      assert.ok(p.checkoutNote, p.cart + ' needs a checkoutNote'); continue;
+    }
     assert.equal(c.cents, Math.round(Number(p.price) * 100), p.cart + ' price');
     assert.ok(typeof p.map === 'number' && c.map <= c.cents, p.cart + ' needs a map at or below price');
     assert.ok(p.checkoutNote, p.cart + ' needs a checkoutNote');
@@ -483,13 +487,12 @@ test('configurator products: each option has its own price, and Coming Soon opti
   const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url)));
   const m = file.products.find(p => p.cart === 'mvrk');
   assert.ok(m.variants.length === 6 && m.options.length === 2);
-  assert.equal(worker.buildCatalog(file).mvrk, undefined); // the product is Coming Soon
-  m.status = 'live';
   const c = worker.buildCatalog(file).mvrk;
-  assert.deepEqual(c.variants.map(v => [v.sku, v.name, v.cents]), [['R6USA', '3/8" Fixed, 8"', 11999], ['FR6USA', '3/8" Flex, 12"', 14999]]);
-  assert.equal(c.cents, 11999); assert.equal(c.option, 'Option');
-  m.variants.find(v => v.sku === 'R6USA').status = 'coming-soon';
-  assert.deepEqual(worker.buildCatalog(file).mvrk.variants.map(v => v.sku), ['FR6USA']);
-  m.variants.forEach(v => { v.status = 'coming-soon'; });
+  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499]]);
+  assert.equal(c.variants.find(v => v.sku === 'FR6USA').name, '3/8" Flex, 12"');
+  assert.equal(c.cents, 8899); assert.equal(c.option, 'Option');
+  m.variants.find(v => v.sku === 'R4USA').status = 'coming-soon';
+  assert.ok(!worker.buildCatalog(file).mvrk.variants.some(v => v.sku === 'R4USA'));
+  m.status = 'coming-soon';
   assert.equal(worker.buildCatalog(file).mvrk, undefined);
 });

@@ -388,7 +388,7 @@ test('prices: each configurator option has its own price, MAP, list and private 
   assert.equal(m.price, null);
   const fr = m.variants.find(v => v.sku === 'FR6USA');
   assert.deepEqual([fr.name, fr.price, fr.map, fr.list, fr.cost, fr.status], ['3/8" Flex, 12"', 149.99, 109.52, 149.35, null, 'live']);
-  assert.equal(m.variants.find(v => v.sku === 'R4USA').status, 'coming-soon');
+  assert.equal(m.variants.find(v => v.sku === 'R4USA').status, 'live');
   // Cost alone for one option: saved under its SKU, no commit.
   assert.equal((await s.call('/api/products/' + encodeURIComponent('mvrk/FR6USA'), { method: 'PUT', data: { cost: '81.18' } })).status, 200);
   assert.equal(s.commits.length, 0);
