@@ -90,9 +90,9 @@
     {
       "slug": "vim-mvrk-3-8-flex-head-ratchet", "category": "vim-tools", "cart": "fr6usa", "status": "coming-soon", "map": 109.52, "list": 149.35, "checkoutNote": "3/8 in drive, 90 tooth flex head, made in USA",
       "brand": "VIM Tools", "name": "VIM MVRK 3/8\" Drive Flex Head Ratchet, 12\", Made in USA", "short": "MVRK 3/8\" Flex Ratchet", "price": "149.99",
-      "desc": "VIM's American-made MVRK flex head ratchet: 3/8 in drive, a 90-tooth head that needs only 4 degrees of swing, 12 in long.",
-      "about": "MVRK is VIM's made-in-USA ratchet line. The FR6USA is the 3/8 in drive flex head version: the head pivots to reach fasteners at an angle, the fine 90-tooth gear ratchets with only 4 degrees of handle swing, and the 12 in polished chrome body gives you leverage on stubborn bolts. VIM sells a repair kit for it (R6USA-RK), so a worn mechanism gets rebuilt rather than replaced.",
-      "facts": ["3/8 in square drive, 90-tooth gear (4° swing)", "Flex head, 12 in overall length", "Made in USA, VIM limited lifetime warranty"],
+      "desc": "Made in USA. 90 teeth. Flex head. 12 inches of leverage.",
+      "about": "Built in America. Rebuildable. Buy it once.",
+      "facts": ["3/8\" drive · 90T · 4° swing", "12\" flex head", "Made in USA · lifetime warranty"],
       "images": [
         { "src": "/images/optimized/vim-fr6usa-side-900.webp", "src480": "/images/optimized/vim-fr6usa-side-480.webp", "w": 900, "h": 900, "alt": "VIM Tools MVRK FR6USA 3/8 in drive 12 in flex head ratchet, made in USA" },
         { "src": "/images/optimized/vim-fr6usa-head-900.webp", "src480": "/images/optimized/vim-fr6usa-head-480.webp", "w": 900, "h": 900, "alt": "Close-up of the MVRK FR6USA flex head with the VIM MVRK USA stamp and direction lever" }
@@ -102,9 +102,9 @@
     {
       "slug": "vim-v410-17mm-vw-drain-plug-tool", "category": "vim-tools", "cart": "v410", "status": "coming-soon", "map": 10.64, "list": 14.51, "checkoutNote": "17mm hex, VW gearbox fill and drain plugs, made in USA",
       "brand": "VIM Tools", "name": "VIM V410 17mm Hex VW Drain Plug Tool, Made in USA", "short": "V410 VW Drain Plug Tool", "price": "14.99",
-      "desc": "The 17mm hex tool for the fill and drain plugs on VW manual gearboxes. American-made by VIM.",
-      "about": "VW put 17mm internal hex fill and drain plugs on its manual gearboxes, from air-cooled Beetles through the Scirocco and Golf, and most socket sets don't have a hex that size. The VIM V410 is a solid 17mm hex made for exactly that job, so a gear oil change doesn't start with a trip to three parts stores.",
-      "facts": ["17mm hex for VW manual gearbox fill and drain plugs", "Made in USA by VIM Tools", "VIM limited lifetime warranty"],
+      "desc": "17mm hex. Pulls VW gearbox plugs. Made in USA.",
+      "about": "The tool nobody owns until the gear oil is due.",
+      "facts": ["17mm hex", "VW manual gearbox fill + drain", "Made in USA · lifetime warranty"],
       "images": [
         { "src": "/images/optimized/vim-v410-900.webp", "src480": "/images/optimized/vim-v410-480.webp", "w": 900, "h": 900, "alt": "VIM V410 17mm hex VW drain plug tool, black oxide finish" }
       ],
@@ -113,9 +113,9 @@
     {
       "slug": "vim-twls100-thin-wall-lug-nut-socket-set", "category": "vim-tools", "cart": "twls100", "status": "coming-soon", "map": 38.89, "list": 53.03, "checkoutNote": "3 pc, 1/2 in drive, thin wall impact lug sockets",
       "brand": "VIM Tools", "name": "VIM TWLS100 3 Pc. Thin Wall Impact Lug Nut Socket Set, 1/2\" Drive", "short": "TWLS100 Thin Wall Lug Sockets", "price": "53.99",
-      "desc": "Thin wall impact lug sockets that fit the narrow, recessed lug holes on alloy race wheels. 1/2 in drive, 3 pieces.",
-      "about": "Alloy race wheels often have narrow, recessed lug holes where a standard impact socket won't fit, or fits and chews up the wheel. VIM's TWLS100 sockets have thin walls to reach into those holes, and they're impact rated, so they work on the gun in the paddock as well as on a breaker bar or torque wrench.",
-      "facts": ["3 thin wall impact lug nut sockets", "1/2 in square drive, impact rated", "VIM limited lifetime warranty"],
+      "desc": "Thin walls for tight lug holes on alloy wheels.",
+      "about": "Race wheels. Skinny lug holes. These fit.",
+      "facts": ["3 pc · 1/2\" drive", "Thin wall · impact rated", "Lifetime warranty"],
       "sku": "TWLS100", "upc": "092308039103"
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
