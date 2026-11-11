@@ -173,7 +173,8 @@ function lineNames(data) {
   const byCart = Object.fromEntries(data.products.filter(p => p.cart).map(p => [p.cart, p]));
   return items => items.map(i => {
     const hit = i.s ? idx[i.s] : null, p = hit ? hit.p : byCart[i.p], variant = hit ? hit.v.name : i.c;
-    return (i.q || 1) + ' × ' + (p ? p.name : (i.s || i.p)) + (variant ? ', ' + variant : '');
+    const set = i.k && idx[i.k] ? ' (part of the ' + String(idx[i.k].v.name).split(':')[0].split(',')[0] + ' set)' : ''; // sets are sold as single ratchets
+    return (i.q || 1) + ' × ' + (p ? p.name : (i.s || i.p)) + (variant ? ', ' + variant : '') + set;
   });
 }
 // The "It's back" email for one SKU, with the product's own photo and page.

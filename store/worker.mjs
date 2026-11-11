@@ -102,8 +102,29 @@ export function priceLine(line) {
   return { product: id, sku: v.sku, variant: v.name, qty, cents: v.cents ?? p.cents, map: v.map ?? p.map, name: p.name, freeShipping: !!p.freeShipping,
     description: (multi ? v.name + ', ' : '') + p.description + ' (' + (v.includes ? v.includes.join(' + ') : v.sku) + ')', keys: v.includes || [v.sku] };
 }
-// Order metadata items: {s: sku, q} now, {p, c, q} before SKUs.
-const itemLine = i => priceLine(i.s ? { sku: i.s, qty: i.q } : { product: i.p, color: i.c, qty: i.q });
+// A set sells as one line per ratchet, so every order lists single SKUs (Mike, 2026-11-11). The set price is split
+// across its parts in proportion to their own prices, rounded to the cent, with any leftover cent on the dearest
+// part, so the parts always add up to the set price. Each part line remembers its set ("set").
+const setShort = n => String(n).split(':')[0].split(',')[0]; // "All 3 fixed: 5", 8", 10"" -> "All 3 fixed"
+export function splitSets(lines) {
+  return lines.flatMap(l => {
+    const v = SKUS[l.sku]?.variant;
+    if (!v?.includes) return [l];
+    const parts = v.includes.map(k => priceLine({ sku: k, qty: l.qty })), full = parts.reduce((t, x) => t + x.cents, 0);
+    parts.forEach(x => { x.cents = Math.round(x.cents * l.cents / full); });
+    const off = l.cents - parts.reduce((t, x) => t + x.cents, 0);
+    parts.reduce((a, b) => b.cents > a.cents ? b : a).cents += off;
+    const name = setShort(l.variant);
+    return parts.map(x => ({ ...x, set: l.sku, setName: name, description: x.description + ', part of the ' + name + ' set' }));
+  });
+}
+// Order metadata items: {s: sku, q} now, {p, c, q} before SKUs; a set's part also carries u (its share of the set
+// price, in cents) and k (the set's SKU).
+const itemLine = i => {
+  const l = priceLine(i.s ? { sku: i.s, qty: i.q } : { product: i.p, color: i.c, qty: i.q });
+  if (i.k && Number.isInteger(i.u)) { const name = setShort(SKUS[i.k]?.variant?.name || i.k); Object.assign(l, { cents: i.u, set: i.k, setName: name, description: l.description + ', part of the ' + name + ' set' }); }
+  return l;
+};
 
 export function priceWarnings() {
   return Object.entries(CATALOG).flatMap(([k, p]) => p.option === 'Option' ? p.variants.filter(v => v.cents < v.map).map(v => k + ' ' + v.sku + ' is below MAP')
@@ -146,7 +167,8 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
   // Free shipping: an order ships free only when every item in it is marked "freeShipping" in the catalog.
   const rate = ship && lines.length && lines.every(l => l.freeShipping) ? FREE_SHIPPING : SHIPPING[fulfillment];
   const rateLabel = fulfillment === 'event' && event ? 'Paddock pickup: ' + event.name + ', ' + eventDates(event) : rate.label;
-  const items = lines.map(l => ({ s: l.sku, q: l.qty }));
+  const items = lines.map(l => l.set ? { s: l.sku, q: l.qty, u: l.cents, k: l.set } : { s: l.sku, q: l.qty });
+  if (JSON.stringify(items).length > 500) throw new APIError(400, 'That is a lot of gear for one order. Please split it into two orders.'); // Stripe metadata limit
   const p = {
     mode: 'payment',
     success_url: returnBase + '?order=success&via=' + fulfillment + '&ref={CHECKOUT_SESSION_ID}',
@@ -476,7 +498,7 @@ export function createWorker({ now = () => Date.now(), stripeFetch = (...a) => f
             const today = localDate(now());
             if (!event || !event.active || today > event.order_by) throw new APIError(400, 'Paddock pickup for that event is closed. Please choose another option.');
           }
-          const lines = data.items.map(priceLine);
+          const lines = splitSets(data.items.map(priceLine));
           const stock = await stockMap(db), short = [];
           for (const [k, q] of Object.entries(needs(lines))) if ((stock[k] ?? 0) < q) short.push(k);
           if (short.length) return json({ error: 'Some items just went out of stock. Please update your cart.', soldOut: short, stock: publicStock(stock) }, 409);
