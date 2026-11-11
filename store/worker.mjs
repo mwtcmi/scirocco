@@ -180,7 +180,9 @@ export function checkoutParams(lines, fulfillment, returnBase, env = {}, cancelB
     // 799 News: buyers are subscribed by default (US opt-out rules), with a visible choice at checkout.
     custom_fields: [{ key: 'news', type: 'dropdown', optional: 'true', label: { type: 'custom', custom: '799 News by email' },
       dropdown: { default_value: 'yes', options: [{ label: 'Yes, send me 799 News', value: 'yes' }, { label: 'No thanks', value: 'no' }] } }],
-    excluded_payment_method_types: ['affirm', 'klarna'], // no pay-later: they cost about 6% a sale
+    // Cards only. Apple Pay and Google Pay come with 'card' (shown on devices and browsers that support them). No pay-later
+    // (about 6% a sale), no bank debit (settles in days, after a one-of-a-kind item may have sold), no Cash App/Amazon Pay.
+    payment_method_types: ['card'],
     line_items: lines.map(l => ({ quantity: l.qty, price_data: { currency: 'usd', unit_amount: l.cents,
       product_data: { name: l.name, description: l.description } } })),
     shipping_options: [{ shipping_rate_data: { type: 'fixed_amount', display_name: rateLabel,
