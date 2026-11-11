@@ -105,6 +105,9 @@
       "desc": "The 17mm hex tool for the fill and drain plugs on VW manual gearboxes. American-made by VIM.",
       "about": "VW put 17mm internal hex fill and drain plugs on its manual gearboxes, from air-cooled Beetles through the Scirocco and Golf, and most socket sets don't have a hex that size. The VIM V410 is a solid 17mm hex made for exactly that job, so a gear oil change doesn't start with a trip to three parts stores.",
       "facts": ["17mm hex for VW manual gearbox fill and drain plugs", "Made in USA by VIM Tools", "VIM limited lifetime warranty"],
+      "images": [
+        { "src": "/images/optimized/vim-v410-900.webp", "src480": "/images/optimized/vim-v410-480.webp", "w": 900, "h": 900, "alt": "VIM V410 17mm hex VW drain plug tool, black oxide finish" }
+      ],
       "sku": "V410", "upc": "", "madeInUSA": true
     },
     { "slug": "bergrennen-paddock-jacket", "category": "apparel", "external": "https://www.empirehillclimb.racing/799/bergrennen-padock-jacket-799",
