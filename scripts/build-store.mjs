@@ -161,15 +161,15 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=23"></script>`;
+<script src="/paddock-store.js?v=24"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
 function offer(p, url) { return { '@type': 'Offer', price: p.price, priceCurrency: 'USD', availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition', seller, url: abs(url) }; }
 function productLd(p) {
   const url = prodUrl(p), brand = { '@type': 'Brand', name: p.brand };
-  if (picker(p)) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name, productGroupID: p.slug, brand, url: abs(url), description: p.about,
-    hasVariant: variantsOf(p).filter(v => !v.soon).map(v => ({ '@type': 'Product', name: `${p.name}, ${v.name}`, sku: v.sku, mpn: v.sku, ...(v.upc ? { gtin12: v.upc } : {}), brand,
+  if (picker(p)) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name, productGroupID: p.slug, brand, url: abs(url), description: p.about, variesBy: ['https://schema.org/size'],
+    hasVariant: variantsOf(p).filter(v => !v.soon).map(v => ({ '@type': 'Product', name: `${p.name}, ${v.name}`, size: v.name, sku: v.sku, mpn: v.sku, ...(v.upc ? { gtin12: v.upc } : {}), brand,
       image: abs(v.img.src), offers: { ...offer(p, `${url}?sku=${encodeURIComponent(v.sku)}`), price: (v.cents / 100).toFixed(2) } })) };
   if (p.colors) return { '@context': 'https://schema.org', '@type': 'ProductGroup', name: p.name + ' with Auto-Stop Spout', productGroupID: p.slug, brand, url: abs(url),
     description: p.about, variesBy: ['https://schema.org/color'],
@@ -219,7 +219,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=20">
+<link rel="stylesheet" href="/paddock-store.css?v=21">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -450,7 +450,7 @@ ${crumbs(trail)}
 ${p.story || p.points ? `<section class="pd-story"><div class="wrap">${p.story ? `<div class="story-head"><div class="kicker">${esc(p.story.kicker || '')}</div><h2>${esc(p.story.title)}</h2><p>${esc(p.story.text)}</p></div>` : ''}${p.points ? `<div class="points">${p.points.map(x => `<div class="point"><h3>${esc(x.title)}</h3><p>${esc(x.text)}</p></div>`).join('')}</div>` : ''}</div></section>` : ''}
 <section class="pd-about"><div class="wrap pd-about-grid">
 <div><h2>About</h2><p>${esc(p.about)}</p></div>
-<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>${picker(p) ? 'Option' : 'Color'}</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
+<div><h2>Part numbers</h2><div class="spec-scroll"><table class="spec"><thead><tr><th>${picker(p) ? 'Option' : 'Color'}</th><th>SKU</th><th>UPC</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td>${i === 1 && p.pick === 'many' && !/^To come|^Set/.test(v) ? `<a href="?sku=${encodeURIComponent(v)}" data-pick-sku="${esc(v)}" data-pick-for="${p.cart}">${esc(v)}</a>` : esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${p.idNote ? `<p class="fine">${esc(p.idNote)}</p>` : ''}</div>
 </div></section>
 ${related.length ? `<section class="related store"><div class="wrap"><h2>Goes With</h2><div class="store-grid${related.length % 3 === 0 ? ' cols-3' : ''}">\n${related.map(x => card(x)).join('\n')}\n</div></div></section>` : '<div class="related"></div>'}
 ` + foot);

@@ -67,6 +67,7 @@ function drawThumbs(id,v){all(attr('data-thumbs',id)).forEach(function(box){var 
 // ratchet's own photo. Each row can be tapped like the grid. A thumbnail click shows that photo instead.
 var lineupOff={};
 function toggleSku(id,sku){var i=gsel[id].indexOf(sku);if(i>=0)gsel[id].splice(i,1);else gsel[id].push(sku);if(gsel[id].length)sel[id]=bySku(id,gsel[id][gsel[id].length-1]).name;lineupOff[id]=false;draw()}
+all('[data-pick-sku]').forEach(function(a){a.onclick=function(e){var id=a.getAttribute('data-pick-for'),sku=a.getAttribute('data-pick-sku');if(!gsel[id]||!bySku(id,sku))return;e.preventDefault();if(gsel[id].indexOf(sku)<0)toggleSku(id,sku);var g=document.querySelector('[data-grid="'+id+'"]');if(g)g.scrollIntoView({behavior:'smooth',block:'center'})}}); // Part numbers table: tap a SKU to add it to the set
 function drawLineup(id){var p=PRODUCTS[id],pick=gsel[id];all(attr('data-lineup',id)).forEach(function(box){
  var vs=p.variants.filter(function(x){return x.cut}),n=vs.filter(function(x){return pick.indexOf(x.sku)>=0}).length;
  box.hidden=lineupOff[id]||!(n===0||n>=2);if(box.hidden)return;
