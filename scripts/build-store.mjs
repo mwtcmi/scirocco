@@ -345,15 +345,16 @@ for (const c of live) {
   const list = inCat(c.slug).filter(p => p !== feat), pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   for (let n = 1; n <= pages; n++) {
     const url = catUrl(c) + (n > 1 ? `page/${n}/` : ''), slice = list.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
-    const title = `${c.name}${n > 1 ? ` (page ${n})` : ''} | Paddock Store | Scirocco 799`;
-    const desc = c.intro || c.blurb;
+    // Optional "seoTitle" / "seoDescription" in catalog.json override the search title and description.
+    const title = c.seoTitle ? c.seoTitle.replace(' | ', n > 1 ? ` (page ${n}) | ` : ' | ') : `${c.name}${n > 1 ? ` (page ${n})` : ''} | Paddock Store | Scirocco 799`;
+    const desc = c.seoDescription || c.intro || c.blurb;
     const trail = [['Paddock Store', '/paddock'], [c.name, catUrl(c)]];
     const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: [...(feat && n === 1 ? [feat] : []), ...slice].filter(isLive).map((p, i) => ({ '@type': 'ListItem', position: (n - 1) * PAGE_SIZE + i + 1, url: abs(prodUrl(p)), name: p.name })) };
     const pager = pages > 1 ? `<nav class="pager" aria-label="Pages">${n > 1 ? `<a href="${catUrl(c) + (n > 2 ? `page/${n - 1}/` : '')}" rel="prev">‹ Prev</a>` : ''}${Array.from({ length: pages }, (_, i) => i + 1).map(k => k === n ? `<span aria-current="page">${k}</span>` : `<a href="${catUrl(c) + (k > 1 ? `page/${k}/` : '')}">${k}</a>`).join('')}${n < pages ? `<a href="${catUrl(c)}page/${n + 1}/" rel="next">Next ›</a>` : ''}</nav>` : '';
     write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
       head({ title, desc, url: SITE + url, ld: [crumbsLd(trail), itemList] }) + `
 ${crumbs(trail)}
-<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(desc)}</p>${seasonLine}</div></header>
+<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(c.intro || c.blurb)}</p>${seasonLine}</div></header>
 ${feat && n === 1 ? featureBand(feat) : ''}
 <section class="store-page store${feat && !list.length ? ' feat-only' : ''}" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
@@ -433,7 +434,7 @@ for (const p of cartProducts) {
   ${notifyForm(p)}`;
   const image = abs(defaultVariant(p).img.src);
   write(`paddock/products/${p.slug}/index.html`,
-    head({ title: `${p.name} | Paddock Store | Scirocco 799`, desc: `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or ${p.freeShipping ? 'free shipping' : '$25 flat-rate shipping'}.`,
+    head({ title: p.seoTitle || `${p.name} | Paddock Store | Scirocco 799`, desc: p.seoDescription || `${p.desc} ${money(p.price)} from 799 Motorsport: free pickup in Traverse City, MI or ${p.freeShipping ? 'free shipping' : '$25 flat-rate shipping'}.`,
       url: abs(url), image, imageAlt: p.name, ld: isLive(p) ? [productLd(p), crumbsLd(trail)] : [crumbsLd(trail)], robots: gone ? 'noindex,follow' : '' }) + `
 ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
