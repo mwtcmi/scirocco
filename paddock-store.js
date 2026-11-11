@@ -53,7 +53,7 @@ function drawProduct(id){var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=l
  all(attr('data-variant-link',id)).forEach(function(a){if(!a.dataset.base)a.dataset.base=a.getAttribute('href');a.href=a.dataset.base+(multi(id)?'?color='+encodeURIComponent(v.name):'')});
  all(attr('data-price',id)).forEach(function(e){if(price(id))e.textContent=money(price(id))});
  all(attr('data-stock',id)).forEach(function(e){e.textContent=av?stockText(have(v.sku),rest):''});
- all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!av||rest<1;b.textContent=!online?'Store offline':!av?'Coming soon':have(v.sku)<1?'Out of stock':rest<1?'All in your cart':'Add to cart'});
+ all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!av||rest<1;b.textContent=!online?'Store offline':!av?'Coming Soon':have(v.sku)<1?'Out of stock':rest<1?'All in your cart':'Add to cart'});
  all('form'+attr('data-notify',id)).forEach(function(f){var show=av&&have(v.sku)<1;f.hidden=!show;if(f.dataset.sku!==v.sku){f.dataset.sku=v.sku;f.querySelector('.notify-msg').textContent=''}})}
 // Free shipping: the order ships free only when every item in the cart is marked free shipping.
 function freeShip(id){var c=data.catalog[id];return c&&c.freeShipping!==undefined?!!c.freeShipping:!!(PRODUCTS[id]&&PRODUCTS[id].freeShipping)}

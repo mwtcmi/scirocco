@@ -105,7 +105,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=8"></script>`;
+<script src="/paddock-store.js?v=9"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -218,7 +218,7 @@ function tile(p) {
   const url = prodUrl(p), v = defaultVariant(p);
   const pic = `<img${multi(p) ? ` data-variant-img="${p.cart}"` : ''} src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(v.img.alt)}">`;
   const body = isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price" data-price="${p.cart}">${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
-    : `<h3>${esc(p.name)}</h3><span class="price">Coming soon</span><span class="ext-buy">See details →</span>`;
+    : `<h3>${esc(p.name)}</h3><span class="price">Coming Soon</span><span class="ext-buy">See details →</span>`;
   if (!multi(p) || !isLive(p)) return `<a class="ext" href="${url}">${usaFlag(p) ? `<span class="ext-photo">${pic}${usaFlag(p)}</span>` : pic}<div class="ext-body">${body}</div></a>`;
   // Products with options: swatches sit over the bottom of the photo, so the tile keeps the same size as its
   // neighbours. paddock-store.js fills [data-options], swaps [data-variant-img] and adds ?color= to [data-variant-link].
@@ -326,7 +326,7 @@ for (const p of cartProducts) {
   const instead = gone && p.replacedBy ? products.find(x => x.slug === p.replacedBy && !isRetired(x)) : null;
   const buy = gone
     ? `<div class="retired-note"><strong>No longer available.</strong> ${instead ? `See the <a href="${prodUrl(instead)}">${esc(instead.name)}</a>, or browse` : 'Browse'} <a href="${catUrl(c)}">${esc(c.name)}</a>.</div>`
-    : soon ? `<button class="add" type="button" disabled>Coming soon</button>`
+    : soon ? `<button class="add" type="button" disabled>Coming Soon</button>`
     : `${options(p)}${fine(p)}${stockLine(p)}
   <button class="add" data-add="${p.cart}">Add to cart</button>
   ${notifyForm(p)}`;
@@ -342,7 +342,7 @@ ${crumbs(trail)}
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>
-  ${isLive(p) ? `<div class="price" data-price="${p.cart}">${money(p.price)}</div>${shipBadge(p)}` : `<div class="price">${gone ? 'No longer available' : 'Coming soon'}</div>`}
+  ${isLive(p) ? `<div class="price" data-price="${p.cart}">${money(p.price)}</div>${shipBadge(p)}` : `<div class="price">${gone ? 'No longer available' : 'Coming Soon'}</div>`}
   ${idLine(p)}
   <p class="desc">${esc(p.desc)}</p>
   <ul class="facts">${p.facts.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
@@ -369,7 +369,7 @@ function fill(name, html) {
 fill('categories', live.map((c, i) => {
   const n = inCat(c.slug).length, num = String(i + 1).padStart(2, '0');
   return n ? `<a class="cat" href="${catUrl(c)}"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Shop ${n} ${n === 1 ? 'item' : 'items'} →</span></a>`
-    : `<div class="cat soon"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Coming soon</span></div>`;
+    : `<div class="cat soon"><span class="cat-num">${num}</span><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><span class="cat-count">Coming Soon</span></div>`;
 }).join('\n'));
 // "Shop by brand" appears once there are two or more brands; until then the block stays empty.
 fill('brands', brands.length < 2 ? '' : `<section class="categories brands-row"><div class="wrap">
