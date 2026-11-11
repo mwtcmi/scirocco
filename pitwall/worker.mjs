@@ -157,11 +157,11 @@ export function eventInput(d) {
 // One naming rule everywhere in Pitwall: the product's full name, then ", Color" for a color option.
 // Stock is grouped by product, one row per variant (SKU), in the product list's order.
 const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
-const variantsOf = p => p.variants ? p.variants.map(v => ({ name: optionName(v), sku: v.sku, status: v.status || 'live' }))
+const variantsOf = p => p.variants ? p.variants.map(v => ({ name: optionName(v), sku: v.sku, status: v.status || 'live', ...(v.includes ? { includes: v.includes } : {}) }))
   : p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku, img: c.img })) : [{ name: '', sku: p.sku }];
 export function stockGroups(data) {
   return data.products.filter(p => p.cart).map(p => ({ product: p.cart, name: p.name, status: p.status || 'live',
-    items: variantsOf(p).map(v => ({ sku: v.sku, variant: v.name, label: p.name + (v.name ? ', ' + v.name : ''), ...(v.status ? { status: v.status } : {}) })) }));
+    items: variantsOf(p).map(v => ({ sku: v.sku, variant: v.name, label: p.name + (v.name ? ', ' + v.name : ''), ...(v.status ? { status: v.status } : {}), ...(v.includes ? { includes: v.includes } : {}) })) }));
 }
 export function skuIndex(data) {
   const out = {};
@@ -291,7 +291,7 @@ export async function dashboard(db, data, now) {
   const ev = await db.prepare('SELECT e.*, (SELECT COUNT(*) FROM orders o WHERE o.event_id = e.id AND NOT (o.refunded_cents > 0 AND o.refunded_cents >= COALESCE(o.amount_total, 0))) AS orders FROM events e WHERE e.active = 1 AND e.ends >= ? ORDER BY e.starts LIMIT 1').bind(today).first();
   const stockRows = Object.fromEntries((await db.prepare('SELECT key, qty FROM stock').all()).results.map(r => [r.key, r.qty]));
   const wait = Object.fromEntries((await db.prepare('SELECT sku, COUNT(*) AS n FROM restock_requests WHERE notified_at IS NULL GROUP BY sku').all()).results.map(r => [r.sku, r.n]));
-  const attention = stockGroups(data).filter(g => g.status === 'live').flatMap(g => g.items).filter(i => (i.status || 'live') === 'live').map(i => ({ label: i.label, sku: i.sku, qty: stockRows[i.sku] ?? 0, waiting: wait[i.sku] || 0 }))
+  const attention = stockGroups(data).filter(g => g.status === 'live').flatMap(g => g.items).filter(i => (i.status || 'live') === 'live' && !i.includes).map(i => ({ label: i.label, sku: i.sku, qty: stockRows[i.sku] ?? 0, waiting: wait[i.sku] || 0 }))
     .filter(i => i.qty < 2 || i.waiting);
   const cust = await db.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS month, SUM(CASE WHEN marketing = 'opt_in' THEN 1 ELSE 0 END) AS optin, SUM(CASE WHEN orders_count > 0 THEN 1 ELSE 0 END) AS buyers FROM customers").bind(p.month).first();
   const signups = await db.prepare("SELECT COUNT(*) AS n FROM customers WHERE marketing_source = 'site sign-up (confirmed)' AND marketing_at >= ?").bind(p.month).first().catch(() => ({ n: 0 }));
@@ -393,6 +393,7 @@ export function createPitwall({ now = () => Date.now(), ghFetch = (...a) => fetc
           if (!changes.length || changes.length > 200) throw new APIError(400, 'Nothing to save.');
           for (const c of changes) {
             if (!Object.hasOwn(known, c.sku)) throw new APIError(400, 'Unknown SKU: ' + String(c.sku).slice(0, 40));
+            if (known[c.sku].v.includes) throw new APIError(400, c.sku + ' is a set: its stock comes from its parts.');
             if (!Number.isInteger(c.qty) || c.qty < 0 || c.qty > 9999) throw new APIError(400, 'Stock must be a whole number from 0 to 9999.');
           }
           const notices = {};

@@ -417,3 +417,11 @@ test('setPrice adds a list price after MAP when a product has none, and edits it
   assert.equal(JSON.parse(setPrice(out, 'pump', { list: 81.5 })).products.find(p => p.cart === 'pump').list, 81.5);
   assert.equal(JSON.parse(out).products.find(p => p.cart === 'jug').list, 45.99);
 });
+
+test('stock: a set has no stock of its own, so Pitwall refuses to set it', async t => {
+  const s = setup(t);
+  const r = await s.call('/api/stock', { method: 'PUT', data: { changes: [{ sku: 'MVRK-SET-FIXED', qty: 3 }] } });
+  assert.equal(r.status, 400); assert.match(r.body.error, /is a set/);
+  const g = (await s.call('/api/stock')).body.groups.find(x => x.product === 'mvrk');
+  assert.deepEqual(g.items.find(i => i.sku === 'MVRK-SET-FLEX').includes, ['FR4USA', 'FR6USA', 'FR8USA']);
+});

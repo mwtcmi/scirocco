@@ -486,13 +486,29 @@ test('business name: optional at checkout, saved apart from the person’s name'
 test('configurator products: each option has its own price, and Coming Soon options cannot be bought', () => {
   const file = JSON.parse(fs.readFileSync(new URL('../store/catalog.json', import.meta.url)));
   const m = file.products.find(p => p.cart === 'mvrk');
-  assert.ok(m.variants.length === 6 && m.options.length === 2);
+  assert.ok(m.variants.length === 8 && m.options.length === 2);
   const c = worker.buildCatalog(file).mvrk;
-  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499]]);
+  assert.deepEqual(c.variants.map(v => [v.sku, v.cents]), [['R4USA', 8899], ['FR4USA', 12999], ['R6USA', 11999], ['FR6USA', 14999], ['R8USA', 13899], ['FR8USA', 19499], ['MVRK-SET-FIXED', 34699], ['MVRK-SET-FLEX', 47499]]);
+  assert.deepEqual(c.variants.find(v => v.sku === 'MVRK-SET-FIXED').includes, ['R4USA', 'R6USA', 'R8USA']);
   assert.equal(c.variants.find(v => v.sku === 'FR6USA').name, '3/8" Flex, 12"');
   assert.equal(c.cents, 8899); assert.equal(c.option, 'Option');
   m.variants.find(v => v.sku === 'R4USA').status = 'coming-soon';
-  assert.ok(!worker.buildCatalog(file).mvrk.variants.some(v => v.sku === 'R4USA'));
+  assert.ok(!worker.buildCatalog(file).mvrk.variants.some(v => v.sku === 'R4USA' || v.sku === 'MVRK-SET-FIXED')); // a set needs every part on sale
   m.status = 'coming-soon';
   assert.equal(worker.buildCatalog(file).mvrk, undefined);
+});
+
+test('a set checks out as one line at its own price and takes one of each part from stock', async t => {
+  const s = service(t);
+  s.sqlite.exec("UPDATE stock SET qty = 2 WHERE key IN ('R4USA','R6USA'); UPDATE stock SET qty = 1 WHERE key = 'R8USA'");
+  const cat = (await s.call('/api/catalog')).body;
+  assert.equal(cat.stock['MVRK-SET-FIXED'], 1); assert.equal(cat.stock['MVRK-SET-FLEX'], 0);
+  // Two sets need two 10" ratchets: refused.
+  const no = await s.call('/api/checkout', { method: 'POST', data: { items: [{ sku: 'MVRK-SET-FIXED', qty: 2 }], fulfillment: 'pickup' } });
+  assert.equal(no.status, 409); assert.deepEqual(no.body.soldOut, ['R8USA']);
+  const ok = await s.call('/api/checkout', { method: 'POST', data: { items: [{ sku: 'MVRK-SET-FIXED', qty: 1 }], fulfillment: 'pickup' } });
+  assert.equal(ok.status, 200);
+  const p = s.sent.at(-1).params;
+  assert.equal(p.get('line_items[0][price_data][unit_amount]'), '34699');
+  assert.match(p.get('line_items[0][price_data][product_data][description]'), /R4USA \+ R6USA \+ R8USA/);
 });

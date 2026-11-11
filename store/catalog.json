@@ -92,9 +92,9 @@
       "brand": "VIM Tools", "name": "VIM MVRK Ratchets", "short": "MVRK Ratchet",
       "desc": "Made in USA. 90 teeth. Pick your drive and head.",
       "about": "Built in America. Rebuildable. Buy it once.",
-      "facts": ["1/4\", 3/8\" or 1/2\" drive", "Fixed or flex head · 90T", "Made in USA · lifetime warranty"],
+      "facts": ["1/4\", 3/8\", 1/2\" or the set of 3", "Fixed or flex head · 90T", "Made in USA · lifetime warranty"],
       "options": [
-        { "name": "Drive", "values": ["1/4\"", "3/8\"", "1/2\""] },
+        { "name": "Drive", "values": ["1/4\"", "3/8\"", "1/2\"", "All 3"] },
         { "name": "Head", "values": ["Fixed", "Flex"] }
       ],
       "defaultSku": "FR6USA",
@@ -104,7 +104,9 @@
         { "sku": "R6USA", "upc": "092308861919", "opts": ["3/8\"", "Fixed"], "size": "8\"", "map": 87.3, "list": 119.05, "price": "119.99" },
         { "sku": "FR6USA", "upc": "092308686192", "opts": ["3/8\"", "Flex"], "size": "12\"", "map": 109.52, "list": 149.35, "price": "149.99" },
         { "sku": "R8USA", "upc": "092308881917", "opts": ["1/2\"", "Fixed"], "size": "10\"", "map": 101.59, "list": 138.53, "price": "138.99" },
-        { "sku": "FR8USA", "upc": "092308688196", "opts": ["1/2\"", "Flex"], "size": "24\"", "map": 142.86, "list": 194.81, "price": "194.99" }
+        { "sku": "FR8USA", "upc": "092308688196", "opts": ["1/2\"", "Flex"], "size": "24\"", "map": 142.86, "list": 194.81, "price": "194.99" },
+        { "sku": "MVRK-SET-FIXED", "includes": ["R4USA", "R6USA", "R8USA"], "opts": ["All 3", "Fixed"], "size": "5\", 8\", 10\"", "map": 253.97, "list": 346.32, "price": "346.99" },
+        { "sku": "MVRK-SET-FLEX", "includes": ["FR4USA", "FR6USA", "FR8USA"], "opts": ["All 3", "Flex"], "size": "6\", 12\", 24\"", "map": 347.62, "list": 474.03, "price": "474.99" }
       ],
       "images": [
         { "src": "/images/optimized/vim-fr6usa-side-900.webp", "src480": "/images/optimized/vim-fr6usa-side-480.webp", "w": 900, "h": 900, "sku": "FR6USA", "alt": "VIM Tools MVRK FR6USA 3/8 in drive 12 in flex head ratchet, made in USA" },

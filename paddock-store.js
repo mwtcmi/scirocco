@@ -30,7 +30,10 @@ function variant(id){var p=PRODUCTS[id];return p.variants.filter(function(v){ret
 function multi(id){return PRODUCTS[id].variants.length>1}
 function have(sku){return online?(data.stock[sku]||0):0}
 function inCart(sku){return cart.reduce(function(s,l){return s+(l.sku===sku?l.qty:0)},0)}
-function left(sku){return have(sku)-inCart(sku)}
+// A set (v.includes) has no stock of its own: it uses one of each part, so parts and sets share the same count.
+function parts(sku){var h=BYSKU[sku];return h&&h.v.includes?h.v.includes:[sku]}
+function used(sku){return cart.reduce(function(s,l){return s+(parts(l.sku).indexOf(sku)>=0?l.qty:0)},0)}
+function left(sku){var h=BYSKU[sku];if(h&&h.v.includes)return online?Math.min.apply(null,h.v.includes.map(function(k){return (data.stock[k]||0)-used(k)})):0;return have(sku)-used(sku)}
 function sellable(id){return online&&!!data.catalog[id]&&(!picker(id)||!!liveVariant(id,variant(id).sku))}
 function count(){return cart.reduce(function(s,l){return s+l.qty},0)}
 function lineLabel(l){var h=BYSKU[l.sku];return h?PRODUCTS[h.id].short+(multi(h.id)?', '+h.v.name:''):l.sku}
@@ -53,8 +56,8 @@ function pickTo(id,i,val){var p=PRODUCTS[id],cur=variant(id).opts.slice();cur[i]
  var hit=p.variants.filter(function(x){return x.opts.join('|')===cur.join('|')})[0]||p.variants.filter(function(x){return x.opts[i]===val})[0];if(hit){sel[id]=hit.name;draw()}}
 function drawProduct(id){var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
  if(v.opts){all(attr('data-pick',id)).forEach(function(b){var i=+b.dataset.opt;b.setAttribute('aria-pressed',v.opts[i]===b.dataset.val);if(!b.onclick)b.onclick=function(){pickTo(id,i,b.dataset.val)}});
-  all(attr('data-pick-name',id)).forEach(function(e){e.textContent=v.opts[+e.dataset.opt]+(+e.dataset.opt===v.opts.length-1&&v.name.indexOf(', ')>0?', '+v.name.split(', ').pop():'')});
-  all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||t.dataset.for===v.sku;t.hidden=!on;if(on){shown++;if(!first)first=t}});
+  all(attr('data-pick-name',id)).forEach(function(e){e.textContent=v.opts[+e.dataset.opt]+(+e.dataset.opt===v.opts.length-1&&v.size?', '+v.size:'')});
+  all(attr('data-thumbs',id)).forEach(function(box){var shown=0,first=null;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){var on=!t.dataset.for||(v.shows||[v.sku]).indexOf(t.dataset.for)>=0;t.hidden=!on;if(on){shown++;if(!first)first=t}});
    box.hidden=shown<2;if(box.dataset.sku!==v.sku){box.dataset.sku=v.sku;[].slice.call(box.querySelectorAll('[data-thumb]')).forEach(function(t){t.setAttribute('aria-pressed',t===first)})}})}
  all(attr('data-options',id)).forEach(function(box){box.innerHTML='';p.variants.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='sw'+(online&&have(x.sku)<1?' out':'');b.style.background=x.hex||'#777';b.title=x.name;
   b.setAttribute('aria-label',x.name+(online&&have(x.sku)<1?' (out of stock)':''));b.setAttribute('aria-pressed',sel[id]===x.name);b.onclick=function(){sel[id]=x.name;draw()};box.appendChild(b)})});
@@ -65,7 +68,7 @@ function drawProduct(id){var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=l
  all(attr('data-price',id)).forEach(function(e){var c=picker(id)?skuPrice(v.sku):price(id);if(c)e.textContent=money(c)});
  all(attr('data-stock',id)).forEach(function(e){e.textContent=av?stockText(have(v.sku),rest):''});
  all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!av||rest<1;b.textContent=!online&&!picker(id)?'Store offline':!av?'Coming Soon':have(v.sku)<1?'Out of stock':rest<1?'All in your cart':'Add to cart'});
- all('form'+attr('data-notify',id)).forEach(function(f){var show=av&&have(v.sku)<1;f.hidden=!show;if(f.dataset.sku!==v.sku){f.dataset.sku=v.sku;f.querySelector('.notify-msg').textContent=''}})}
+ all('form'+attr('data-notify',id)).forEach(function(f){var show=av&&have(v.sku)<1&&!v.includes;f.hidden=!show;if(f.dataset.sku!==v.sku){f.dataset.sku=v.sku;f.querySelector('.notify-msg').textContent=''}})}
 // Free shipping: the order ships free only when every item in the cart is marked free shipping.
 function freeShip(id){var c=data.catalog[id];return c&&c.freeShipping!==undefined?!!c.freeShipping:!!(PRODUCTS[id]&&PRODUCTS[id].freeShipping)}
 function draw(){

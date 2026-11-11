@@ -23,7 +23,9 @@ const cents = v => Math.round(Number(v) * 100);
 // each with its own price; any other product has a single variant (its own SKU). Stock, cart lines and orders all use SKUs.
 export const optionName = v => v.opts.join(' ') + (v.size ? ', ' + v.size : '');
 export function variantsOf(p) {
-  if (p.variants) return p.variants.map(v => ({ name: optionName(v), sku: v.sku, cents: cents(v.price), map: cents(v.map ?? v.price), live: (v.status || 'live') === 'live' }));
+  // A set ("includes": other SKUs of the same product) has its own SKU and price but no stock of its own: it is
+  // in stock when every part is, and selling one takes one of each part.
+  if (p.variants) return p.variants.map(v => ({ name: optionName(v), sku: v.sku, cents: cents(v.price), map: cents(v.map ?? v.price), live: (v.status || 'live') === 'live', ...(v.includes ? { includes: v.includes } : {}) }));
   return p.colors ? p.colors.map(c => ({ name: c.name, sku: c.sku })) : [{ name: '', sku: p.sku }];
 }
 export function buildCatalog(file) {
@@ -32,7 +34,9 @@ export function buildCatalog(file) {
     if (!p.cart || (p.status || 'live') !== 'live') continue; // only live products can be bought
     const all = variantsOf(p);
     for (const v of all) if (!v.sku) throw new Error(p.slug + ': every variant needs a SKU');
-    const variants = p.variants ? all.filter(v => v.live).map(({ live, ...v }) => v) : all; // a coming-soon option can't be bought
+    const liveSkus = new Set(all.filter(v => v.live && !v.includes).map(v => v.sku));
+    // a coming-soon option can't be bought, nor a set with a coming-soon part
+    const variants = p.variants ? all.filter(v => v.live && (!v.includes || v.includes.every(k => liveSkus.has(k)))).map(({ live, ...v }) => v) : all;
     if (!variants.length) continue;
     const low = p.variants ? Math.min(...variants.map(v => v.cents)) : cents(p.price);
     const item = { name: p.name, description: p.checkoutNote, cents: low, map: p.variants ? Math.min(...variants.map(v => v.map)) : cents(p.map ?? p.price),
@@ -96,7 +100,7 @@ export function priceLine(line) {
   }
   const p = CATALOG[id], multi = p.variants.length > 1;
   return { product: id, sku: v.sku, variant: v.name, qty, cents: v.cents ?? p.cents, map: v.map ?? p.map, name: p.name, freeShipping: !!p.freeShipping,
-    description: (multi ? v.name + ', ' : '') + p.description + ' (' + v.sku + ')', keys: [v.sku] };
+    description: (multi ? v.name + ', ' : '') + p.description + ' (' + (v.includes ? v.includes.join(' + ') : v.sku) + ')', keys: v.includes || [v.sku] };
 }
 // Order metadata items: {s: sku, q} now, {p, c, q} before SKUs.
 const itemLine = i => priceLine(i.s ? { sku: i.s, qty: i.q } : { product: i.p, color: i.c, qty: i.q });
@@ -119,7 +123,10 @@ async function stockMap(db) {
 // Stock by SKU, plus the older keys as aliases for a cached copy of the store page.
 function publicStock(stock) {
   const out = {};
-  for (const [sku, { id, variant }] of Object.entries(SKUS)) { out[sku] = stock[sku] ?? 0; const old = legacyKey(id, variant); if (old) out[old] = stock[sku] ?? 0; }
+  for (const [sku, { id, variant }] of Object.entries(SKUS)) {
+    out[sku] = variant.includes ? Math.min(...variant.includes.map(k => stock[k] ?? 0)) : stock[sku] ?? 0; // a set: as many as its scarcest part
+    const old = legacyKey(id, variant); if (old) out[old] = out[sku];
+  }
   return out;
 }
 
