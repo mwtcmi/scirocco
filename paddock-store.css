@@ -93,8 +93,11 @@ a.cat{text-decoration:none;color:inherit;transition:transform .15s}a.cat:hover{o
 .gp-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.gp-quick button{min-height:36px;padding:0 12px;border:1px solid #444;background:none;color:#fff;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.gp-quick button[aria-pressed=true]{border-color:var(--green);color:var(--green)}
 .gp-sum{margin:12px 0 0;color:#aaa;font-size:13px;min-height:1.4em}
 .pd-grid>div{min-width:0}.thumbs{flex-wrap:wrap}
-/* Live to-scale lineup of the picked ratchets, over the product photo */
-.pd-photo .lineup{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:4.5%;padding:8% 7%;background:#ECECEA}.pd-photo .lineup[hidden]{display:none}
-.lu-head{margin-top:2%;color:#8a8a86;font-size:clamp(10px,1.6vw,14px);font-weight:900;letter-spacing:.16em;text-transform:uppercase}.lu-head:first-child{margin-top:0}
-.lu-row{display:flex;align-items:center;gap:2.5%;min-height:0}.lu-row img{display:block;height:auto}.lu-row span{color:#4a4a47;font-size:clamp(11px,1.7vw,16px);font-weight:900;white-space:nowrap}
+/* The photo area as a to-scale lineup: silhouettes for unpicked ratchets, full chrome for picked ones */
+.pd-photo .lineup{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:1.6%;padding:7% 7%;background:#ECECEA}.pd-photo .lineup[hidden]{display:none}
+.lu-cap{margin-bottom:3%;color:#169a26;font-size:clamp(11px,1.7vw,15px);font-weight:900;letter-spacing:.16em;text-transform:uppercase;opacity:0;transition:opacity .25s}.lineup.empty .lu-cap{opacity:1}
+.lu-head{margin-top:3%;color:#8a8a86;font-size:clamp(10px,1.5vw,13px);font-weight:900;letter-spacing:.16em;text-transform:uppercase}.lu-cap+.lu-head{margin-top:0}
+.lu-row{display:flex;align-items:center;gap:2.5%;width:100%;padding:1.2% 0;border:0;background:none;cursor:pointer;font:inherit;text-align:left}
+.lu-row img{display:block;height:auto;filter:brightness(0);opacity:.13;transition:filter .3s,opacity .3s}.lu-row span{color:#b5b5b0;font-size:clamp(11px,1.6vw,15px);font-weight:900;white-space:nowrap;transition:color .3s}
+.lu-row.on img{filter:none;opacity:1}.lu-row.on span{color:#1a1a1a}.lu-row:hover img{opacity:.3}.lu-row.on:hover img{opacity:1}.lu-row:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .pd-photo .usa-flag{z-index:2}
