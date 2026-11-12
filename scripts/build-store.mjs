@@ -51,7 +51,7 @@ for (const p of products.filter(p => p.variants)) {
     if (v.includes) { if (!v.label && !v.opts) throw new Error(`${p.slug} ${v.sku}: a set needs a "label"`); if (!v.opts) { if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`); continue; } }
     if (!Array.isArray(v.opts) || v.opts.length !== p.options.length || v.opts.some((x, i) => !p.options[i].values.includes(x))) throw new Error(`${p.slug} ${v.sku}: "opts" must give one listed value per option`);
     if (p.pick !== 'kit' && combos.has(v.opts.join('|'))) throw new Error(`${p.slug}: two variants are ${v.opts.join(' ')}`); // a kit's parts share a section
-    if (p.pick === 'kit' && !(v.label && v.chip && v.title)) throw new Error(`${p.slug} ${v.sku}: a kit part needs a "label", "chip" and "title"`);
+    if (p.pick === 'kit' && !(v.label && v.chip && v.title && v.brand)) throw new Error(`${p.slug} ${v.sku}: a kit part needs a "label", "chip", "title" and its own "brand"`);
     combos.add(v.opts.join('|'));
     if (!(Number(v.price) > 0)) throw new Error(`${p.slug} ${v.sku}: needs a price`);
     if (v.status && !['live', 'coming-soon'].includes(v.status)) throw new Error(`${p.slug} ${v.sku}: status must be live or coming-soon`);
@@ -89,7 +89,8 @@ for (const p of products.filter(p => p.pick === 'kit')) {
 const status = p => p.status || 'live';
 for (const p of products) if (!STATUSES.includes(status(p))) throw new Error(`${p.slug}: status must be ${STATUSES.join(', ')}`);
 const isLive = p => status(p) === 'live', isRetired = p => status(p) === 'retired';
-const inCat = slug => products.filter(p => p.category === slug && !isRetired(p));
+// "alsoIn": other categories a product shows in (the 799 Paddock Kit lives in Trailer & Pit and shows on VIM Tools too).
+const inCat = slug => products.filter(p => (p.category === slug || (p.alsoIn || []).includes(slug)) && !isRetired(p));
 const cartProducts = products.filter(p => p.cart);
 const sellable = cartProducts.filter(isLive);
 const catUrl = c => `/paddock/${c.slug}/`;
@@ -417,7 +418,7 @@ ${pager}
 }
 
 // ---- Brand pages ----
-const brandNames = [...new Set(products.filter(p => p.brand && !isRetired(p)).map(p => p.brand))].sort();
+const brandNames = [...new Set(products.filter(p => p.brand && !isRetired(p) && p.pick !== 'kit').map(p => p.brand))].sort(); // a kit mixes brands: no brand page of its own
 const sameList = (a, b) => a.length === b.length && a.every(p => b.includes(p));
 const brands = brandNames.map(name => {
   const list = products.filter(p => p.brand === name && !isRetired(p)), slug = slugify(name);

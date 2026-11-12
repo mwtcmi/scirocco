@@ -38,9 +38,9 @@ export function feedItems(catalog, stock, site) {
         if ((v.status || 'live') !== 'live' || v.includes) continue; // only real, live SKUs
         const own = imgs.filter(i => i.sku === v.sku), shared = imgs.filter(i => i.skus && i.skus.includes(v.sku));
         const all = [...own, ...shared], pics = [...all.filter(i => !/-dim-/.test(i.src)), ...all.filter(i => /-dim-/.test(i.src))].map(i => abs(i.src)); // main image: a plain photo; the measured shot (text on it) goes after
-        // Kit parts are different products, not options of one product, so they get no item_group_id.
+        // Kit parts are different products, not options of one product, so they get no item_group_id and keep their own brand.
         items.push({ ...base, id: v.sku, ...(p.pick === 'kit' ? {} : { item_group_id: p.slug }), title: optionTitle(p, v), link: `${page}?sku=${encodeURIComponent(v.sku)}`,
-          image_link: pics[0], image_alt: (all.find(i => abs(i.src) === pics[0]) || {}).alt, additional_image_link: pics.slice(1, 11), price: money(v.price), cents: Math.round(v.price * 100), sku: v.sku, gtin: v.upc, ...(v.size ? { size: optionName(v) } : {}) });
+          image_link: pics[0], image_alt: (all.find(i => abs(i.src) === pics[0]) || {}).alt, additional_image_link: pics.slice(1, 11), price: money(v.price), cents: Math.round(v.price * 100), sku: v.sku, gtin: v.upc, ...(v.brand ? { brand: v.brand } : {}), ...(v.size ? { size: optionName(v) } : {}) });
       }
     } else if (p.colors) {
       for (const c of p.colors) {
