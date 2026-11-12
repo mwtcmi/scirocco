@@ -101,7 +101,7 @@ function drawGrid(id){var p=PRODUCTS[id],pick=gsel[id],st=gridSet(id),v=st&&bySk
  all('.add'+attr('data-add',id)).forEach(function(b){var ok=online&&n&&!bad.length&&!outs.length&&rest>0;b.disabled=!ok;
   b.textContent=!n?'Build your set':bad.length&&online?'Coming Soon':!online?'Coming Soon':outs.length?(outs.length===n?'Out of stock':bySku(id,outs[0]).name+' is out of stock'):rest<1?'All in your cart':n>1?'Add '+n+' to cart':'Add to cart'});
  all('form'+attr('data-notify',id)).forEach(function(f){var k=outs[0],show=!!k&&cat;f.hidden=!show;if(k&&f.dataset.sku!==k){f.dataset.sku=k;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l)l.textContent='Want the '+bySku(id,k).name+'? Get an email when it\'s back.'}})}
-// "pick": "kit" (the VIM Paddock Kit): tap any mix of parts, section by section. Every part is its own SKU and its own cart
+// "pick": "kit" (the 799 Paddock Kit): tap any mix of parts, section by section. Every part is its own SKU and its own cart
 // line; a section's "rail" (the 16-clip socket rail) comes automatically with its parts. "also" brings in another product's
 // SKUs (the MVRK ratchets). An out-of-stock part can't be picked: tapping it opens "email me when it's back" for it.
 // A section with "rails" (Sockets): the buyer picks the rail (type and color); Magrails also need 3/8" pegs, one pack per

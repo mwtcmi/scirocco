@@ -67,7 +67,7 @@ for (const p of products.filter(p => p.variants)) {
   const forSale = p.variants.filter(v => (v.status || 'live') === 'live');
   p.price = Math.min(...(forSale.length ? forSale : p.variants).map(v => Number(v.price))).toFixed(2);
 }
-// "pick": "kit" (the VIM Paddock Kit): sections of parts to tap, any mix. "options" has one option whose values are the
+// "pick": "kit" (the 799 Paddock Kit): sections of parts to tap, any mix. "options" has one option whose values are the
 // sections; each part's "opts" names its section, with "row" (a line within the section), "chip" (the short button text),
 // "label" and "title" (the full name for Stripe, orders and Google). "kit": {groups: [{name, note, also: SKUs of other
 // products (the MVRK ratchets), rail: a SKU that comes automatically with the section's parts, quick: [{label, skus}]}],
