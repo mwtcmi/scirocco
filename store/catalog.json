@@ -5,7 +5,7 @@
     "Tuff Jug": { "mapPolicy": "MAP is 15% below MSRP. It covers the website, social, email, Google Shopping, flyers, event signage and published promo codes. It does not cover prices shown only in a cart or checkout, private in-person prices, or free shipping." },
     "VIM Tools": { "mapPolicy": "MAP is listed per part in VIM's 2026 WMI price file (effective 05/01/2026), about 73% of the User (list) price. The written policy (what it covers: website, Google Shopping, events, promo codes) is still to get from the VIM rep." }
   },
-  "season": { "line": "Every order here gets 799 to the start line.", "bold": "Nine hill climbs in 2027.", "link": "/racing#schedule", "linkText": "See the schedule", "cart": "Your order fuels the 799 season." },
+  "season": { "line": "Every order helps get 799 to", "bold": "nine hill climbs in 2027.", "link": "/racing#schedule", "linkText": "See the schedule", "cart": "Your order fuels the 799 season." },
   "categories": [
     { "slug": "tools", "name": "Tools", "blurb": "Hand tools, cordless tools, storage and the things that get repairs done." },
     { "slug": "fuel-fluids", "name": "Fuel & Fluids", "blurb": "Fuel jugs, funnels, transfer gear, fluids and trackside cleanup.",
