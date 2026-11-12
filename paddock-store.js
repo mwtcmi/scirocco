@@ -116,7 +116,7 @@ function railOf(id,g){return KIT[id].rails[g]?rsel[id][g]:null}
 // How many packs of pegs the chosen rail needs for n sockets (0 for the clip rail, which has its own clips).
 function pegPacks(id,g,n){var r=KIT[id].rails[g],h=BYSKU[rsel[id][g]];return r&&r.pegs&&h&&/^Magrail/.test(h.v.railType||'')&&n?Math.ceil(n/r.pegs.per):0}
 function kitName(sku){var h=BYSKU[sku];return h?(h.v.title||PRODUCTS[h.id].name+', '+h.v.name):sku}
-function kitShort(sku){var h=BYSKU[sku];return h?(h.v.usa&&h.v.chip?'MVRK '+h.v.chip:h.v.chip||h.v.opts&&h.v.opts[1]+' '+h.v.size||h.v.name):sku}
+function kitShort(sku){var h=BYSKU[sku];return h?h.v.board||(h.v.usa&&h.v.chip?'MVRK '+h.v.chip:h.v.chip||h.v.opts&&h.v.opts[1]+' '+h.v.size||h.v.name):sku}
 function kitGroupPicks(id,g){return ksel[id].filter(function(k){return KIT[id].groupOf[k]===g})}
 function kitLines(id){var out=ksel[id].slice(),r=KIT[id].rails;Object.keys(r).forEach(function(g){var n=kitGroupPicks(id,g).length;if(!n)return;out.push(rsel[id][g]);for(var i=0;i<pegPacks(id,g,n);i++)out.push(r[g].pegs.sku)});return out}
 // What the chosen rail still lacks for one more socket in section g: the rail itself or its pegs (null if it's fine).
@@ -126,6 +126,7 @@ function kitOk(id,sku){var h=BYSKU[sku];if(!online||!h||!data.catalog[h.id]||(pi
  var g=KIT[id].groupOf[sku];return isRail(id,sku)||!railShort(id,g)}
 function kitTap(id,sku){var i=ksel[id].indexOf(sku);if(i>=0){ksel[id].splice(i,1);draw();return}
  if(online&&!kitOk(id,sku)){var k=have(sku)<1?sku:railShort(id,KIT[id].groupOf[sku]);knotify[id]=k&&have(k)<1?k:null;draw();return}
+ var one=BYSKU[sku].v.oneOf;if(one)ksel[id]=ksel[id].filter(function(k){var h=BYSKU[k];return !(h&&h.v.oneOf===one)}); // "pick one sheet"
  ksel[id].push(sku);knotify[id]=null;draw()}
 function sameSet(a,b){return a.length===b.length&&a.slice().sort().join(' ')===b.slice().sort().join(' ')}
 function kitQuick(id,skus,group){var want=skus.filter(function(k){return !online||kitOk(id,k)});
@@ -134,7 +135,7 @@ function kitQuick(id,skus,group){var want=skus.filter(function(k){return !online
 // Socket outside diameters (mm) for the kit board, by size, so the rail looks like a real rail.
 var OD={8:17,10:17,12:18.5,13:19,14:20,15:21,17:23.5,19:26};
 function drawKitboard(id){var p=PRODUCTS[id];all(attr('data-kitboard',id)).forEach(function(box){
- if(!box.dataset.built){box.dataset.built='1';var html='<div class="kb-cap">Your paddock kit</div>';
+ if(!box.dataset.built){box.dataset.built='1';var html='<div class="kb-cap">'+(p.kit.title||'Your paddock kit')+'</div>';
   p.kit.groups.forEach(function(g){if(g.rails){var rows={},order=[];p.variants.forEach(function(v){if(v.group===g.name&&!isRail(id,v.sku)){if(!rows[v.row]){rows[v.row]=[];order.push(v.row)}rows[v.row].push(v)}});
     html+='<div class="kb-rail" data-kb-group="'+g.name+'"><div class="kb-rail-head">'+g.name+' <span data-kb-railname></span></div>';
     order.forEach(function(r){html+='<div class="kb-rail-row"><span class="kb-row-name">'+r+'</span><div class="kb-clips">'+rows[r].map(function(v){var mm=parseFloat(v.chip),d=Math.round((OD[mm]||20)/26*100);
@@ -167,12 +168,12 @@ function drawKit(id){var p=PRODUCTS[id],lines=kitLines(id),n=lines.length,total=
   r.textContent=out?'The '+cur.v.name+' is out of stock right now. Pick another rail or color.':(n?'Your '+n+(n===1?' socket goes':' sockets go')+' on the '+cur.v.name+', '+money(skuPrice(cur.v.sku)):'Your sockets come on the '+cur.v.name+', '+money(skuPrice(cur.v.sku)))+(packs?', with '+packs+(packs===1?' pack':' packs')+' of 3/8" pegs ('+money(skuPrice(cfg.pegs.sku))+' each)':/^Magrail/.test(type)?', plus 3/8" pegs':'')+(out?'':'.')});
  all(attr('data-kit-n',id)).forEach(function(e){e.textContent=n?'· '+n+(n===1?' piece':' pieces'):''});
  all(attr('data-kit-total',id)).forEach(function(e){e.textContent=n?money(total):''});
- all(attr('data-kit-sum',id)).forEach(function(e){e.textContent=n?'Each piece is its own line in your cart.':'Tap the parts you want, or start with the must-haves.'});
+ all(attr('data-kit-sum',id)).forEach(function(e){e.textContent=(p.preorder?'Preorder · '+p.preorder.ships+'. ':'')+(n?'Each piece is its own line in your cart.':'Tap the parts you want, or start with the '+((p.kit.quick&&p.kit.quick[0]&&p.kit.quick[0].label)||'shortcuts').replace(/^The /,'').replace(/^./,function(c){return c.toLowerCase()})+'.')});
  all(attr('data-price',id)).forEach(function(e){e.textContent=n?money(total):' ';e.style.visibility=n?'':'hidden'});
  all(attr('data-variant-ids',id)).forEach(function(e){e.textContent=n?n+' SKUs':''});
  all(attr('data-stock',id)).forEach(function(e){e.textContent=''});
  var stuck=Object.keys(KIT[id].rails).filter(function(g){var c=kitGroupPicks(id,g).length,r=KIT[id].rails[g],pk=pegPacks(id,g,c);return c&&(left(rsel[id][g])<1||(pk&&left(r.pegs.sku)<pk))}); // sockets never ship without their rail
- all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!online||!n||stuck.length>0;b.textContent=!online?'Store offline':!n?'Build your kit':stuck.length?'Pick a rail that\'s in stock':'Add '+n+' to cart'});
+ var pre=p.preorder;all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!online||!n||stuck.length>0;b.textContent=!online?'Store offline':!n?'Build your kit':stuck.length?'Pick a rail that\'s in stock':(pre?'Preorder ':'Add ')+n+(pre?'':' to cart')});
  all('form'+attr('data-notify',id)).forEach(function(f){var k=knotify[id];f.hidden=!k;if(k&&f.dataset.sku!==k){f.dataset.sku=k;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l)l.textContent='The '+kitName(k)+' is out of stock. Get an email when it\'s back.'}});
  drawKitboard(id)}
 function drawProduct(id){if(PRODUCTS[id].pick==='kit'){drawKit(id);return}if(PRODUCTS[id].pick==='many'){drawGrid(id);return}var p=PRODUCTS[id],v=variant(id),av=sellable(id),rest=left(v.sku);
