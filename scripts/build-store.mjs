@@ -248,7 +248,7 @@ ${baseStyle}
 <meta name="twitter:image:alt" content="${alt}">
 <!-- /Site icons and link previews -->
 <link rel="stylesheet" href="/footer.css?v=2">
-<link rel="stylesheet" href="/paddock-store.css?v=24">
+<link rel="stylesheet" href="/paddock-store.css?v=25">
 ${ld.map(ldScript).join('\n')}
 </head>
 <body>
@@ -302,7 +302,7 @@ const kitPicker = p => {
     const rails = g.rails ? g.rails.choices.map(k => parts.find(v => v.sku === k)) : [], types = [...new Set(rails.map(v => v.railType))];
     const from = t => Math.min(...rails.filter(v => v.railType === t).map(v => v.cents));
     const railPick = rails.length ? `<div class="kit-railpick" data-kit-rails="${esc(g.name)}"><div class="kit-row"><span class="kit-row-name">Rail</span><div class="kit-chips">${types.map(t => `<button type="button" class="kit-chip kit-railtype" data-kit-railtype="${esc(t)}" aria-pressed="false"><b>${esc(t)}</b><small>${money((from(t) / 100).toFixed(2))}</small></button>`).join('')}</div></div>
-<div class="kit-row kit-color-row"><span class="kit-row-name">Color</span><div class="swatches kit-swatches">${rails.filter(v => v.color && v.railType !== 'Clip rail').map(v => `<button type="button" class="sw" data-kit-railsku="${esc(v.sku)}" data-type="${esc(v.railType)}" style="background:${esc(v.hex)}" title="${esc(v.color)}" aria-label="${esc(v.title)}" aria-pressed="false"></button>`).join('')}</div><span class="kit-color-name" data-kit-colorname></span></div>
+<div class="kit-row kit-color-row"><span class="kit-row-name">Color</span><div class="swatches kit-swatches">${rails.filter(v => v.color && v.railType !== 'Clip rail').map(v => `<button type="button" class="sw" data-kit-railsku="${esc(v.sku)}" data-type="${esc(v.railType)}" style="background:${esc(v.hex)}" title="${esc(v.color)}" aria-label="${esc(v.title)}" aria-pressed="false"></button>`).join('')}<span class="kit-color-name" data-kit-colorname></span></div></div>
 <p class="kit-rail" data-kit-rail></p></div>` : '';
     return `<fieldset class="opt kit-group" data-kit-group="${esc(g.name)}"><legend>${esc(g.name)} <span data-kit-count="${esc(g.name)}"></span></legend>${g.note ? `<p class="kit-note">${esc(g.note)}</p>` : ''}
 ${rows.length > 1 || rows[0] ? rows.map(r => `<div class="kit-row"><span class="kit-row-name">${esc(r)}</span>${chips(all.filter(x => x.row === r))}</div>`).join('') : chips(all)}
