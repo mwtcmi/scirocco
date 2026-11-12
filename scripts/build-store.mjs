@@ -480,7 +480,7 @@ fill('categories', tiles.map((c, i) => {
 }).join('\n'));
 // "Shop by brand" appears once there are two or more brands; until then the block stays empty.
 fill('brands', brands.length < 2 ? '' : `<section class="categories brands-row"><div class="wrap">
-<div class="section-head"><div><div class="kicker">Who Makes It</div><h2>Shop By<br>Brand.</h2></div><p>The makers whose gear earned a place in the 799 trailer.</p></div><div class="cat-grid">
+<div class="section-head"><div><div class="kicker">Who Makes It</div><h2>Shop By<br>Brand.</h2></div></div><div class="cat-grid">
 ${brands.map((b, i) => `<a class="cat" href="${b.url}"><span class="cat-num">${String(i + 1).padStart(2, '0')}</span><h3>${esc(b.name)}</h3><p>${esc(b.info.blurb || `${b.list.length} ${b.list.length === 1 ? 'product' : 'products'} in the Paddock Store.`)}</p><span class="cat-count">Shop ${esc(b.name)} →</span></a>`).join('\n')}
 </div></div></section>`);
 // Structured data for the store front: the category pages it links to.
