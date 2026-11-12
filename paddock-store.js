@@ -36,7 +36,7 @@ function used(sku){return cart.reduce(function(s,l){return s+(parts(l.sku).index
 function left(sku){var h=BYSKU[sku];if(h&&h.v.includes)return online?Math.min.apply(null,h.v.includes.map(function(k){return (data.stock[k]||0)-used(k)})):0;return have(sku)-used(sku)}
 function sellable(id){return online&&!!data.catalog[id]&&(!picker(id)||!!liveVariant(id,variant(id).sku))}
 function count(){return cart.reduce(function(s,l){return s+l.qty},0)}
-function lineLabel(l){var h=BYSKU[l.sku];return h?h.v.title||PRODUCTS[h.id].short+(multi(h.id)?', '+h.v.name:''):l.sku}
+function lineLabel(l){var h=BYSKU[l.sku];return h?(h.v.title||PRODUCTS[h.id].short+(multi(h.id)?', '+h.v.name:''))+(PRODUCTS[h.id].preorder?' (preorder)':''):l.sku}
 // Stock wording: never "0 in stock" (when it's out, the button says so and the notify box shows).
 function stockText(onHand,rest){return onHand<1?'':rest<1?'All in your cart':rest===1?'Only 1 left':rest+' in stock'}
 // The chosen way to get the order: 'ship', 'pickup', 'table', or 'event:<id>' (paddock pickup at an event).
@@ -71,7 +71,7 @@ all('[data-pick-sku]').forEach(function(a){a.onclick=function(e){var id=a.getAtt
  if(ksel[id]){e.preventDefault();if(ksel[id].indexOf(sku)<0&&!isRail(id,sku))kitTap(id,sku);var c=document.querySelector('.kit [data-kit-sku="'+sku+'"]');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});return}
  if(!gsel[id]||!bySku(id,sku))return;e.preventDefault();if(gsel[id].indexOf(sku)<0)toggleSku(id,sku);var g=document.querySelector('[data-grid="'+id+'"]');if(g)g.scrollIntoView({behavior:'smooth',block:'center'})}}); // Part numbers table: tap a SKU to add it to the set
 // Structured data for Google: swap the build-time availability for live stock once the catalog loads.
-function liveLd(){all('script[type="application/ld+json"]').forEach(function(el){try{var d=JSON.parse(el.textContent),hit=false;(d.hasVariant||[d]).forEach(function(x){if(x.offers&&x.sku){x.offers.availability='https://schema.org/'+(have(x.sku)>0?'InStock':'OutOfStock');hit=true}});if(hit)el.textContent=JSON.stringify(d)}catch(e){}})}
+function liveLd(){all('script[type="application/ld+json"]').forEach(function(el){try{var d=JSON.parse(el.textContent),hit=false;(d.hasVariant||[d]).forEach(function(x){if(x.offers&&x.sku){var h=BYSKU[x.sku],pre=h&&PRODUCTS[h.id].preorder;x.offers.availability='https://schema.org/'+(have(x.sku)>0?(pre?'PreOrder':'InStock'):'OutOfStock');hit=true}});if(hit)el.textContent=JSON.stringify(d)}catch(e){}})}
 function drawLineup(id){var p=PRODUCTS[id],pick=gsel[id];all(attr('data-lineup',id)).forEach(function(box){
  var vs=p.variants.filter(function(x){return x.cut}),n=vs.filter(function(x){return pick.indexOf(x.sku)>=0}).length;
  box.hidden=lineupOff[id]||!(n===0||n>=2);if(box.hidden)return;
@@ -187,9 +187,11 @@ function drawProduct(id){if(PRODUCTS[id].pick==='kit'){drawKit(id);return}if(PRO
  if(v.img)all(attr('data-variant-img',id)).forEach(function(img){if(img.dataset.sku!==v.sku){img.dataset.sku=v.sku;img.src=v.img.src;if(v.img.srcset)img.srcset=v.img.srcset;img.alt=v.img.alt}});
  all(attr('data-variant-link',id)).forEach(function(a){if(!a.dataset.base)a.dataset.base=a.getAttribute('href');a.href=a.dataset.base+(picker(id)?'?sku='+encodeURIComponent(v.sku):multi(id)?'?color='+encodeURIComponent(v.name):'')});
  all(attr('data-price',id)).forEach(function(e){var c=picker(id)?skuPrice(v.sku):price(id);if(c)e.textContent=money(c)});
- all(attr('data-stock',id)).forEach(function(e){e.textContent=av?stockText(have(v.sku),rest):''});
- all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!av||rest<1;b.textContent=!online&&!picker(id)?'Store offline':!av?'Coming Soon':have(v.sku)<1?'Out of stock':rest<1?'All in your cart':'Add to cart'});
- all('form'+attr('data-notify',id)).forEach(function(f){var show=av&&have(v.sku)<1&&!v.includes;f.hidden=!show;if(f.dataset.sku!==v.sku){f.dataset.sku=v.sku;f.querySelector('.notify-msg').textContent=''}})}
+ // "preorder": made to order. Stock in Pitwall is the number of preorder spots; the page says when it ships.
+ var pre=p.preorder;
+ all(attr('data-stock',id)).forEach(function(e){e.textContent=av?(pre?(have(v.sku)>0?'Preorder · '+pre.ships:'Preorders are full'):stockText(have(v.sku),rest)):''});
+ all('.add'+attr('data-add',id)).forEach(function(b){b.disabled=!av||rest<1;b.textContent=!online&&!picker(id)?'Store offline':!av?'Coming Soon':have(v.sku)<1?(pre?'Preorders full':'Out of stock'):rest<1?'All in your cart':pre?'Preorder':'Add to cart'});
+ all('form'+attr('data-notify',id)).forEach(function(f){var show=av&&have(v.sku)<1&&!v.includes;f.hidden=!show;if(f.dataset.sku!==v.sku){f.dataset.sku=v.sku;f.querySelector('.notify-msg').textContent='';var l=f.querySelector('label');if(l&&pre)l.textContent='Get an email when preorders open again.'}})}
 // Free shipping: the order ships free only when every item in the cart is marked free shipping.
 function freeShip(id){var c=data.catalog[id];return c&&c.freeShipping!==undefined?!!c.freeShipping:!!(PRODUCTS[id]&&PRODUCTS[id].freeShipping)}
 function draw(){

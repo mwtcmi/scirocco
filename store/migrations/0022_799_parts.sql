@@ -1,0 +1,2 @@
+-- 799 Parts (preorder): Lexan rear, rear quarter and door windows for the Mk1 Scirocco, and mirror plates. Stock = preorder spots, 0 until Mike opens them in Pitwall.
+INSERT OR IGNORE INTO stock (key, qty) VALUES ('799-MK1S-RW-125C', 0), ('799-MK1S-RW-125G', 0), ('799-MK1S-RW-188C', 0), ('799-MK1S-RW-188G', 0), ('799-MK1S-QW-125C', 0), ('799-MK1S-QW-125G', 0), ('799-MK1S-QW-188C', 0), ('799-MK1S-QW-188G', 0), ('799-MK1S-DW-125C', 0), ('799-MK1S-DW-125G', 0), ('799-MK1S-DW-188C', 0), ('799-MK1S-DW-188G', 0), ('799-MK1S-MP', 0);

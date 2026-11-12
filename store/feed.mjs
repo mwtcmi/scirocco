@@ -25,7 +25,7 @@ export function feedItems(catalog, stock, site) {
   const cats = Object.fromEntries((catalog.categories || []).map(c => [c.slug, c.name]));
   const items = [];
   for (const p of catalog.products) {
-    if (!p.cart || (p.status || 'live') !== 'live' || p.external) continue;
+    if (!p.cart || (p.status || 'live') !== 'live' || p.external || p.preorder) continue; // preorders wait: Google wants a ship date per item
     const page = `${site}/paddock/products/${p.slug}/`;
     const base = {
       description: (p.feedDesc || [p.desc, ...(p.facts || [])].filter(Boolean).join(' ') || p.about || p.name).slice(0, 5000),

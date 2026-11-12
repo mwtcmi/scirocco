@@ -157,7 +157,7 @@ for (const p of products) if (p.madeInUSA !== undefined && typeof p.madeInUSA !=
 const onPage = cartProducts.filter(p => isLive(p) || (picker(p) && !isRetired(p))); // a coming-soon configurator still lets you pick
 const clientData = {
   products: Object.fromEntries(onPage.map(p => [p.cart, { name: p.name, short: p.short || p.name, cat: p.category, option: p.colors ? 'Color' : picker(p) ? 'Option' : null, freeShipping: p.freeShipping === true,
-    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name), ...(p.pick ? { pick: p.pick } : {}) } : {}), ...(p.kit ? { kit: p.kit } : {}) }])),
+    default: defaultVariant(p).name, variants: variantsOf(p), ...(picker(p) ? { options: p.options.map(o => o.name), ...(p.pick ? { pick: p.pick } : {}) } : {}), ...(p.kit ? { kit: p.kit } : {}), ...(p.preorder ? { preorder: p.preorder } : {}) }])),
   fallback: Object.fromEntries(sellable.map(p => [p.cart, { cents: Math.round(p.price * 100) }]))
 };
 
@@ -346,7 +346,7 @@ function tile(p) {
   const url = prodUrl(p), v = defaultVariant(p);
   const pic = `<img${multi(p) ? ` data-variant-img="${p.cart}"` : ''} src="${v.img.src}"${v.img.srcset ? ` srcset="${v.img.srcset.replace(/,/g, ', ')}"` : ''} sizes="(max-width:800px) 50vw, 280px" width="900" height="900" loading="lazy" alt="${esc(v.img.alt)}">`;
   const body = isLive(p) && p.pick === 'kit' ? `<h3>${esc(p.name)}</h3><span class="price">Build your kit</span><span class="ext-buy">Start →</span>`
-    : isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price"${picker(p) ? '' : ` data-price="${p.cart}"`}>${picker(p) ? 'From ' : ''}${money(p.price)}</span><span class="ext-buy">Buy Now →</span>`
+    : isLive(p) ? `<h3>${esc(p.name)}</h3><span class="price"${picker(p) ? '' : ` data-price="${p.cart}"`}>${picker(p) ? 'From ' : ''}${money(p.price)}</span><span class="ext-buy">${p.preorder ? 'Preorder' : 'Buy Now'} →</span>`
     : `<h3>${esc(p.name)}</h3><span class="price">Coming Soon</span><span class="ext-buy">See details →</span>`;
   if (!p.colors || !isLive(p)) return `<a class="ext" href="${url}">${usaFlag(p) ? `<span class="ext-photo">${pic}${usaFlag(p)}</span>` : pic}<div class="ext-body">${body}</div></a>`;
   // Products with options: swatches sit over the bottom of the photo, so the tile keeps the same size as its
@@ -491,7 +491,7 @@ ${crumbs(trail)}
 <section class="pd store" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>
 <div class="pd-grid">
-<div><div class="pd-photo${p.pick === 'kit' ? ' kit-photo' : ''}">${p.pick === 'kit' ? `<div class="kitboard" data-kitboard="${p.cart}"></div>` : photoTag(p, { big: true, lazy: false })}${p.pick === 'many' ? `<div class="lineup" data-lineup="${p.cart}" hidden></div>` : ''}${usaFlag(p)}</div>${thumbs}</div>
+<div><div class="pd-photo${p.pick === 'kit' ? ' kit-photo' : ''}">${p.pick === 'kit' ? `<div class="kitboard" data-kitboard="${p.cart}"></div>` : photoTag(p, { big: true, lazy: false })}${p.pick === 'many' && p.variants.some(v => v.cut) ? `<div class="lineup" data-lineup="${p.cart}" hidden></div>` : ''}${usaFlag(p)}</div>${thumbs}</div>
 <div class="pd-info item" data-id="${p.cart}">
   <span class="badge">${esc(c.name)}</span>
   <h1>${esc(p.name)}</h1>
