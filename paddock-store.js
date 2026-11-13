@@ -129,11 +129,12 @@ function kitTap(id,sku){var i=ksel[id].indexOf(sku);if(i>=0){ksel[id].splice(i,1
  var one=BYSKU[sku].v.oneOf;if(one)ksel[id]=ksel[id].filter(function(k){var h=BYSKU[k];return !(h&&h.v.oneOf===one)}); // "pick one sheet"
  ksel[id].push(sku);knotify[id]=null;draw()}
 function sameSet(a,b){return a.length===b.length&&a.slice().sort().join(' ')===b.slice().sort().join(' ')}
-function kitQuick(id,skus,group){var want=skus.filter(function(k){return !online||kitOk(id,k)});
- if(group){var cur=kitGroupPicks(id,group),rest=ksel[id].filter(function(k){return KIT[id].groupOf[k]!==group});ksel[id]=sameSet(cur,want)&&want.length?rest:rest.concat(want)}
+function kitQuick(id,skus,group,addon){var want=skus.filter(function(k){return !online||kitOk(id,k)});
+ if(addon){var has=want.length&&want.every(function(k){return ksel[id].indexOf(k)>=0});ksel[id]=has?ksel[id].filter(function(k){return want.indexOf(k)<0}):ksel[id].concat(want.filter(function(k){return ksel[id].indexOf(k)<0&&!isRail(id,k)}))}
+ else if(group){var cur=kitGroupPicks(id,group),rest=ksel[id].filter(function(k){return KIT[id].groupOf[k]!==group});ksel[id]=sameSet(cur,want)&&want.length?rest:rest.concat(want)}
  else ksel[id]=want.filter(function(k){return !isRail(id,k)});knotify[id]=null;draw()}
 // Socket outside diameters (mm) for the kit board, by size, so the rail looks like a real rail.
-var OD={8:17,10:17,12:18.5,13:19,14:20,15:21,17:23.5,19:26};
+var OD={8:17,10:17,12:18.5,13:19,14:20,15:21,16:22,17:23.5,18:24.5,19:26};
 function drawKitboard(id){var p=PRODUCTS[id];all(attr('data-kitboard',id)).forEach(function(box){
  if(!box.dataset.built){box.dataset.built='1';var html='<div class="kb-cap">'+(p.kit.title||'Your paddock kit')+'</div>';
   p.kit.groups.forEach(function(g){if(g.rails){var rows={},order=[];p.variants.forEach(function(v){if(v.group===g.name&&!isRail(id,v.sku)){if(!rows[v.row]){rows[v.row]=[];order.push(v.row)}rows[v.row].push(v)}});
@@ -155,7 +156,8 @@ function drawKit(id){var p=PRODUCTS[id],lines=kitLines(id),n=lines.length,total=
  all('.kit[data-kit="'+id+'"] [data-kit-sku]').forEach(function(b){var sku=b.dataset.kitSku,on=ksel[id].indexOf(sku)>=0,ok=!online||kitOk(id,sku);b.setAttribute('aria-pressed',on);b.classList.toggle('out',online&&!on&&!ok);
   b.title=online&&!on&&!ok?(have(sku)<1?'Out of stock: tap to get an email when it\'s back':left(sku)<1?'All in your cart':'Out of stock'):'';if(!b.onclick)b.onclick=function(){kitTap(id,sku)}});
  all('[data-kit-quick="'+id+'"]').forEach(function(b){var fs=b.closest('[data-kit-group]'),g=fs&&fs.dataset.kitGroup,k=b.dataset.skus?b.dataset.skus.split(' '):[],want=k.filter(function(x){return !online||kitOk(id,x)||ksel[id].indexOf(x)>=0}).filter(function(x){return !isRail(id,x)});
-  b.setAttribute('aria-pressed',k.length?sameSet(g?kitGroupPicks(id,g):ksel[id],want)&&want.length>0:false);if(!b.onclick)b.onclick=function(){kitQuick(id,k,g)}});
+  var add=!!b.dataset.addon,addOn=function(){var x=[];all('[data-kit-quick="'+id+'"][data-addon]').forEach(function(a){var s=a.dataset.skus.split(' ');if(s.every(function(q){return ksel[id].indexOf(q)>=0}))x=x.concat(s)});return x};
+  b.setAttribute('aria-pressed',!k.length||!want.length?false:add?want.every(function(x){return ksel[id].indexOf(x)>=0}):g?sameSet(kitGroupPicks(id,g),want):(function(){var extra=addOn().filter(function(x){return want.indexOf(x)<0});return sameSet(ksel[id].filter(function(x){return extra.indexOf(x)<0}),want)})());if(!b.onclick)b.onclick=function(){kitQuick(id,k,g,add)}});
  all('[data-kit-group]').forEach(function(fs){var c=fs.querySelector('[data-kit-count]'),m=kitGroupPicks(id,fs.dataset.kitGroup).length;if(c)c.textContent=m?m+' picked':''});
  all('[data-kit-rails]').forEach(function(box){var g=box.dataset.kitRails,cur=BYSKU[rsel[id][g]],type=cur.v.railType,n=kitGroupPicks(id,g).length,packs=pegPacks(id,g,n),cfg=KIT[id].rails[g];
   [].slice.call(box.querySelectorAll('[data-kit-railtype]')).forEach(function(b){b.setAttribute('aria-pressed',b.dataset.kitRailtype===type);if(!b.onclick)b.onclick=function(){var t=b.dataset.kitRailtype;if(t===BYSKU[rsel[id][g]].v.railType)return;

@@ -185,7 +185,7 @@ const cartBlock = `<button class="cart-btn" id="cart-btn" aria-haspopup="dialog"
   <p class="fine">All sales final. See <a href="/returns">returns, warranty &amp; shipping</a>, <a href="/terms">terms</a> and <a href="/privacy">privacy</a>. Secure checkout by Stripe: card, Apple Pay and Google Pay. Promo codes go on the next screen. Orders include occasional 799 News by email; say no at checkout or unsubscribe any time.</p>
 </aside>
 <script>window.PADDOCK=${JSON.stringify(clientData)};</script>
-<script src="/paddock-store.js?v=30"></script>`;
+<script src="/paddock-store.js?v=31"></script>`;
 
 // ---- Structured data ----
 const seller = { '@type': 'Organization', name: catalog.seller };
@@ -291,7 +291,7 @@ const bySkuAll = sku => { for (const p of products) for (const v of p.variants ?
 const kitPicker = p => {
   const parts = variantsOf(p), mini = `<span class="kit-usa" aria-label="Made in USA">${FLAG_SVG}</span>`;
   const chip = (sku, text, cents, label, usa) => `<button type="button" class="kit-chip" data-kit-sku="${esc(sku)}" aria-pressed="false" aria-label="${esc(label)}"><b>${esc(text)}</b><small>${money((cents / 100).toFixed(2))}</small>${usa ? mini : ''}</button>`;
-  const quick = (list, extra = '') => list?.length ? `<div class="gp-quick kit-quick">${list.map(q => `<button type="button" data-kit-quick="${p.cart}" data-skus="${q.skus.join(' ')}" data-label="${esc(q.label)}"${extra}>${esc(q.label)}</button>`).join('')}</div>` : '';
+  const quick = (list, extra = '') => list?.length ? `<div class="gp-quick kit-quick">${list.map(q => `<button type="button" data-kit-quick="${p.cart}" data-skus="${q.skus.join(' ')}" data-label="${esc(q.label)}"${q.addon ? ' data-addon="1"' : ''}${extra}>${esc(q.label)}</button>`).join('')}</div>` : '';
   const groups = p.kit.groups.map(g => {
     const railSkus = g.rails ? [...g.rails.choices, ...(g.rails.pegs ? [g.rails.pegs.sku] : [])] : [];
     const mine = parts.filter(v => v.group === g.name && !railSkus.includes(v.sku));
