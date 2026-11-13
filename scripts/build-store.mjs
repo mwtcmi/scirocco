@@ -354,7 +354,7 @@ for (const c of live) {
     write(`paddock/${c.slug}/${n > 1 ? `page/${n}/` : ''}index.html`,
       head({ title, desc, url: SITE + url, ld: [crumbsLd(trail), itemList] }) + `
 ${crumbs(trail)}
-<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1><p>${esc(c.intro || c.blurb)}</p>${seasonLine}</div></header>
+<header class="cat-hero"><div class="wrap"><div class="kicker">799 Paddock Store</div><h1>${esc(c.name)}</h1>${c.headingOnly ? '' : `<p>${esc(c.intro || c.blurb)}</p>${seasonLine}`}</div></header>
 ${feat && n === 1 ? featureBand(feat) : ''}
 <section class="store-page store${feat && !list.length ? ' feat-only' : ''}" id="store"><div class="wrap">
 <p class="store-note" id="store-note" role="status" hidden></p>

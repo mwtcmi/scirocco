@@ -10,7 +10,7 @@
     { "slug": "tools", "name": "Tools", "blurb": "Hand tools, cordless tools, storage and the things that get repairs done." },
     { "slug": "fuel-fluids", "name": "Fuel & Fluids", "blurb": "Fuel jugs, funnels, transfer gear, fluids and trackside cleanup.",
       "intro": "The fuel and transfer gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
-    { "slug": "tuff-jug", "name": "Tuff Jug", "blurb": "Utility jugs, the electric transfer pump, spouts and caps we use in the 799 paddock.",
+    { "slug": "tuff-jug", "name": "Tuff Jug", "headingOnly": true, "blurb": "Utility jugs, the electric transfer pump, spouts and caps we use in the 799 paddock.",
       "intro": "The Tuff Jug gear in the 799 trailer. Stocked by 799, with free pickup in Downtown Traverse City by appointment or $25 flat-rate shipping." },
     { "slug": "vim-tools", "name": "VIM Tools", "featured": "vim-mvrk-ratchets", "blurb": "Specialty hand tools from VIM, the original mobile tool distributor, since 1931.",
       "seoTitle": "Authorized VIM Tools Dealer, Traverse City, MI | 799 Paddock Store",
