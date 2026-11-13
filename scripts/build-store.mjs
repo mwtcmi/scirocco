@@ -519,7 +519,7 @@ function fill(name, html) {
   if (!re.test(home)) throw new Error(`paddock.html is missing <!-- store:${name} --> markers`);
   home = home.replace(re, (_, open, close) => `${open}\n${html}\n${close}`); // a function, so "$2" in a price is never read as a pattern
 }
-fill('season', seasonLine);
+fill('season', ''); // Mike, 2026-11-12: no season line on the store front (category pages keep it)
 // Only categories with products are shown; empty ones stay hidden until they're stocked.
 // "teaser": true shows an empty category on the store front as a Coming Soon tile (after the stocked ones), e.g. to
 // keep the category grid even. It gets no page until it has products.
