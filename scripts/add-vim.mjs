@@ -7,7 +7,8 @@
 //
 // Example: node scripts/add-vim.mjs add 799-paddock-kit Sockets --row Shallow SMS616 SMS618
 // Names are tidied from VIM's description; check them (and chip, label) before committing.
-// The Made in USA flag ("usa": true) is set only when VIM's own description says MADE IN USA / USA MADE.
+// The Made in USA flag ("usa": true) is set only when VIM itself says so: its description (MADE IN USA / USA MADE)
+// or a claim in store/vim-usa-claims.json (with the catalog page).
 // New parts have no stock until it's entered in Pitwall (no stock row = 0, can't be bought).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,6 +16,7 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const VIM = JSON.parse(fs.readFileSync(path.join(ROOT, 'store/vim-catalog.json'), 'utf8')).parts;
 const CATALOG = path.join(ROOT, 'store/catalog.json');
+const USA = JSON.parse(fs.readFileSync(path.join(ROOT, 'store/vim-usa-claims.json'), 'utf8')).claims;
 
 const KEEP = new Set(['MVRK', 'USA', 'UJ', 'XZN', 'SAE', 'OAL', 'BMW', 'VW', 'LED', 'S2', 'EP', 'IP', 'SQ', 'CV', 'ABS', 'O2', 'TPMS', 'PH1', 'PH2', 'PH3']);
 const WORDS = { MAGRAIL: 'Magrail', MAGRAILS: 'Magrails', TORX: 'Torx', 'E-TORX': 'E-Torx', 'TORX®': 'Torx', 'E-TORX®': 'E-Torx' };
@@ -40,7 +42,7 @@ function line(sku, section, row, chip) {
   const p = VIM[sku];
   if (!p) throw new Error(`${sku}: not in the VIM catalog (store/vim-catalog.json)`);
   if (!p.list) throw new Error(`${sku}: VIM lists no price for it`);
-  const name = tidy(p.desc), usa = /MADE IN USA|USA MADE/i.test(p.desc);
+  const name = tidy(p.desc), usa = /MADE IN USA|USA MADE/i.test(p.desc) || !!USA[sku];
   const clean = name.replace(/,? (Made in USA|USA Made)\b/i, '');
   const v = { sku, opts: [section], ...(row ? { row } : {}), chip: chip || chipOf(clean), label: clean, title: `VIM ${clean}`,
     ...(usa ? { usa: true } : {}), ...(p.upc ? { upc: p.upc } : {}), ...(p.map ? { map: p.map } : {}), list: p.list, price: price(p.list), brand: 'VIM Tools' };

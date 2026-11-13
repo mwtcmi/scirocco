@@ -1,0 +1,22 @@
+{
+  "note": "VIM parts VIM itself calls Made in USA, with where it says so. Only these (and descriptions that say MADE IN USA / USA MADE) get the flag. The price file's origin column alone is not enough.",
+  "claims": {
+    "V419": "VIM 2025 catalog p.41 (socket rails, Made in USA)",
+    "V420": "VIM 2025 catalog p.41 (socket rails, Made in USA)",
+    "V421": "VIM 2025 catalog p.41 (socket rails, Made in USA)",
+    "V422": "VIM 2025 catalog p.41 (socket rails, Made in USA)",
+    "V423": "VIM 2025 catalog p.41 (socket rails, Made in USA)",
+    "V424": "VIM 2025 catalog p.41 (socket rails, Made in USA)",
+    "V420C-20B": "VIM 2025 catalog p.41 (socket clips, Made in USA)",
+    "V421C-20B": "VIM 2025 catalog p.41 (socket clips, Made in USA)",
+    "V422C-20B": "VIM 2025 catalog p.41 (socket clips, Made in USA)",
+    "V424C-20B": "VIM 2025 catalog p.41 (socket clips, Made in USA)",
+    "V510": "VIM 2025 catalog p.40 (\"Made in USA\")",
+    "V511": "VIM 2025 catalog p.40 (\"Made in USA\")",
+    "V514": "VIM 2025 catalog p.40 (\"Made in USA\")",
+    "V515": "VIM 2025 catalog p.40 (\"Made in USA\")",
+    "V516": "VIM 2025 catalog p.40 (\"Made in USA\")",
+    "WT0810": "VIM 2025 catalog p.20 (\"Made in USA\")",
+    "C1": "VIM 2025 catalog p.37 (\"Made in USA\")"
+  }
+}
