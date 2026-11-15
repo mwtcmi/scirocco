@@ -47,5 +47,7 @@ window.JOURNAL = [
   { photo: "c-08", part: "VDO tach, 8,000 rpm, with telltale needle", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-09", part: "Motometer oil pressure, 0–10 bar", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-10", part: "VDO water temperature, 50–150 °C", category: "Cockpit", date: "2026-11-15" },
-  { photo: "c-11", part: "VDO voltmeter", category: "Cockpit", date: "2026-11-15" }
+  { photo: "c-11", part: "VDO voltmeter", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-12", part: "Steering wheel on the car, driver's view", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-13", part: "Suede steering wheel, BK35000, quick-release side", category: "Cockpit", date: "2026-11-15", check: true }
 ];
