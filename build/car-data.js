@@ -42,5 +42,10 @@ window.JOURNAL = [
   { photo: "s-25", part: "Outside kill switch, pull handle and spark triangle", category: "Safety", date: "2026-11-15" },
   { photo: "s-26", part: "Inside kill switch with pull cable", category: "Safety", date: "2026-11-15" },
   { photo: "s-27", part: "Sparco extinguisher, 2 kg ABC powder, service due 05/2027", category: "Safety", date: "2026-11-15" },
-  { photo: "c-06", part: "Switch panel: ignition, engine start, VDO volt gauge", category: "Cockpit", date: "2026-11-15" }
+  { photo: "c-06", part: "Switch panel: ignition, engine start, VDO volt gauge", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-07", part: "Gauge cluster and quick-release hub", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-08", part: "VDO tach, 8,000 rpm, with telltale needle", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-09", part: "Motometer oil pressure, 0–10 bar", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-10", part: "VDO water temperature, 50–150 °C", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-11", part: "VDO voltmeter", category: "Cockpit", date: "2026-11-15" }
 ];
