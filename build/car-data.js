@@ -38,5 +38,9 @@ window.JOURNAL = [
   { photo: "s-23", part: "Sparco extinguisher, floor mount", category: "Safety", date: "2026-11-15" },
   { photo: "s-24", part: "Cage from the driver door, looking back", category: "Safety", date: "2026-11-15" },
   { photo: "c-04", part: "Seat, handbrake and shifter", category: "Cockpit", date: "2026-11-15" },
-  { photo: "c-05", part: "Dash and switch panel from the passenger door", category: "Cockpit", date: "2026-11-15" }
+  { photo: "c-05", part: "Dash and switch panel from the passenger door", category: "Cockpit", date: "2026-11-15" },
+  { photo: "s-25", part: "Outside kill switch, pull handle and spark triangle", category: "Safety", date: "2026-11-15" },
+  { photo: "s-26", part: "Inside kill switch with pull cable", category: "Safety", date: "2026-11-15" },
+  { photo: "s-27", part: "Sparco extinguisher, 2 kg ABC powder, service due 05/2027", category: "Safety", date: "2026-11-15" },
+  { photo: "c-06", part: "Switch panel: ignition, engine start, VDO volt gauge", category: "Cockpit", date: "2026-11-15" }
 ];
