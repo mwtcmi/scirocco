@@ -28,5 +28,15 @@ window.JOURNAL = [
   { photo: "s-16", part: "Beltenick camlock buckle", category: "Safety", date: "2026-11-15" },
   { photo: "c-01", part: "Cockpit from the passenger door", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-02", part: "Shifter, Sparco knob", category: "Cockpit", date: "2026-11-15", check: true },
-  { photo: "c-03", part: "Pedals and footrest plate", category: "Cockpit", date: "2026-11-15" }
+  { photo: "c-03", part: "Pedals and footrest plate", category: "Cockpit", date: "2026-11-15" },
+  { photo: "s-17", part: "Roll cage through the hatch glass", category: "Safety", date: "2026-11-15" },
+  { photo: "s-18", part: "Rear compartment: harness bar and battery box", category: "Safety", date: "2026-11-15" },
+  { photo: "s-19", part: "Harness bar mount plate", category: "Safety", date: "2026-11-15" },
+  { photo: "s-20", part: "Main hoop foot by the rear strut top", category: "Safety", date: "2026-11-15" },
+  { photo: "s-21", part: "Main hoop base, three brace joints", category: "Safety", date: "2026-11-15", check: true },
+  { photo: "s-22", part: "Brace foot at the sill", category: "Safety", date: "2026-11-15", check: true },
+  { photo: "s-23", part: "Sparco extinguisher, floor mount", category: "Safety", date: "2026-11-15" },
+  { photo: "s-24", part: "Cage from the driver door, looking back", category: "Safety", date: "2026-11-15" },
+  { photo: "c-04", part: "Seat, handbrake and shifter", category: "Cockpit", date: "2026-11-15" },
+  { photo: "c-05", part: "Dash and switch panel from the passenger door", category: "Cockpit", date: "2026-11-15" }
 ];
