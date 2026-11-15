@@ -1,4 +1,4 @@
-// Build journal data: one entry per photo. Add new entries at the end.
+// The Car (build/car.html) data: one entry per photo. Add new entries at the end.
 // photo = id in /images/optimized/journal/<id>-1600.webp and -640.webp
 // check: true = part name is a guess, Mike to confirm
 window.JOURNAL = [
