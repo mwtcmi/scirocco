@@ -1,5 +1,6 @@
 // The Car (build/car.html) data: one entry per photo. Add new entries at the end.
 // photo = id in /images/optimized/journal/<id>-1600.webp and -640.webp
+// status: "Removed" = part no longer on the car; date = when the photo was taken (blank if unknown)
 // check: true = part name is a guess, shows "(to confirm)"
 window.JOURNAL = [
   { photo: "w-02", part: "Front, hood open", category: "Exterior", date: "2026-11-15" },
@@ -71,5 +72,10 @@ window.JOURNAL = [
   { photo: "b-05", part: "Stainless spring clip, driver side", category: "Body", date: "2026-11-15" },
   { photo: "b-06", part: "Stainless spring clip, passenger side", category: "Body", date: "2026-11-15" },
   { photo: "f-01", part: "Dual 40 mm carbs", category: "Fuel", date: "2026-11-15" },
-  { photo: "f-02", part: "Braided fuel feed and return", category: "Fuel", date: "2026-11-15" }
+  { photo: "f-02", part: "Braided fuel feed and return", category: "Fuel", date: "2026-11-15" },
+  { photo: "o-01", part: "Old coilovers", category: "Suspension", status: "Removed" },
+  { photo: "o-02", part: "Old coilover", category: "Suspension", status: "Removed" },
+  { photo: "o-03", part: "Old front coilover", category: "Suspension", status: "Removed" },
+  { photo: "o-04", part: "Old rear coilover", category: "Suspension", status: "Removed" },
+  { photo: "o-05", part: "Old top mount", category: "Suspension", status: "Removed" }
 ];
