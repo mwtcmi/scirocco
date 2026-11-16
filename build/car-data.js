@@ -127,5 +127,6 @@ window.JOURNAL = [
   { photo: "b-23", part: "Door latch and pull-strap release, passenger side", category: "Body", date: "2026-11-16" },
   { photo: "b-24", part: "Passenger floor: fuel line, extinguisher, floor crossmember", category: "Body", date: "2026-11-16" },
   { photo: "w-13", part: "Spare wheel, 195/50R15 street tire", category: "Wheels & Tires", group: "Spare set", date: "2026-11-16" },
-  { photo: "w-14", part: "Spare set of four, tread", category: "Wheels & Tires", group: "Spare set", date: "2026-11-16" }
+  { photo: "w-14", part: "Spare set of four, tread", category: "Wheels & Tires", group: "Spare set", date: "2026-11-16" },
+  { photo: "c-14", part: "Handbrake lever", category: "Cockpit", date: "2026-11-16" }
 ];
