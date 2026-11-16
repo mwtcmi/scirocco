@@ -66,10 +66,10 @@ window.JOURNAL = [
   { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15" },
   { photo: "w-09", part: "Rear wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "w-10", part: "Rear wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "w-11", part: "Front wheel", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "w-12", part: "Front wheel", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "b-05", part: "Stainless spring clip with plastic protector", category: "Body", date: "2026-11-15" },
-  { photo: "b-06", part: "Stainless spring clip with plastic protector", category: "Body", date: "2026-11-15" },
+  { photo: "w-11", part: "Front wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
+  { photo: "w-12", part: "Front wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
+  { photo: "b-05", part: "Stainless spring clip with plastic protector, driver side", category: "Body", date: "2026-11-15" },
+  { photo: "b-06", part: "Stainless spring clip with plastic protector, passenger side", category: "Body", date: "2026-11-15" },
   { photo: "f-01", part: "Dual 40 mm Weber DCOEs from above: fuel pressure regulator, Bosch coil", category: "Fuel", date: "2026-11-15" },
   { photo: "f-02", part: "Weber DCOE, braided fuel feed and return", category: "Fuel", date: "2026-11-15" }
 ];
