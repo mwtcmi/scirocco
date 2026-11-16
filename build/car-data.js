@@ -69,5 +69,7 @@ window.JOURNAL = [
   { photo: "w-11", part: "Front wheel: Hoosier A7 205/50ZR15, DOT date 2724", category: "Wheels & Tires", date: "2026-11-15" },
   { photo: "w-12", part: "Front wheel, yellow caliper", category: "Wheels & Tires", date: "2026-11-15", check: true },
   { photo: "b-05", part: "Spring clip, stainless, made in England (M.P.)", category: "Body", date: "2026-11-15", check: true },
-  { photo: "b-06", part: "Spring clip, other side", category: "Body", date: "2026-11-15", check: true }
+  { photo: "b-06", part: "Spring clip, other side", category: "Body", date: "2026-11-15", check: true },
+  { photo: "f-01", part: "Weber carb from above: Filter King fuel pressure regulator, fuel lines, Bosch coil", category: "Fuel", date: "2026-11-15", check: true },
+  { photo: "f-02", part: "Weber carb side, braided fuel feed and return", category: "Fuel", date: "2026-11-15", check: true }
 ];
