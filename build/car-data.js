@@ -73,9 +73,9 @@ window.JOURNAL = [
   { photo: "b-06", part: "Stainless spring clip, passenger side", category: "Body", date: "2026-11-15" },
   { photo: "f-01", part: "Dual 40 mm carbs", category: "Fuel", date: "2026-11-15" },
   { photo: "f-02", part: "Braided fuel feed and return", category: "Fuel", date: "2026-11-15" },
-  { photo: "o-01", part: "Old coilovers", category: "Suspension", status: "Removed" },
-  { photo: "o-02", part: "Old coilover", category: "Suspension", status: "Removed" },
-  { photo: "o-03", part: "Old front coilover", category: "Suspension", status: "Removed" },
-  { photo: "o-04", part: "Old rear coilover", category: "Suspension", status: "Removed" },
-  { photo: "o-05", part: "Old top mount", category: "Suspension", status: "Removed" }
+  { photo: "o-01", part: "Old coilovers", category: "Suspension", status: "Removed", date: "Sep 2026" },
+  { photo: "o-02", part: "Old coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
+  { photo: "o-03", part: "Old front coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
+  { photo: "o-04", part: "Old rear coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
+  { photo: "o-05", part: "Old top mount", category: "Suspension", status: "Removed", date: "Sep 2026" }
 ];
