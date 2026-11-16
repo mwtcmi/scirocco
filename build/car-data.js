@@ -79,5 +79,10 @@ window.JOURNAL = [
   { photo: "o-04", part: "Old rear coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "o-05", part: "Old top mount", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "r-01", part: "Brake master cylinder", category: "Brakes", date: "2026-11-15" },
-  { photo: "r-02", part: "Brake master cylinder, side", category: "Brakes", date: "2026-11-15" }
+  { photo: "r-02", part: "Brake master cylinder, side", category: "Brakes", date: "2026-11-15" },
+  { photo: "r-03", part: "Front caliper", category: "Brakes" },
+  { photo: "r-04", part: "Front caliper and rotor", category: "Brakes" },
+  { photo: "r-05", part: "Rear caliper and rotor", category: "Brakes" },
+  { photo: "r-06", part: "Rear caliper and rotor, wheel off", category: "Brakes" },
+  { photo: "r-07", part: "Rear pad", category: "Brakes" }
 ];
