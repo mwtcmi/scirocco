@@ -91,5 +91,6 @@ window.JOURNAL = [
   { photo: "r-11", part: "Front rotor and caliper (G60), yellow", category: "Brakes" },
   { photo: "r-12", part: "Rear brake, red caliper, car on stands", category: "Brakes" },
   { photo: "r-13", part: "Front caliper (G60) and pad, yellow", category: "Brakes" },
-  { photo: "r-14", part: "Wheel spacer with extended studs", category: "Brakes" }
+  { photo: "r-14", part: "Wheel spacer with extended studs", category: "Brakes" },
+  { photo: "r-15", part: "Brake proportioning valve, by the harness buckle", category: "Brakes" }
 ];
