@@ -49,5 +49,6 @@ window.JOURNAL = [
   { photo: "c-10", part: "VDO water temperature, 50–150 °C", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-11", part: "VDO voltmeter", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-12", part: "Steering wheel on the car, driver's view", category: "Cockpit", date: "2026-11-15" },
-  { photo: "c-13", part: "Suede steering wheel, BK35000, quick-release side", category: "Cockpit", date: "2026-11-15", check: true }
+  { photo: "c-13", part: "Suede steering wheel, BK35000, quick-release side", category: "Cockpit", date: "2026-11-15", check: true },
+  { photo: "e-01", part: "VW Motorsport battery box in the spare wheel well, main cable and ground", category: "Electrical", date: "2026-11-15" }
 ];
