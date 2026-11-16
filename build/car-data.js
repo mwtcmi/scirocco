@@ -1,6 +1,6 @@
 // The Car (build/car.html) data: one entry per photo. Add new entries at the end.
 // photo = id in /images/optimized/journal/<id>-1600.webp and -640.webp
-// check: true = part name is a guess, Mike to confirm
+// check: true = part name is a guess, shows "(to confirm)"
 window.JOURNAL = [
   { photo: "w-02", part: "Front, hood open", category: "Exterior", date: "2026-11-15" },
   { photo: "w-01", part: "Front, driver side", category: "Exterior", date: "2026-11-15" },
@@ -14,10 +14,10 @@ window.JOURNAL = [
   { photo: "s-02", part: "Harness bar, shoulder straps wrapped", category: "Safety", date: "2026-11-15" },
   { photo: "s-03", part: "OMP roll bar label, No. 25949", category: "Safety", date: "2026-11-15" },
   { photo: "s-04", part: "Main hoop foot and mounting plate", category: "Safety", date: "2026-11-15" },
-  { photo: "s-05", part: "Front leg mount by the footwell", category: "Safety", date: "2026-11-15", check: true },
-  { photo: "s-06", part: "Bar joints at the floor, from below", category: "Safety", date: "2026-11-15", check: true },
-  { photo: "s-07", part: "Brace joints at the main hoop", category: "Safety", date: "2026-11-15", check: true },
-  { photo: "s-08", part: "Brace joints at the main hoop, other side", category: "Safety", date: "2026-11-15", check: true },
+  { photo: "s-05", part: "Front leg mount by the footwell", category: "Safety", date: "2026-11-15" },
+  { photo: "s-06", part: "Bar joints at the floor, from below", category: "Safety", date: "2026-11-15" },
+  { photo: "s-07", part: "Brace joints at the main hoop", category: "Safety", date: "2026-11-15" },
+  { photo: "s-08", part: "Brace joints at the main hoop, other side", category: "Safety", date: "2026-11-15" },
   { photo: "s-09", part: "Brace joint, extinguisher behind", category: "Safety", date: "2026-11-15" },
   { photo: "s-10", part: "Brace bolt, M10 8.8", category: "Safety", date: "2026-11-15" },
   { photo: "s-11", part: "Brace bolt close-up, M10 8.8", category: "Safety", date: "2026-11-15" },
@@ -33,8 +33,8 @@ window.JOURNAL = [
   { photo: "s-18", part: "Rear compartment: harness bar and battery box", category: "Safety", date: "2026-11-15" },
   { photo: "s-19", part: "Harness bar mount plate", category: "Safety", date: "2026-11-15" },
   { photo: "s-20", part: "Main hoop foot by the rear strut top", category: "Safety", date: "2026-11-15" },
-  { photo: "s-21", part: "Main hoop base, three brace joints", category: "Safety", date: "2026-11-15", check: true },
-  { photo: "s-22", part: "Brace foot at the sill", category: "Safety", date: "2026-11-15", check: true },
+  { photo: "s-21", part: "Main hoop base, three brace joints", category: "Safety", date: "2026-11-15" },
+  { photo: "s-22", part: "Brace foot at the sill", category: "Safety", date: "2026-11-15" },
   { photo: "s-23", part: "Sparco extinguisher, floor mount", category: "Safety", date: "2026-11-15" },
   { photo: "s-24", part: "Cage from the driver door, looking back", category: "Safety", date: "2026-11-15" },
   { photo: "c-04", part: "Seat, handbrake and shifter", category: "Cockpit", date: "2026-11-15" },
@@ -49,7 +49,7 @@ window.JOURNAL = [
   { photo: "c-10", part: "VDO water temperature, 50–150 °C", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-11", part: "VDO voltmeter", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-12", part: "Steering wheel on the car, driver's view", category: "Cockpit", date: "2026-11-15" },
-  { photo: "c-13", part: "Suede steering wheel, BK35000, quick-release side", category: "Cockpit", date: "2026-11-15", check: true },
+  { photo: "c-13", part: "Suede steering wheel, BK35000, quick-release side", category: "Cockpit", date: "2026-11-15" },
   { photo: "e-01", part: "VW Motorsport battery box in the spare wheel well, main cable and ground", category: "Electrical", date: "2026-11-15" },
   { photo: "b-01", part: "Hood closed, Sparco hood pins", category: "Body", date: "2026-11-15" },
   { photo: "b-02", part: "Sparco hood pin and clip", category: "Body", date: "2026-11-15" },
@@ -62,8 +62,8 @@ window.JOURNAL = [
   { photo: "n-04", part: "Radiator, fan shroud, breather filter", category: "Engine", date: "2026-11-15" },
   { photo: "u-01", part: "Ground Control camber/caster plate, driver", category: "Suspension", date: "2026-11-15" },
   { photo: "u-02", part: "Ground Control camber/caster plate, passenger", category: "Suspension", date: "2026-11-15" },
-  { photo: "u-03", part: "Driver strut tower, plate and strut bar", category: "Suspension", date: "2026-11-15", check: true },
-  { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15", check: true },
+  { photo: "u-03", part: "Driver strut tower, plate and strut bar", category: "Suspension", date: "2026-11-15" },
+  { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15" },
   { photo: "w-09", part: "Rear wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "w-10", part: "Rear wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "w-11", part: "Front wheel", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
