@@ -124,5 +124,6 @@ window.JOURNAL = [
   { photo: "b-20", part: "Door inside, driver side", category: "Body", date: "2026-11-16" },
   { photo: "b-21", part: "Door inside, passenger side", category: "Body", date: "2026-11-16" },
   { photo: "b-22", part: "Door latch and pull-strap release, driver side", category: "Body", date: "2026-11-16" },
-  { photo: "b-23", part: "Door latch and pull-strap release, passenger side", category: "Body", date: "2026-11-16" }
+  { photo: "b-23", part: "Door latch and pull-strap release, passenger side", category: "Body", date: "2026-11-16" },
+  { photo: "b-24", part: "Passenger floor: fuel line, extinguisher, floor crossmember", category: "Body", date: "2026-11-16" }
 ];
