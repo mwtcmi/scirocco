@@ -27,7 +27,7 @@ window.JOURNAL = [
   { photo: "s-15", part: "Harness label: FIA B-220.T/98, D-221.T/98", category: "Safety", date: "2026-11-15" },
   { photo: "s-16", part: "Beltenick camlock buckle", category: "Safety", date: "2026-11-15" },
   { photo: "c-01", part: "Cockpit from the passenger door", category: "Cockpit", date: "2026-11-15" },
-  { photo: "c-02", part: "Shifter, Sparco knob", category: "Cockpit", date: "2026-11-15", check: true },
+  { photo: "c-02", part: "Shifter, Sparco knob", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-03", part: "Pedals and footrest plate", category: "Cockpit", date: "2026-11-15" },
   { photo: "s-17", part: "Roll cage through the hatch glass", category: "Safety", date: "2026-11-15" },
   { photo: "s-18", part: "Rear compartment: harness bar and battery box", category: "Safety", date: "2026-11-15" },
