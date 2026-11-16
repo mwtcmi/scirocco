@@ -70,6 +70,6 @@ window.JOURNAL = [
   { photo: "w-12", part: "Front wheel", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "b-05", part: "Spring clip, stainless, made in England (M.P.)", category: "Body", date: "2026-11-15", check: true },
   { photo: "b-06", part: "Spring clip, other side", category: "Body", date: "2026-11-15", check: true },
-  { photo: "f-01", part: "Weber carb from above: Filter King fuel pressure regulator, fuel lines, Bosch coil", category: "Fuel", date: "2026-11-15", check: true },
-  { photo: "f-02", part: "Weber carb side, braided fuel feed and return", category: "Fuel", date: "2026-11-15", check: true }
+  { photo: "f-01", part: "Dual 40 mm Weber DCOEs from above: fuel pressure regulator, Bosch coil", category: "Fuel", date: "2026-11-15" },
+  { photo: "f-02", part: "Weber DCOE, braided fuel feed and return", category: "Fuel", date: "2026-11-15" }
 ];
