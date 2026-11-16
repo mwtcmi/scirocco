@@ -63,5 +63,11 @@ window.JOURNAL = [
   { photo: "u-01", part: "Ground Control camber/caster plate, driver", category: "Suspension", date: "2026-11-15" },
   { photo: "u-02", part: "Ground Control camber/caster plate, passenger", category: "Suspension", date: "2026-11-15" },
   { photo: "u-03", part: "Driver strut tower, plate and strut bar", category: "Suspension", date: "2026-11-15", check: true },
-  { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15", check: true }
+  { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15", check: true },
+  { photo: "w-09", part: "Rear wheel, passenger side, by the fuel cap: Hoosier A7, red caliper", category: "Wheels & Tires", date: "2026-11-15", check: true },
+  { photo: "w-10", part: "Rear wheel, driver side: Hoosier A7, red caliper", category: "Wheels & Tires", date: "2026-11-15", check: true },
+  { photo: "w-11", part: "Front wheel: Hoosier A7 205/50ZR15, DOT date 2724", category: "Wheels & Tires", date: "2026-11-15" },
+  { photo: "w-12", part: "Front wheel, yellow caliper", category: "Wheels & Tires", date: "2026-11-15", check: true },
+  { photo: "b-05", part: "Spring clip, stainless, made in England (M.P.)", category: "Body", date: "2026-11-15", check: true },
+  { photo: "b-06", part: "Spring clip, other side", category: "Body", date: "2026-11-15", check: true }
 ];
