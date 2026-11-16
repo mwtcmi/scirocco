@@ -120,5 +120,9 @@ window.JOURNAL = [
   { photo: "x-02", part: "Empire Hill Climb 2025, old suspension", category: "Exterior", date: "2025" },
   { photo: "x-03", part: "Front, stance", category: "Exterior" },
   { photo: "b-18", part: "Door handle, passenger side", category: "Body", date: "2026-11-16" },
-  { photo: "b-19", part: "Door handle, driver side, insert missing", category: "Body", date: "2026-11-16" }
+  { photo: "b-19", part: "Door handle, driver side, insert missing", category: "Body", date: "2026-11-16" },
+  { photo: "b-20", part: "Door inside, driver side", category: "Body", date: "2026-11-16" },
+  { photo: "b-21", part: "Door inside, passenger side", category: "Body", date: "2026-11-16" },
+  { photo: "b-22", part: "Door latch and pull-strap release, driver side", category: "Body", date: "2026-11-16" },
+  { photo: "b-23", part: "Door latch and pull-strap release, passenger side", category: "Body", date: "2026-11-16" }
 ];
