@@ -97,7 +97,7 @@
 <div class="w crumb"><a href="/build/">The Build</a> › <span>The Car</span></div>
 <header class="hero" style="padding-bottom:30px"><div class="w"><div class="k">The Build</div><h1>The<br><span>Car.</span></h1></div></header>
 <div id="journal"></div>
-<script src="/build/car-data.js?v=15"></script>
+<script src="/build/car-data.js?v=16"></script>
 <script>(function(){var d=window.JOURNAL||[],cats=[],by={};d.forEach(function(e){if(!by[e.category]){by[e.category]=[];cats.push(e.category)}by[e.category].push(e)});
 var esc=function(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
 document.getElementById('journal').innerHTML=cats.map(function(c){return '<section class="sec"><div class="w"><h2>'+esc(c)+'</h2><div class="gal">'+by[c].map(function(e){var f='/images/optimized/journal/'+e.photo;return '<figure><a href="'+f+'-1600.webp" target="_blank" rel="noopener"><img src="'+f+'-640.webp" alt="'+esc(e.part)+'" loading="lazy"'+(e.ratio?' style="aspect-ratio:'+e.ratio+'"':'')+'></a><figcaption><b>'+esc(e.part)+(e.check?' (to confirm)':'')+'</b>'+esc(e.date)+'</figcaption></figure>'}).join('')+'</div></div></section>'}).join('')})();</script>

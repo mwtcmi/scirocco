@@ -66,7 +66,7 @@ window.JOURNAL = [
   { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15", check: true },
   { photo: "w-09", part: "Rear wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "w-10", part: "Rear wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "w-11", part: "Front wheel, Hoosier A7 205/50ZR15", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
+  { photo: "w-11", part: "Front wheel", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "w-12", part: "Front wheel", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
   { photo: "b-05", part: "Spring clip, stainless, made in England (M.P.)", category: "Body", date: "2026-11-15", check: true },
   { photo: "b-06", part: "Spring clip, other side", category: "Body", date: "2026-11-15", check: true },
