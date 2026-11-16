@@ -54,5 +54,14 @@ window.JOURNAL = [
   { photo: "b-01", part: "Hood closed, Sparco hood pins", category: "Body", date: "2026-11-15" },
   { photo: "b-02", part: "Sparco hood pin and clip", category: "Body", date: "2026-11-15" },
   { photo: "b-03", part: "Hood pin post in the core support, timing belt side", category: "Body", date: "2026-11-15" },
-  { photo: "b-04", part: "Hood pin post in the core support, coolant cap side", category: "Body", date: "2026-11-15" }
+  { photo: "b-04", part: "Hood pin post in the core support, coolant cap side", category: "Body", date: "2026-11-15" },
+  { photo: "x-01", part: "Windshield, 799 number, cockpit view", category: "Exterior", date: "2026-11-15" },
+  { photo: "n-01", part: "Engine bay from the front, strut bar across both towers", category: "Engine", date: "2026-11-15" },
+  { photo: "n-02", part: "Engine bay from the driver tower", category: "Engine", date: "2026-11-15" },
+  { photo: "n-03", part: "Engine bay from the passenger tower: timing belt, fuel regulator", category: "Engine", date: "2026-11-15" },
+  { photo: "n-04", part: "Radiator, fan shroud, breather filter", category: "Engine", date: "2026-11-15" },
+  { photo: "u-01", part: "Ground Control camber/caster plate, driver", category: "Suspension", date: "2026-11-15" },
+  { photo: "u-02", part: "Ground Control camber/caster plate, passenger", category: "Suspension", date: "2026-11-15" },
+  { photo: "u-03", part: "Driver strut tower, plate and strut bar", category: "Suspension", date: "2026-11-15", check: true },
+  { photo: "u-04", part: "Passenger strut tower, welds in primer", category: "Suspension", date: "2026-11-15", check: true }
 ];
