@@ -65,10 +65,10 @@ window.JOURNAL = [
   { photo: "u-02", part: "Camber/caster plate, passenger side", category: "Suspension", date: "2026-11-15" },
   { photo: "u-03", part: "Strut tower, driver side", category: "Suspension", date: "2026-11-15" },
   { photo: "u-04", part: "Strut tower, passenger side", category: "Suspension", date: "2026-11-15" },
-  { photo: "w-09", part: "Rear wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "w-10", part: "Rear wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "w-11", part: "Front wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
-  { photo: "w-12", part: "Front wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1" },
+  { photo: "w-09", part: "Rear wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1", group: "On the car" },
+  { photo: "w-10", part: "Rear wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1", group: "On the car" },
+  { photo: "w-11", part: "Front wheel, driver side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1", group: "On the car" },
+  { photo: "w-12", part: "Front wheel, passenger side", category: "Wheels & Tires", date: "2026-11-15", ratio: "1/1", group: "On the car" },
   { photo: "b-05", part: "Stainless spring clip, driver side", category: "Body", date: "2026-11-15" },
   { photo: "b-06", part: "Stainless spring clip, passenger side", category: "Body", date: "2026-11-15" },
   { photo: "f-01", part: "Dual 40 mm carbs", category: "Fuel", date: "2026-11-15" },
@@ -125,5 +125,7 @@ window.JOURNAL = [
   { photo: "b-21", part: "Door inside, passenger side", category: "Body", date: "2026-11-16" },
   { photo: "b-22", part: "Door latch and pull-strap release, driver side", category: "Body", date: "2026-11-16" },
   { photo: "b-23", part: "Door latch and pull-strap release, passenger side", category: "Body", date: "2026-11-16" },
-  { photo: "b-24", part: "Passenger floor: fuel line, extinguisher, floor crossmember", category: "Body", date: "2026-11-16" }
+  { photo: "b-24", part: "Passenger floor: fuel line, extinguisher, floor crossmember", category: "Body", date: "2026-11-16" },
+  { photo: "w-13", part: "Spare wheel, 195/50R15 street tire", category: "Wheels & Tires", group: "Spare set", date: "2026-11-16" },
+  { photo: "w-14", part: "Spare set of four, tread", category: "Wheels & Tires", group: "Spare set", date: "2026-11-16" }
 ];
