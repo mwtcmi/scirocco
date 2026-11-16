@@ -81,7 +81,6 @@ window.JOURNAL = [
   { photo: "u-10", part: "Knuckles, on the bench", category: "Suspension" },
   { photo: "u-11", part: "Control arms, on the bench", category: "Suspension" },
   { photo: "o-01", part: "Old coilovers", category: "Suspension", status: "Removed", date: "Sep 2026" },
-  { photo: "o-02", part: "Old coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "o-03", part: "Old front coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "o-04", part: "Old rear coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "o-05", part: "Old top mount", category: "Suspension", status: "Removed", date: "Sep 2026" },
