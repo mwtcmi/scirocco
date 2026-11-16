@@ -84,5 +84,8 @@ window.JOURNAL = [
   { photo: "r-04", part: "Front caliper and rotor", category: "Brakes" },
   { photo: "r-05", part: "Rear caliper and rotor", category: "Brakes" },
   { photo: "r-06", part: "Rear caliper and rotor, wheel off", category: "Brakes" },
-  { photo: "r-07", part: "Rear pad", category: "Brakes" }
+  { photo: "r-07", part: "Rear pad", category: "Brakes" },
+  { photo: "r-08", part: "Front corner, wheel off", category: "Brakes" },
+  { photo: "r-09", part: "Front caliper, rotor and strut", category: "Brakes" },
+  { photo: "r-10", part: "Rear corner, wheel off", category: "Brakes" }
 ];
