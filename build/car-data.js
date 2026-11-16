@@ -50,5 +50,9 @@ window.JOURNAL = [
   { photo: "c-11", part: "VDO voltmeter", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-12", part: "Steering wheel on the car, driver's view", category: "Cockpit", date: "2026-11-15" },
   { photo: "c-13", part: "Suede steering wheel, BK35000, quick-release side", category: "Cockpit", date: "2026-11-15", check: true },
-  { photo: "e-01", part: "VW Motorsport battery box in the spare wheel well, main cable and ground", category: "Electrical", date: "2026-11-15" }
+  { photo: "e-01", part: "VW Motorsport battery box in the spare wheel well, main cable and ground", category: "Electrical", date: "2026-11-15" },
+  { photo: "b-01", part: "Hood closed, Sparco hood pins", category: "Body", date: "2026-11-15" },
+  { photo: "b-02", part: "Sparco hood pin and clip", category: "Body", date: "2026-11-15" },
+  { photo: "b-03", part: "Hood pin post in the core support, timing belt side", category: "Body", date: "2026-11-15" },
+  { photo: "b-04", part: "Hood pin post in the core support, coolant cap side", category: "Body", date: "2026-11-15" }
 ];
