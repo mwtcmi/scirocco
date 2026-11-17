@@ -103,6 +103,8 @@ window.JOURNAL = [
   { photo: "r-13", part: "Front caliper (G60) and pad, yellow", category: "Brakes", group: "On blue coilovers" },
   { photo: "n-05", part: "Cylinder head casting number", category: "Engine" },
   { photo: "n-06", part: "Cylinder head date stamp", category: "Engine" },
+  { photo: "n-09", part: "Engine code stamp, 3A", category: "Engine", date: "2026-11-17" },
+  { photo: "n-10", part: "Cylinder head logos", category: "Engine", date: "2026-11-17" },
   { photo: "b-07", part: "Hood open", category: "Body", date: "2026-11-14" },
   { photo: "b-08", part: "Hood vents", category: "Body", date: "2026-11-14" },
   { photo: "b-09", part: "Hood vent edges, flaking paint", category: "Body", date: "2026-11-14" },
