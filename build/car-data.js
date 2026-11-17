@@ -80,6 +80,8 @@ window.JOURNAL = [
   { photo: "u-09", part: "Camber/caster plates, on the bench", category: "Suspension" },
   { photo: "u-10", part: "Knuckles, on the bench", category: "Suspension" },
   { photo: "u-11", part: "Control arms, on the bench", category: "Suspension" },
+  { photo: "u-13", part: "Front droop, passenger side", category: "Suspension", date: "2026-11-16" },
+  { photo: "u-14", part: "Rear droop, passenger side", category: "Suspension", date: "2026-11-16" },
   { photo: "o-01", part: "Old coilovers", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "o-03", part: "Old front coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
   { photo: "o-04", part: "Old rear coilover", category: "Suspension", status: "Removed", date: "Sep 2026" },
