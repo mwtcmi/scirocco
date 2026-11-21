@@ -135,4 +135,8 @@ window.JOURNAL = [
   { photo: "d-01", part: "Exhaust and sway bar under the floor", category: "Underside", date: "2026-11-19" },
   { photo: "d-02", part: "Header, gearbox mount and sway bar", category: "Underside", date: "2026-11-19" },
   { photo: "d-03", part: "Inner CV joint", category: "Underside", date: "2026-11-19" },
+  { photo: "d-04", part: "Front underside, engine and gearbox", category: "Underside", date: "2026-11-21" },
+  { photo: "d-05", part: "Front corner, control arm and link", category: "Underside", date: "2026-11-21" },
+  { photo: "d-06", part: "Front corner and oil pan", category: "Underside", date: "2026-11-21" },
+  { photo: "d-07", part: "Front tow point", category: "Underside", date: "2026-11-21" },
 ];
